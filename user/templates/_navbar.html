@@ -28,18 +28,36 @@
     </button>
     <div class="collapse navbar-collapse" id="navbarNav">
       <ul class="navbar-nav ms-auto">
-        <li class="nav-item">
-          <a href="/" class="nav-link">Inicio</a>
-        </li>
         {% if user.is_authenticated %}
         <li class="nav-item">
-          <a href="" class="nav-link">Completed Tasks</a>
+          <a href="" class="nav-link">Productos</a>
+        </li>
+        <li class="nav-item">
+          <a href="" class="nav-link">Dashboard</a>
+        </li>
+        <li class="nav-item">
+          <a href="" class="nav-link">Clientes</a>
+        </li>
+        <li class="nav-item">
+          <a href="" class="nav-link">Proveedores</a>
+        </li>
+        <li class="nav-item">
+          <a href="" class="nav-link">Facturas</a>
+        </li>
+        <li class="nav-item">
+          <a href="" class="nav-link">Reportes</a>
         </li>
         <li class="nav-item">
           <a href="{% url 'tasks' %}" class="nav-link">Tasks</a>
         </li>
-        <li class="nav-item">
-          <a href="" class="nav-link">Create Task</a>
+        <li class="nav-item dropdown">
+          <a class="nav-link dropdown-toggle" href="#" id="navbarDropdown" role="button" data-bs-toggle="dropdown" aria-expanded="false">
+            Configuración
+          </a>
+          <ul class="dropdown-menu" aria-labelledby="navbarDropdown">
+            <li><a class="dropdown-item" href="">Usuarios</a></li>
+            <li><a class="dropdown-item" href="">Configuración General</a></li>
+          </ul>
         </li>
         <li class="nav-item">
           <a class="nav-link" href="/logout">Logout</a>
