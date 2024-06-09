@@ -57,9 +57,13 @@
     <span class="carousel-control-next-icon" aria-hidden="true"></span>
     <span class="visually-hidden">Next</span>
   </button>
+  {% if user.is_authenticated %}
+  <!--Aqui no va nada porque si no agrego esta condicion mostrara el boton inicio de session-->
+  {% else %}
   <div class="carousel-caption d-none d-md-block" style="margin-bottom: 40px;">
     <h1>Bienvenido a CeluPro Co</h1>
     <a href="/signin" class="btn btn-custom">Iniciar sesion</a>
   </div>
+  {% endif %}
 </div>
 {% endblock %}

@@ -47,7 +47,7 @@ def signin(request):
             user = authenticate(username=username, password=password)
             if user is not None:
                 login(request, user)
-                return redirect('home')  # Redirige a la página de inicio después de iniciar sesión
+                return redirect('tasks')  
     else:
         form = CustomAuthenticationForm()
     return render(request, 'signin.html', {'form': form})
