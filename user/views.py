@@ -5,6 +5,8 @@ from django.db import IntegrityError
 from django.utils import timezone
 from django.contrib.auth.decorators import login_required
 from .form import CustomUserCreationForm, CustomAuthenticationForm
+from customer.models import Cliente
+from customer.forms import ClienteForm
 
 def signup(request):
     if request.method == 'GET':
@@ -27,6 +29,11 @@ def signup(request):
 def tasks(request):
     # tasks = Task.objects.filter(user=request.user, datecompleted__isnull=True)
     return render(request, 'tasks.html')
+
+@login_required
+def customer(request):
+    if request.method == 'GET':
+        return render(request, 'Customer/createCustomer.html', {"form": ClienteForm()})
 
 def home(request):
     return render(request, 'home.html')

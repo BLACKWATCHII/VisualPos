@@ -35,8 +35,15 @@
         <li class="nav-item">
           <a href="" class="nav-link">Dashboard</a>
         </li>
-        <li class="nav-item">
-          <a href="" class="nav-link">Clientes</a>
+        <li class="nav-item dropdown">
+          <a class="nav-link dropdown-toggle" href="#" id="clientesDropdown" role="button" data-bs-toggle="dropdown" aria-expanded="false">
+            Clientes
+          </a>
+          <ul class="dropdown-menu" aria-labelledby="clientesDropdown">
+            <li><a class="dropdown-item" href="">Ver Clientes</a></li>
+            <li><a class="dropdown-item" href="{% url 'createCustomer' %}">Crear Cliente</a></li>
+            <li><a class="dropdown-item" href="">Actualizar Cliente</a></li>
+          </ul>
         </li>
         <li class="nav-item">
           <a href="" class="nav-link">Proveedores</a>
