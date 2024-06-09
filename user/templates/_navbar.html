@@ -1,0 +1,55 @@
+{% load static %}
+<style>
+  .btn-custom {
+    background-color: #FF65C3;
+    border-color: #FF65C3;
+    color: white;
+  }
+
+  .btn-custom:hover {
+    background-color: #e055b0;
+    border-color: #e055b0;
+  }
+</style>
+<nav class="navbar navbar-expand-lg navbar-dark bg-black">
+  <div class="container">
+    <img src="{% static 'img/logo.png' %}" alt="Bootstrap" width="40px" style="margin:5px;">
+    <a class="navbar-brand" href="/">CeluPro Co</a>
+    <button
+      class="navbar-toggler"
+      type="button"
+      data-bs-toggle="collapse"
+      data-bs-target="#navbarNav"
+      aria-controls="navbarNav"
+      aria-expanded="false"
+      aria-label="Toggle navigation"
+    >
+      <span class="navbar-toggler-icon"></span>
+    </button>
+    <div class="collapse navbar-collapse" id="navbarNav">
+      <ul class="navbar-nav ms-auto">
+        <li class="nav-item">
+          <a href="/" class="nav-link">Inicio</a>
+        </li>
+        {% if user.is_authenticated %}
+        <li class="nav-item">
+          <a href="" class="nav-link">Completed Tasks</a>
+        </li>
+        <li class="nav-item">
+          <a href="{% url 'tasks' %}" class="nav-link">Tasks</a>
+        </li>
+        <li class="nav-item">
+          <a href="" class="nav-link">Create Task</a>
+        </li>
+        <li class="nav-item">
+          <a class="nav-link" href="/logout">Logout</a>
+        </li>
+        {% else %}
+        <li class="nav-item">
+          <a href="/signup" class="btn btn-custom">Registrarse</a>
+        </li>
+        {% endif %}
+      </ul>
+    </div>
+  </div>
+</nav>

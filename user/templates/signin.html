@@ -1,0 +1,58 @@
+{% extends "base.html" %}
+{% load static %}
+{% block content %}
+<style>
+  .login-container {
+    max-width: 400px;
+    margin: 50px auto;
+    padding: 20px;
+    border-radius: 10px;
+    box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
+    background-color: #ffffff;
+    text-align: center;
+  }
+  .login-logo {
+    max-width: 100px;
+    margin: 0 auto 20px;
+  }
+  .login-title {
+    color: #FF65C3;
+    margin-bottom: 20px;
+  }
+  .login-form p {
+    color: black;
+    font-weight: 500;
+  }
+  .login-form input {
+    width: 100%;
+    padding: 10px;
+    margin: 10px 0;
+    border: 1px solid #83C8EC;
+    border-radius: 5px;
+  }
+  .login-form button {
+    background-color: #FF65C3;
+    border: none;
+    padding: 10px 20px;
+    color: white;
+    font-size: 16px;
+    border-radius: 5px;
+    cursor: pointer;
+    transition: background-color 0.3s ease;
+  }
+  .login-form button:hover {
+    background-color: #e055b0;
+  }
+</style>
+
+<div class="login-container">
+  <img src="{% static 'img/logo.png' %}" alt="Logo" class="login-logo">
+  <h1 class="login-title">Iniciar sesion</h1>
+  <p>{{ error }}</p>
+  <form action="/signin/" method="POST" class="login-form">
+    {% csrf_token %}
+    {{ form.as_p }}
+    <button type="submit">Sign In</button>
+  </form>
+</div>
+{% endblock %}
