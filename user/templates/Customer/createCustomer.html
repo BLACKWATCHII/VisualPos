@@ -1,64 +1,60 @@
 {% extends 'base.html' %}
 
 {% block content %}
-<h2 class="title">Formulario de Cliente</h2>
-
-<div class="card">
-    <form method="post" action="">
-        {% csrf_token %}
-        
-        <div class="section">
-            <h3>Información del Cliente</h3>
-            <div class="form-row">
-                <div class="form-group col-md-6">
-                    <label for="id_name">Nombre</label>
-                    {{ form.name }}
-                </div>
-                <div class="form-group col-md-6">
-                    <label for="id_lastname">Apellido</label>
-                    {{ form.lastname }}
-                </div>
+<div class="card mt-3">
+    <h2 class="title">CLIENTES</h2>
+    <div class="section">
+        <h5>INFORMACIÓN DEL CLIENTE</h5>
+        <div class="form-row">
+            <div class="form-group col-md-6">
+                <label for="id_name">Nombre</label>
+                {{ form.name }}
             </div>
-            <div class="form-row">
-                <div class="form-group col-md-6">
-                    <label for="id_cedula">Cédula</label>
-                    {{ form.cedula }}
-                </div>
-                <div class="form-group col-md-6">
-                    <label for="id_phone">Teléfono</label>
-                    {{ form.phone }}
-                </div>
-            </div>
-            <div class="form-row">
-                <div class="form-group col-md-6">
-                    <label for="id_email">Correo Electrónico</label>
-                    {{ form.email }}
-                </div>
+            <div class="form-group col-md-6">
+                <label for="id_lastname">Apellido</label>
+                {{ form.lastname }}
             </div>
         </div>
-        
-        <div class="section">
-            <h3>Dirección</h3>
-            <div class="form-row">
-                <div class="form-group col-md-6">
-                    <label for="id_address">Dirección</label>
-                    {{ form.address }}
-                </div>
-                <div class="form-group col-md-6">
-                    <label for="id_city">Ciudad</label>
-                    {{ form.city }}
-                </div>
+        <div class="form-row">
+            <div class="form-group col-md-6">
+                <label for="id_cedula">Cédula</label>
+                {{ form.cedula }}
+            </div>
+            <div class="form-group col-md-6">
+                <label for="id_phone">Teléfono</label>
+                {{ form.phone }}
             </div>
         </div>
-        <button type="submit" class="btn btn-primary">Guardar</button>
-    </form>
+        <div class="form-row">
+            <div class="form-group col-md-6">
+                <label for="id_email">Correo Electrónico</label>
+                {{ form.email }}
+            </div>
+        </div>
+    </div>
+    <div class="section">
+        <h5>INFORMACION DE RESIDENCIA</h5>
+        <div class="form-row">
+            <div class="form-group col-md-6">
+                <label for="id_address">Dirección</label>
+                {{ form.address }}
+            </div>
+            <div class="form-group col-md-6">
+                <label for="id_city">Ciudad</label>
+                {{ form.city }}
+            </div>
+        </div>
+    </div>
+    <button type="submit" class="btn btn-primary">Guardar</button>
 </div>
 
 <style>
     .title {
-        color: #FF65C3;
-        text-align: center;
+        color: #0046b8;
+        text-align: left;
         margin-bottom: 20px;
+        font-size: 20px; /* Slightly smaller font size to match the image */
+        font-weight: bold;
     }
 
     .card {
@@ -74,9 +70,14 @@
         margin-bottom: 20px;
     }
 
-    .section h3 {
+    .section h5 {
+        background-color: #E9ECEF;  /* Fondo gris claro */
+        padding: 10px;
+        border-radius: 5px;
         color: #8E8E8E;
         margin-bottom: 15px;
+        font-size: 14px; /* Slightly smaller font size to match the image */
+        font-weight: bold;
     }
 
     .form-row {
@@ -116,6 +117,12 @@
         background-color: #8E8E8E;
         border: none;
         color: white;
+    }
+
+    hr {
+        border: 0;
+        border-top: 1px solid #e9ecef;
+        margin: 20px 0;
     }
 </style>
 {% endblock %}
