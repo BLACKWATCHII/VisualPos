@@ -19,8 +19,10 @@ from user import views
 
 urlpatterns = [
     path('', views.home, name='home'),
-    path('createCustomer/', views.customer, name='createCustomer'),
+    path('createCustomer/', views.cliente_create_view, name='createCustomer'),
+    path('viewClient/', views.view_Clients, name='viewClient'),
     path('admin/', admin.site.urls),
+
     path('signup/', views.signup, name='signup'),
     path('tasks/', views.tasks, name='tasks'),
     # path('tasks_completed/', views.tasks_completed, name='tasks_completed'),

@@ -1,0 +1,145 @@
+{% extends 'base.html' %}
+
+{% block content %}
+<style>
+    
+    .table {
+        margin-top: 20px;
+        border-collapse: separate;
+        border-spacing: 0 10px;
+        width: 100%;
+    }
+    
+    .table th,
+    .table td {
+        padding: 12px;
+        text-align: center;
+    }
+    
+    .table th {
+        background-color: #f8f9fa;
+    }
+    
+    .table-hover tbody tr:hover {
+        background-color: #f1f1f1;
+    }
+    
+    .btn-primary,
+    .btn-danger {
+        margin-right: 5px;
+    }
+    
+    .btn-primary i,
+    .btn-danger i {
+        pointer-events: none;
+    }
+    
+    /* Estilos adicionales para la tabla */
+    #clientsTable_wrapper {
+        border-radius: 10px;
+        box-shadow: 0 0 10px rgba(0,0,0,0.1);
+        padding: 48px;
+    }
+    
+    /* Ajustes para la barra de búsqueda y paginación */
+    .dataTables_wrapper .dataTables_filter {
+        float: right;
+        text-align: right;
+    }
+    
+    .dataTables_wrapper .dataTables_length {
+        float: left;
+    }
+    
+    .dataTables_wrapper .dataTables_paginate {
+        float: right;
+        text-align: right;
+        margin-top: 10px;
+    }
+    
+    .dataTables_wrapper .dataTables_info {
+        float: left;
+        margin-top: 10px;
+    }
+    
+    /* Ajustes para las tablas */
+    .dataTables_wrapper .dataTables_paginate .paginate_button {
+        padding: 0.5em 1em;
+        margin-left: 2px;
+        margin-right: 2px;
+        color: white;
+        background-color: #007bff;
+        border: 1px solid transparent;
+        border-radius: 0.25rem;
+        cursor: pointer;
+    }
+
+    .dataTables_wrapper .dataTables_paginate .paginate_button.current {
+        background-color: #343a40;
+        border-color: #343a40;
+    }
+
+    .dataTables_wrapper .dataTables_paginate .paginate_button:hover {
+        background-color: #0056b3;
+        border-color: #0056b3;
+    }
+
+    .dataTables_wrapper .dataTables_paginate .paginate_button.disabled {
+        cursor: default;
+        background-color: #e9ecef;
+        border-color: #dee2e6;
+    }
+</style>
+</head>
+<body>
+
+<div class="container mt-4">
+<div class="d-flex justify-content-between mb-3">
+    <button class="btn btn-secondary" style="margin-left: auto;">Export</button>
+</div>
+<table id="clientsTable" class="table table-hover">
+    <thead class="thead-light">
+        <tr>
+            <th><input type="checkbox"></th>
+            <th>ID</th>
+            <th>Cedula</th>
+            <th>Nombre</th>
+            <th>Apellido</th>
+            <th>Telefono</th>
+            <th>Accion</th>
+        </tr>
+    </thead>
+    <tbody>
+        <!-- Aquí van tus datos -->
+        {% for client in clients %}
+        <tr>
+            <td><input type="checkbox"></td>
+            <td>#{{ client.id }}</td>
+            <td>{{ client.cedula }}</td>
+            <td>{{ client.name }}</td>
+            <td>{{ client.lastname }}</td>
+            <td>{{ client.phone }}</td>
+            <td>
+                <button class="btn btn-sm btn-primary"><i class="fas fa-edit"></i></button>
+                <button class="btn btn-sm btn-danger"><i class="fas fa-trash"></i></button>
+            </td>
+        </tr>
+        {% endfor %}
+    </tbody>
+</table>
+</div>
+
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/5.15.3/css/all.min.css">
+<script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
+<script src="https://cdn.datatables.net/1.10.24/js/jquery.dataTables.min.js"></script>
+<script src="https://cdn.datatables.net/plug-ins/1.10.24/i18n/Spanish.json"></script>
+<script>
+$(document).ready(function() {
+    $('#clientsTable').DataTable({
+        "language": {
+            "url": "//cdn.datatables.net/plug-ins/1.10.24/i18n/Spanish.json"
+        }
+    });
+});
+</script>
+{% endblock %}

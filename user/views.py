@@ -2,11 +2,10 @@ from django.shortcuts import render, redirect, get_object_or_404
 from django.contrib.auth import login, logout, authenticate
 from django.contrib.auth.models import User
 from django.db import IntegrityError
-from django.utils import timezone
 from django.contrib.auth.decorators import login_required
-from .form import CustomUserCreationForm, CustomAuthenticationForm
+from .form import CustomUserCreationForm, CustomAuthenticationForm,ClienteForm
 from customer.models import Cliente
-from customer.forms import ClienteForm
+from django.http import JsonResponse
 
 def signup(request):
     if request.method == 'GET':
@@ -27,13 +26,12 @@ def signup(request):
 
 @login_required
 def tasks(request):
-    # tasks = Task.objects.filter(user=request.user, datecompleted__isnull=True)
-    return render(request, 'tasks.html')
+    customer= Cliente.objects.count()
+    context = {
+        'num_clientes': customer  
+    }
+    return render(request, 'tasks.html',context)
 
-@login_required
-def customer(request):
-    if request.method == 'GET':
-        return render(request, 'Customer/createCustomer.html', {"form": ClienteForm()})
 
 def home(request):
     return render(request, 'home.html')
@@ -58,3 +56,25 @@ def signin(request):
     else:
         form = CustomAuthenticationForm()
     return render(request, 'signin.html', {'form': form})
+
+from django.urls import reverse
+
+def cliente_create_view(request):
+    if request.method == 'POST':
+        form = ClienteForm(request.POST)
+        if form.is_valid():
+            form.save()
+            return JsonResponse({'redirect': reverse('viewClient')})
+        else:
+            cedula_error = form.errors.get('cedula')
+            if cedula_error:
+                return JsonResponse({'error': cedula_error}, status=400)
+    else:
+        form = ClienteForm()
+    return render(request, 'Customer/createCustomer.html', {'form': form})
+
+
+@login_required
+def view_Clients(request):
+    clients = Cliente.objects.all() 
+    return render(request, 'Customer/viewClient.html', {'clients': clients})

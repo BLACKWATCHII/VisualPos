@@ -11,7 +11,7 @@
     border-color: #e055b0;
   }
 </style>
-<nav class="navbar navbar-expand-lg navbar-dark bg-black">
+<nav class="navbar navbar-expand-lg navbar-dark bg-black fixed-top">
   <div class="container">
     <img src="{% static 'img/logo.png' %}" alt="Bootstrap" width="40px" style="margin:5px;">
     <a class="navbar-brand" href="/">CeluPro Co</a>
@@ -40,7 +40,7 @@
             Clientes
           </a>
           <ul class="dropdown-menu" aria-labelledby="clientesDropdown">
-            <li><a class="dropdown-item" href="">Ver Clientes</a></li>
+            <li><a class="dropdown-item" href="{% url 'viewClient' %}">Ver Clientes</a></li>
             <li><a class="dropdown-item" href="{% url 'createCustomer' %}">Crear Cliente</a></li>
             <li><a class="dropdown-item" href="">Actualizar Cliente</a></li>
           </ul>
@@ -54,9 +54,6 @@
         <li class="nav-item">
           <a href="" class="nav-link">Reportes</a>
         </li>
-        <li class="nav-item">
-          <a href="" class="nav-link">Tasks</a>
-        </li>
         <li class="nav-item dropdown">
           <a class="nav-link dropdown-toggle" href="#" id="navbarDropdown" role="button" data-bs-toggle="dropdown" aria-expanded="false">
             Configuración
@@ -67,7 +64,7 @@
           </ul>
         </li>
         <li class="nav-item">
-          <a class="nav-link" href="/logout">Logout</a>
+          <a class="btn btn-danger" href="/logout">Cerrar sesion</a>
         </li>
         {% else %}
         <li class="nav-item">
