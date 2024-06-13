@@ -62,7 +62,6 @@ def signin(request):
 def cliente_create_view(request):
     if request.method == 'POST':
         form = ClienteForm(request.POST, request.FILES)  
-        print(form)
         if form.is_valid():
             form.save()
             return JsonResponse({'redirect': reverse('viewClient')})
