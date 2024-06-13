@@ -2,7 +2,6 @@
 
 {% block content %}
 <style>
-    
     .table {
         margin-top: 20px;
         border-collapse: separate;
@@ -34,14 +33,12 @@
         pointer-events: none;
     }
     
-    /* Estilos adicionales para la tabla */
     #clientsTable_wrapper {
         border-radius: 10px;
         box-shadow: 0 0 10px rgba(0,0,0,0.1);
         padding: 48px;
     }
     
-    /* Ajustes para la barra de búsqueda y paginación */
     .dataTables_wrapper .dataTables_filter {
         float: right;
         text-align: right;
@@ -62,7 +59,6 @@
         margin-top: 10px;
     }
     
-    /* Ajustes para las tablas */
     .dataTables_wrapper .dataTables_paginate .paginate_button {
         padding: 0.5em 1em;
         margin-left: 2px;
@@ -106,11 +102,11 @@
             <th>Nombre</th>
             <th>Apellido</th>
             <th>Telefono</th>
+            <th>PDF</th>
             <th>Accion</th>
         </tr>
     </thead>
     <tbody>
-        <!-- Aquí van tus datos -->
         {% for client in clients %}
         <tr>
             <td><input type="checkbox"></td>
@@ -119,6 +115,13 @@
             <td>{{ client.name }}</td>
             <td>{{ client.lastname }}</td>
             <td>{{ client.phone }}</td>
+            <td>
+                {% if client.pdf %}
+                    <a href="{% url 'download_pdf' client.id %}">Download PDF</a>
+                {% else %}
+                    No PDF
+                {% endif %}
+            </td>
             <td>
                 <button class="btn btn-sm btn-primary"><i class="fas fa-edit"></i></button>
                 <button class="btn btn-sm btn-danger"><i class="fas fa-trash"></i></button>

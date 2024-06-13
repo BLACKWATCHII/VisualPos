@@ -4,7 +4,7 @@
 {% block content %}
 <div class="card mt-5" style="margin-top: 6rem!important;">
     <h2 class="title">CLIENTES</h2>
-    <form method="POST" action="{% url 'createCustomer' %}">
+    <form method="POST" action="{% url 'createCustomer' %}" enctype="multipart/form-data">  <!-- Añade enctype="multipart/form-data" -->
         {% csrf_token %}
         <div class="section">
             <h5>INFORMACIÓN DEL CLIENTE</h5>
@@ -33,6 +33,10 @@
                     <label for="id_email">Correo Electrónico</label>
                     {{ form.email }}
                 </div>
+                <div class="form-group col-md-6">
+                    <label for="id_pdf">Archivo PDF</label>
+                    {{ form.pdf }}
+                </div>
             </div>
         </div>
         <div class="section">
@@ -52,8 +56,6 @@
     </form>
 </div>
 
-
-
 <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/sweetalert2@11/dist/sweetalert2.min.css">
 <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
 <script src="https://ajax.googleapis.com/ajax/libs/jquery/3.5.1/jquery.min.js"></script>
@@ -62,19 +64,20 @@
     $(document).ready(function(){
         $('form').submit(function(event){
             event.preventDefault();
+            var formData = new FormData(this);  // Cambia para usar FormData
             $.ajax({
                 type: 'POST',
                 url: $(this).attr('action'),
-                data: $(this).serialize(),
+                data: formData,
+                processData: false,  // Añade esto
+                contentType: false,  // Añade esto
                 success: function(response){
-                    // Mostrar alerta de éxito
                     Swal.fire({
                         icon: 'success',
                         title: 'Guardado exitosamente',
                         showConfirmButton: false,
-                        timer: 1500 // Cierra automáticamente la alerta después de 1.5 segundos
+                        timer: 1500
                     }).then(function() {
-                        // Redirigir a la página viewClients
                         window.location.href = response.redirect;
                     });
                 },
@@ -92,18 +95,12 @@
     });
 </script>
 
-
-
-
-
-
-
 <style>
     .title {
         color: #0046b8;
         text-align: left;
         margin-bottom: 20px;
-        font-size: 20px; /* Slightly smaller font size to match the image */
+        font-size: 20px; 
         font-weight: bold;
     }
 
@@ -112,8 +109,8 @@
         padding: 20px;
         border-radius: 10px;
         box-shadow: 0 0 10px rgba(0,0,0,0.1);
-        max-width: 800px;  /* Ancho máximo del formulario */
-        margin: 0 auto;  /* Centramos el formulario */
+        max-width: 800px;  
+        margin: 0 auto;  
     }
 
     .section {
@@ -121,12 +118,12 @@
     }
 
     .section h5 {
-        background-color: #E9ECEF;  /* Fondo gris claro */
+        background-color: #E9ECEF;  
         padding: 10px;
         border-radius: 5px;
         color: #8E8E8E;
         margin-bottom: 15px;
-        font-size: 14px; /* Slightly smaller font size to match the image */
+        font-size: 14px; 
         font-weight: bold;
     }
 
@@ -147,14 +144,14 @@
         margin-top: 5px;
         border-radius: 5px;
         border: 1px solid #ced4da;
-        font-size: 14px;  /* Tamaño de fuente más pequeño */
+        font-size: 14px;  
     }
 
     .btn {
-        padding: 8px 16px;  /* Tamaño de botón más pequeño */
+        padding: 8px 16px;  
         border-radius: 5px;
         margin-right: 10px;
-        font-size: 14px;  /* Tamaño de fuente más pequeño */
+        font-size: 14px;  
     }
 
     .btn-primary {

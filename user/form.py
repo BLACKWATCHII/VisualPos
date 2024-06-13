@@ -36,7 +36,7 @@ class CustomAuthenticationForm(AuthenticationForm):
 class ClienteForm(forms.ModelForm):
     class Meta:
         model = Cliente
-        fields = ['name', 'lastname', 'address', 'city', 'cedula', 'phone', 'email']
+        fields = ['name', 'lastname', 'address', 'city', 'cedula', 'phone', 'email', 'pdf']
         widgets = {
             'name': forms.TextInput(attrs={'class': 'form-control'}),
             'lastname': forms.TextInput(attrs={'class': 'form-control'}),
@@ -45,6 +45,7 @@ class ClienteForm(forms.ModelForm):
             'cedula': forms.TextInput(attrs={'class': 'form-control'}),
             'phone': forms.TextInput(attrs={'class': 'form-control'}),
             'email': forms.EmailInput(attrs={'class': 'form-control'}),
+            'pdf': forms.FileInput(attrs={'class': 'form-control'}),
         }
 
     def clean_cedula(self):

@@ -1,11 +1,13 @@
-from django.shortcuts import render, redirect, get_object_or_404 
+from django.shortcuts import render, redirect,get_object_or_404
 from django.contrib.auth import login, logout, authenticate
 from django.contrib.auth.models import User
 from django.db import IntegrityError
 from django.contrib.auth.decorators import login_required
 from .form import CustomUserCreationForm, CustomAuthenticationForm,ClienteForm
 from customer.models import Cliente
-from django.http import JsonResponse
+from django.http import JsonResponse, HttpResponse
+from django.urls import reverse
+import os
 
 def signup(request):
     if request.method == 'GET':
@@ -57,11 +59,10 @@ def signin(request):
         form = CustomAuthenticationForm()
     return render(request, 'signin.html', {'form': form})
 
-from django.urls import reverse
-
 def cliente_create_view(request):
     if request.method == 'POST':
-        form = ClienteForm(request.POST)
+        form = ClienteForm(request.POST, request.FILES)  
+        print(form)
         if form.is_valid():
             form.save()
             return JsonResponse({'redirect': reverse('viewClient')})
@@ -76,5 +77,18 @@ def cliente_create_view(request):
 
 @login_required
 def view_Clients(request):
-    clients = Cliente.objects.all() 
-    return render(request, 'Customer/viewClient.html', {'clients': clients})
+    clients = Cliente.objects.all()
+    context = {
+        'clients': clients,
+    }
+    return render(request, 'Customer/viewClient.html', context)
+
+@login_required
+def download_pdf(request, client_id):
+    client = get_object_or_404(Cliente, id=client_id)
+    pdf_path = client.pdf.path
+    with open(pdf_path, 'rb') as pdf_file:
+        response = HttpResponse(pdf_file.read(), content_type='application/pdf')
+        response['Content-Disposition'] = f'attachment; filename={os.path.basename(pdf_path)}'
+        return response
+
