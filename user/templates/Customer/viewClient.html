@@ -87,19 +87,33 @@
         background-color: #e9ecef;
         border-color: #dee2e6;
     }
+   .section h2 {
+        background-color: #E9ECEF;  
+        padding: 10px;
+        border-radius: 5px;
+        color: #8E8E8E;
+        margin-bottom: 15px;
+        font-size: 20px; 
+        font-weight: bold;
+    }
 </style>
 </head>
 <body>
 
-    <div class="container mt-4">
+    <div class="container mt-5">
         <div class="d-flex justify-content-between mb-3">
-            <button class="btn btn-secondary" style="margin-left: auto;">Export</button>
+        </div>
+        <div class="section" style="margin-top: 5rem!important;">
+            <h2>Clientes registrados
+                <button class="btn btn-secondary" id="exportButton" style="margin-left: 960px;">Export</button>
+            </h2>
         </div>
         <table id="clientsTable" class="table table-hover">
             <thead class="thead-light">
+                
                 <tr>
                     <th><input type="checkbox"></th>
-                    <th>ID</th>
+                    <th style="font-weight: bold;">#</th>
                     <th>Cedula</th>
                     <th>Nombre</th>
                     <th>Apellido</th>
@@ -109,26 +123,32 @@
                 </tr>
             </thead>
             <tbody>
-                {% for client in clients %}
-                <tr>
-                    <td><input type="checkbox"></td>
-                    <td>#{{ client.id }}</td>
-                    <td>{{ client.cedula }}</td>
-                    <td>{{ client.name }}</td>
-                    <td>{{ client.lastname }}</td>
-                    <td>{{ client.phone }}</td>
-                    <td>
-                        {% if client.pdf %}
-                            <a href="{% url 'download_pdf' client.id %}" class="btn btn-sm btn-info" data-toggle="modal" data-target="#pdfModal">Descargar PDF</a>
-                        {% else %}
-                            No PDF
-                        {% endif %}
-                    </td>
-                    <td>
-                        <a href="{% url 'update_cliente' client.id %}" class="btn btn-sm btn-primary"><i class="fas fa-edit"></i></a>
-                    </td>
-                </tr>
-                {% endfor %}
+                    {% if clients %}
+                    {% for client in clients %}
+                    <tr>
+                        <td><input type="checkbox"></td>
+                        <td>#{{ client.id }}</td>
+                        <td>{{ client.cedula }}</td>
+                        <td>{{ client.name }}</td>
+                        <td>{{ client.lastname }}</td>
+                        <td>{{ client.phone }}</td>
+                        <td>
+                            {% if client.pdf %}
+                                <a href="{% url 'download_pdf' client.id %}" class="btn btn-sm btn-info" data-toggle="modal" data-target="#pdfModal">Descargar PDF</a>
+                            {% else %}
+                                No PDF
+                            {% endif %}
+                        </td>
+                        <td>
+                            <a href="{% url 'update_cliente' client.id %}" class="btn btn-sm btn-primary"><i class="fas fa-edit"></i></a>
+                        </td>
+                    </tr>
+                    {% endfor %}
+                    {% else %}
+                        <tr>
+                            <td colspan="8" class="text-center">No hay clientes registrados</td>
+                        </tr>
+                    {% endif %}
             </tbody>
         </table>
     </div>
@@ -144,6 +164,9 @@
                 "url": "//cdn.datatables.net/plug-ins/1.10.24/i18n/Spanish.json"
             }
         });
+    });
+    document.getElementById('exportButton').addEventListener('click', function() {
+        window.location.href = "{% url 'export_clients_to_excel' %}";
     });
     </script>
 {% endblock %}

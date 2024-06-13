@@ -4,7 +4,7 @@
 {% block content %}
 <div class="card mt-5" style="margin-top: 6rem!important;">
     <h2 class="title">CLIENTES</h2>
-    <form method="POST" action="{% url 'createCustomer' %}" enctype="multipart/form-data">  <!-- Añade enctype="multipart/form-data" -->
+    <form method="POST" action="{% url 'createCustomer' %}" enctype="multipart/form-data">  
         {% csrf_token %}
         <div class="section">
             <h5>INFORMACIÓN DEL CLIENTE</h5>

@@ -29,8 +29,15 @@
     <div class="collapse navbar-collapse" id="navbarNav">
       <ul class="navbar-nav ms-auto">
         {% if user.is_authenticated %}
-        <li class="nav-item">
-          <a href="" class="nav-link">Productos</a>
+        <li class="nav-item dropdown">
+          <a class="nav-link dropdown-toggle" href="#" id="clientesDropdown" role="button" data-bs-toggle="dropdown" aria-expanded="false">
+            Productos
+          </a>
+          <ul class="dropdown-menu" aria-labelledby="clientesDropdown">
+            <li><a class="dropdown-item" href="{% url 'createItem' %}">Crear productos</a></li>
+            <li><a class="dropdown-item" href="{% url 'createTax' %}">Crear impuestos</a></li>
+            <li><a class="dropdown-item" href="">Actualizar productos</a></li>
+          </ul>
         </li>
         <li class="nav-item">
           <a href="{% url 'tasks' %}" class="nav-link">Dashboard</a>
@@ -42,7 +49,7 @@
           <ul class="dropdown-menu" aria-labelledby="clientesDropdown">
             <li><a class="dropdown-item" href="{% url 'viewClient' %}">Ver Clientes</a></li>
             <li><a class="dropdown-item" href="{% url 'createCustomer' %}">Crear Cliente</a></li>
-            <li><a class="dropdown-item" href="">Actualizar Cliente</a></li>
+            <!-- <li><a class="dropdown-item" href="">Actualizar Cliente</a></li> -->
           </ul>
         </li>
         <li class="nav-item">
@@ -75,3 +82,22 @@
     </div>
   </div>
 </nav>
+
+
+<script>
+  document.getElementById('logoutButton').addEventListener('click', function(event) {
+    event.preventDefault();
+    Swal.fire({
+      title: 'Cerrando sesión',
+      text: 'Por favor, espere...',
+      icon: 'info',
+      timer: 2000,
+      onOpen: () => {
+        Swal.showLoading();
+        setTimeout(() => {
+          window.location.href = '/logout';
+        }, 2000);
+      }
+    });
+  });
+</script>

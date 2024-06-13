@@ -8,6 +8,7 @@ from customer.models import Cliente
 from django.http import JsonResponse, HttpResponse
 from django.urls import reverse
 import os
+import pandas as pd
 
 def signup(request):
     if request.method == 'GET':
@@ -115,3 +116,27 @@ def update_cliente(request, client_id):
     else:
         form = ClienteForm(instance=client)
     return render(request, 'Customer/updateCustomer.html', {'form': form, 'client_id': client.id})
+
+def item(request):
+    return render(request, 'items/createItem.html')
+
+def createTax(request):
+    return render(request,'tax/createTax.html')
+
+@login_required
+def export_clients_to_excel(request):
+    clients = Cliente.objects.all()
+    data = {
+        'ID': [client.id for client in clients],
+        'Cedula': [client.cedula for client in clients],
+        'Nombre': [client.name for client in clients],
+        'Apellido': [client.lastname for client in clients],
+        'Telefono': [client.phone for client in clients]
+    }
+
+    df = pd.DataFrame(data)
+    response = HttpResponse(content_type='application/vnd.openxmlformats-officedocument.spreadsheetml.sheet')
+    response['Content-Disposition'] = 'attachment; filename=Clientes.xlsx'
+    df.to_excel(response, index=False)
+    
+    return response
