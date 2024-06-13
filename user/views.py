@@ -99,3 +99,19 @@ def preview_pdf(request, client_id):
         response = HttpResponse(pdf_file.read(), content_type='application/pdf')
         response['Content-Disposition'] = 'inline'
         return response
+
+@login_required
+def update_cliente(request, client_id):
+    client = get_object_or_404(Cliente, id=client_id)
+    if request.method == 'POST':
+        form = ClienteForm(request.POST, request.FILES, instance=client)
+        if form.is_valid():
+            form.save()
+            return JsonResponse({'redirect': reverse('viewClient')})
+        else:
+            cedula_error = form.errors.get('cedula')
+            if cedula_error:
+                return JsonResponse({'error': cedula_error}, status=400)
+    else:
+        form = ClienteForm(instance=client)
+    return render(request, 'Customer/updateCustomer.html', {'form': form, 'client_id': client.id})

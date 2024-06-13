@@ -3,8 +3,8 @@
 
 {% block content %}
 <div class="card mt-5" style="margin-top: 6rem!important;">
-    <h2 class="title">CLIENTES</h2>
-    <form method="POST" action="{% url 'createCustomer' %}" enctype="multipart/form-data">  <!-- Añade enctype="multipart/form-data" -->
+    <h2 class="title">ACTUALIZAR CLIENTE</h2>
+    <form method="POST" action="{% url 'update_cliente' client_id %}" enctype="multipart/form-data">
         {% csrf_token %}
         <div class="section">
             <h5>INFORMACIÓN DEL CLIENTE</h5>
@@ -52,7 +52,7 @@
                 </div>
             </div>
         </div>
-        <button type="submit" class="btn btn-primary">Guardar</button>
+        <button type="submit" class="btn btn-primary">Actualizar</button>
     </form>
 </div>
 
@@ -64,17 +64,17 @@
     $(document).ready(function(){
         $('form').submit(function(event){
             event.preventDefault();
-            var formData = new FormData(this);  
+            var formData = new FormData(this);
             $.ajax({
                 type: 'POST',
                 url: $(this).attr('action'),
                 data: formData,
-                processData: false,  
-                contentType: false,  
+                processData: false,
+                contentType: false,
                 success: function(response){
                     Swal.fire({
                         icon: 'success',
-                        title: 'Guardado exitosamente',
+                        title: 'Actualizado exitosamente',
                         showConfirmButton: false,
                         timer: 1500
                     }).then(function() {
@@ -92,14 +92,6 @@
                 }
             });
         });
-            $('#id_cedula').attr('maxlength', '10'); 
-
-            $('#id_cedula').on('input', function() {
-                this.value = this.value.replace(/[^\d]/g, ''); 
-                if (this.value.length > 10) {
-                    this.value = this.value.slice(0, 10); 
-                }
-            });
     });
 </script>
 

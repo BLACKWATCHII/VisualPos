@@ -22,6 +22,7 @@ urlpatterns = [
     path('createCustomer/', views.cliente_create_view, name='createCustomer'),
     path('viewClient/', views.view_Clients, name='viewClient'),
     path('clients/<int:client_id>/preview/', views.preview_pdf, name='preview_pdf'),
+    path('update_cliente/<int:client_id>/', views.update_cliente, name='update_cliente'),
     path('admin/', admin.site.urls),
     path('signup/', views.signup, name='signup'),
     path('tasks/', views.tasks, name='tasks'),

@@ -105,7 +105,7 @@
                     <th>Apellido</th>
                     <th>Telefono</th>
                     <th>PDF</th>
-                    <th>Accion</th>
+                    <th>Editar</th>
                 </tr>
             </thead>
             <tbody>
@@ -119,14 +119,14 @@
                     <td>{{ client.phone }}</td>
                     <td>
                         {% if client.pdf %}
-                            <a href="{% url 'download_pdf' client.id %}" class="btn btn-sm btn-info" data-toggle="modal" data-target="#pdfModal">Preview PDF</a>
+                            <a href="{% url 'download_pdf' client.id %}" class="btn btn-sm btn-info" data-toggle="modal" data-target="#pdfModal">Descargar PDF</a>
                         {% else %}
                             No PDF
                         {% endif %}
                     </td>
                     <td>
-                        <button class="btn btn-sm btn-primary"><i class="fas fa-edit"></i></button>
-                        <button class="btn btn-sm btn-danger"><i class="fas fa-trash"></i></button>
+                        <a href="{% url 'update_cliente' client.id %}" class="btn btn-sm btn-primary"><i class="fas fa-edit"></i></a>
+                        <!-- <button class="btn btn-sm btn-danger"><i class="fas fa-trash"></i></button> -->
                     </td>
                 </tr>
                 {% endfor %}
