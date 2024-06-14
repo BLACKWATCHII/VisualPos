@@ -118,7 +118,7 @@ def update_cliente(request, client_id):
     return render(request, 'Customer/updateCustomer.html', {'form': form, 'client_id': client.id})
 
 def item(request):
-    return render(request, 'items/createItem.html')
+    return render(request, 'items/viewItem.html')
 
 def createTax(request):
     return render(request,'tax/createTax.html')

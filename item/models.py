@@ -1,4 +1,5 @@
 from django.db import models
+from django.contrib.auth.models import User
 
 class Item(models.Model):
     Name = models.CharField(max_length=255)
@@ -8,6 +9,11 @@ class Item(models.Model):
     Stock = models.IntegerField(default=0)
     create_date = models.DateTimeField(auto_now_add=True)
     active = models.BooleanField(default=True)
+    user = models.ForeignKey(User, on_delete=models.CASCADE, related_name='productos')
 
     def __str__(self):
-        return self.nombre
+        return self.Name
+
+
+
+

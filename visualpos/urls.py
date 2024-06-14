@@ -23,7 +23,7 @@ urlpatterns = [
     path('viewClient/', views.view_Clients, name='viewClient'),
     path('clients/<int:client_id>/preview/', views.preview_pdf, name='preview_pdf'),
     path('update_cliente/<int:client_id>/', views.update_cliente, name='update_cliente'),
-    path('createItem/', views.item, name='createItem'),
+    path('viewItem/', views.item, name='viewItem'),
     path('export_clients_to_excel/', views.export_clients_to_excel, name='export_clients_to_excel'),
     path('createTax/', views.createTax, name='createTax'),
     path('admin/', admin.site.urls),
