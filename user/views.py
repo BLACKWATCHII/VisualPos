@@ -3,8 +3,9 @@ from django.contrib.auth import login, logout, authenticate
 from django.contrib.auth.models import User
 from django.db import IntegrityError
 from django.contrib.auth.decorators import login_required
-from .form import CustomUserCreationForm, CustomAuthenticationForm,ClienteForm
+from .form import CustomUserCreationForm, CustomAuthenticationForm,ClienteForm,ItemForm
 from customer.models import Cliente
+from item.models import Item
 from django.http import JsonResponse, HttpResponse
 from django.urls import reverse
 from django.db.models import Count
@@ -162,8 +163,21 @@ def export_clients_to_excel(request):
 ################################################################################################################
 
 # Create item and view
+@login_required
 def item(request):
     return render(request, 'items/viewItem.html')
 
+@login_required
 def CreateItem(request):
-    return render(request,'item/createItem.html')
+    if request.method == 'POST':
+        form = ItemForm(request.POST, user=request.user)  # Pasamos el usuario actual
+        if form.is_valid():
+            item = form.save()
+            return redirect('viewItem')
+    else:
+        form = ItemForm(user=request.user)  # Pasamos el usuario actual al formulario
+    return render(request, 'items/createItem.html', {'form': form})
+
+@login_required
+def CreateTax(request):  
+    return render(request,'tax/createTax.html')

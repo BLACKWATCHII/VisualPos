@@ -27,7 +27,7 @@ urlpatterns = [
     path('logout/', views.signout, name='logout'),
     path('signin/', views.signin, name='signin'),
     ##################################################################################
-    
+
     # customer
     path('createCustomer/', views.cliente_create_view, name='createCustomer'),
     path('viewClient/', views.view_Clients, name='viewClient'),
@@ -40,6 +40,7 @@ urlpatterns = [
     #item
     path('viewItem/', views.item, name='viewItem'),
     path('createItem/',views.CreateItem, name='createItem'),
+    path('createTax/',views.CreateTax, name='createTax'),
     ###################################################################################
 
 

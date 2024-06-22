@@ -1,9 +1,160 @@
 {% extends 'base.html' %}
-
 {% load static %}
 
 {% block content %}
+<div class="card mt-5">
+    <h2 class="title">CREAR ÍTEM</h2>
+    <form method="POST" action="{% url 'createItem' %}" enctype="multipart/form-data">  
+        {% csrf_token %}
+        <div class="section">
+            <h5>Datos del Ítem</h5>
+            <div class="form-row">
+                <div class="form-group col-md-6">
+                    <label for="id_name">Nombre</label>
+                    {{ form.name }}
+                </div>
+                <div class="form-group col-md-6">
+                    <label for="id_referent">Referencia</label>
+                    {{ form.referent }}
+                </div>
+            </div>
+            <div class="form-row">
+                <div class="form-group col-md-6">
+                    <label for="id_description">Descripción</label>
+                    {{ form.description }}
+                </div>
+                <div class="form-group col-md-6">
+                    <label for="id_price">Precio</label>
+                    {{ form.price }}
+                </div>
+            </div>
+            <div class="form-row">
+                <div class="form-group col-md-6">
+                    <label for="id_stock">Stock</label>
+                    {{ form.stock }}
+                </div>
+                <div class="form-group col-md-6">
+                    <label for="id_active">Activo</label>
+                    {{ form.active }}
+                </div>
+            </div>
+        </div>
+        <button type="submit" class="btn btn-primary">Guardar</button>
+    </form>
+</div>
 
-<h1 style="position: absolute; top: 80px;">Create Item</h1>
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/sweetalert2@11/dist/sweetalert2.min.css">
+<script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
+<script src="https://ajax.googleapis.com/ajax/libs/jquery/3.5.1/jquery.min.js"></script>
 
+<script>
+    $(document).ready(function(){
+        $('form').submit(function(event){
+            event.preventDefault();
+            var formData = new FormData(this);  
+            $.ajax({
+                type: 'POST',
+                url: $(this).attr('action'),
+                data: formData,
+                processData: false,  
+                contentType: false,  
+                success: function(response){
+                    Swal.fire({
+                        icon: 'success',
+                        title: 'Guardado exitosamente',
+                        showConfirmButton: false,
+                        timer: 1500
+                    }).then(function() {
+                        window.location.href = response.redirect;
+                    });
+                },
+                error: function(response){
+                    if (response.status === 400) {
+                        Swal.fire({
+                            icon: 'error',
+                            title: 'Error',
+                            text: response.responseJSON.error,
+                        });
+                    }
+                }
+            });
+        });
+    });
+</script>
+
+<style>
+    .title {
+        color: #0046b8;
+        text-align: left;
+        margin-bottom: 20px;
+        font-size: 20px; 
+        font-weight: bold;
+    }
+
+    .card {
+        background-color: #f8f9fa;
+        padding: 20px;
+        border-radius: 10px;
+        box-shadow: 0 0 10px rgba(0,0,0,0.1);
+        max-width: 800px;  
+        margin: 6rem auto 0; /* Ajusta el margen superior según necesites */
+    }
+
+    .section {
+        margin-bottom: 20px;
+        background-color: #ffffff;
+        border: 1px solid #ced4da;
+        padding: 20px;
+        border-radius: 5px;
+    }
+
+    .section h5 {
+        background-color: #E9ECEF;  
+        padding: 10px;
+        border-radius: 5px;
+        color: #8E8E8E;
+        margin-bottom: 15px;
+        font-size: 14px; 
+        font-weight: bold;
+    }
+
+    .form-row {
+        display: flex;
+        flex-wrap: wrap;
+        justify-content: space-between;
+    }
+
+    .form-group {
+        flex: 0 0 48%;
+        margin-bottom: 15px;
+    }
+
+    label {
+        font-weight: bold;
+        color: #0046b8;
+    }
+
+    .btn {
+        padding: 8px 16px;  
+        border-radius: 5px;
+        margin-top: 20px; /* Espacio adicional arriba del botón */
+        font-size: 14px;  
+    }
+
+    .btn-primary {
+        background-color: #FF65C3;
+        border: none;
+        color: white;
+    }
+
+    .btn-primary:hover {
+        background-color: #e64980; /* Color de fondo al pasar el mouse */
+    }
+
+    hr {
+        border: 0;
+        border-top: 1px solid #e9ecef;
+        margin: 20px 0;
+    }
+</style>
 {% endblock %}

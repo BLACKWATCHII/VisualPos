@@ -3,6 +3,7 @@ from django.contrib.auth.forms import UserCreationForm
 from django.contrib.auth.models import User
 from django.contrib.auth.forms import AuthenticationForm
 from customer.models import Cliente
+from item.models import Item
 from django.core.validators import RegexValidator
 from django.core.exceptions import ValidationError
 
@@ -75,3 +76,19 @@ class ClienteForm(forms.ModelForm):
             raise ValidationError('La cédula ya está registrada.')
 
         return cedula
+
+class ItemForm(forms.ModelForm):
+    class Meta:
+        model = Item
+        fields = ['Name', 'Referents', 'Description', 'Price', 'Stock', 'active']  
+
+    def __init__(self, *args, **kwargs):
+        self.user = kwargs.pop('user', None)  
+        super(ItemForm, self).__init__(*args, **kwargs)
+
+    def save(self, commit=True):
+        instance = super(ItemForm, self).save(commit=False)
+        instance.user = self.user  
+        if commit:
+            instance.save()
+        return instance
