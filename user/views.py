@@ -7,8 +7,11 @@ from .form import CustomUserCreationForm, CustomAuthenticationForm,ClienteForm
 from customer.models import Cliente
 from django.http import JsonResponse, HttpResponse
 from django.urls import reverse
+from django.db.models import Count
 import os
 import pandas as pd
+import json
+
 
 def signup(request):
     if request.method == 'GET':
@@ -28,12 +31,29 @@ def signup(request):
 
 
 @login_required
-def tasks(request):
-    customer= Cliente.objects.count()
+def Dasboard(request):
+    customer_count = Cliente.objects.count()
+
+    # Calculate new clients per day
+    new_clients_per_day = (
+        Cliente.objects
+        .filter(record_date__isnull=False)
+        .values('record_date')
+        .annotate(count=Count('id'))
+        .order_by('record_date')
+    )
+
+    # Prepare data for the chart
+    dates = [entry['record_date'].strftime('%Y-%m-%d') for entry in new_clients_per_day]
+    counts = [entry['count'] for entry in new_clients_per_day]
+
     context = {
-        'num_clientes': customer  
+        'num_clientes': customer_count,
+        'dates': json.dumps(dates),  # Convert list to JSON format
+        'counts': json.dumps(counts),  # Convert list to JSON format
     }
-    return render(request, 'tasks.html',context)
+
+    return render(request, 'tasks.html', context)
 
 
 def home(request):

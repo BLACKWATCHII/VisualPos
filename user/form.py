@@ -69,6 +69,9 @@ class ClienteForm(forms.ModelForm):
         cedula = self.cleaned_data.get('cedula')
         if not cedula.isdigit() or not (8 <= len(cedula) <= 10):
             raise ValidationError('Ingrese una cédula válida de entre 8 y 10 dígitos.')
-        if Cliente.objects.filter(cedula=cedula).exists():
+
+        instance_id = self.instance.id if self.instance else None
+        if Cliente.objects.filter(cedula=cedula).exclude(id=instance_id).exists():
             raise ValidationError('La cédula ya está registrada.')
+
         return cedula

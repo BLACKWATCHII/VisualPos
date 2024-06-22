@@ -28,7 +28,7 @@ urlpatterns = [
     path('createTax/', views.createTax, name='createTax'),
     path('admin/', admin.site.urls),
     path('signup/', views.signup, name='signup'),
-    path('tasks/', views.tasks, name='tasks'),
+    path('Dasboard/', views.Dasboard, name='Dasboard'),
     path('logout/', views.signout, name='logout'),
     path('signin/', views.signin, name='signin'),
      path('clients/<int:client_id>/download/', views.download_pdf, name='download_pdf'),
