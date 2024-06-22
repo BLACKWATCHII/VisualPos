@@ -18,18 +18,31 @@ from django.urls import path
 from user import views
 
 urlpatterns = [
+
+    ## login and register
     path('', views.home, name='home'),
-    path('createCustomer/', views.cliente_create_view, name='createCustomer'),
-    path('viewClient/', views.view_Clients, name='viewClient'),
-    path('clients/<int:client_id>/preview/', views.preview_pdf, name='preview_pdf'),
-    path('update_cliente/<int:client_id>/', views.update_cliente, name='update_cliente'),
-    path('viewItem/', views.item, name='viewItem'),
-    path('export_clients_to_excel/', views.export_clients_to_excel, name='export_clients_to_excel'),
-    path('createTax/', views.createTax, name='createTax'),
     path('admin/', admin.site.urls),
     path('signup/', views.signup, name='signup'),
     path('Dasboard/', views.Dasboard, name='Dasboard'),
     path('logout/', views.signout, name='logout'),
     path('signin/', views.signin, name='signin'),
-     path('clients/<int:client_id>/download/', views.download_pdf, name='download_pdf'),
+    ##################################################################################
+    
+    # customer
+    path('createCustomer/', views.cliente_create_view, name='createCustomer'),
+    path('viewClient/', views.view_Clients, name='viewClient'),
+    path('clients/<int:client_id>/preview/', views.preview_pdf, name='preview_pdf'),
+    path('update_cliente/<int:client_id>/', views.update_cliente, name='update_cliente'),
+    path('export_clients_to_excel/', views.export_clients_to_excel, name='export_clients_to_excel'),
+    path('clients/<int:client_id>/download/', views.download_pdf, name='download_pdf'),
+    ####################################################################################
+
+    #item
+    path('viewItem/', views.item, name='viewItem'),
+    path('createItem/',views.CreateItem, name='createItem'),
+    ###################################################################################
+
+
+
+     
 ]

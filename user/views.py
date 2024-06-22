@@ -13,6 +13,8 @@ import pandas as pd
 import json
 
 
+# Login and register
+
 def signup(request):
     if request.method == 'GET':
         return render(request, 'signup.html', {"form": CustomUserCreationForm()})
@@ -50,7 +52,7 @@ def Dasboard(request):
     context = {
         'num_clientes': customer_count,
         'dates': json.dumps(dates),  # Convert list to JSON format
-        'counts': json.dumps(counts),  # Convert list to JSON format
+        'counts': json.dumps(counts),  
     }
 
     return render(request, 'tasks.html', context)
@@ -80,6 +82,9 @@ def signin(request):
         form = CustomAuthenticationForm()
     return render(request, 'signin.html', {'form': form})
 
+################################################################################################################
+
+## Create Customer and update customer
 def cliente_create_view(request):
     if request.method == 'POST':
         form = ClienteForm(request.POST, request.FILES)  
@@ -137,12 +142,6 @@ def update_cliente(request, client_id):
         form = ClienteForm(instance=client)
     return render(request, 'Customer/updateCustomer.html', {'form': form, 'client_id': client.id})
 
-def item(request):
-    return render(request, 'items/viewItem.html')
-
-def createTax(request):
-    return render(request,'tax/createTax.html')
-
 @login_required
 def export_clients_to_excel(request):
     clients = Cliente.objects.all()
@@ -160,3 +159,11 @@ def export_clients_to_excel(request):
     df.to_excel(response, index=False)
     
     return response
+################################################################################################################
+
+# Create item and view
+def item(request):
+    return render(request, 'items/viewItem.html')
+
+def CreateItem(request):
+    return render(request,'item/createItem.html')
