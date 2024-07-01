@@ -40,6 +40,7 @@ urlpatterns = [
     #item
     path('viewItem/', views.item, name='viewItem'),
     path('createItem/',views.CreateItem, name='createItem'),
+    path('update/<int:item_id>/', views.UpdateItem, name='UpdateItem'),
     path('createTax/',views.CreateTax, name='createTax'),
     ###################################################################################
 

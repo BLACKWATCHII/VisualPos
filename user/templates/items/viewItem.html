@@ -71,36 +71,46 @@
             </div>
             <table id="clientsTable" class="table table-hover">
                 <thead class="thead-light">
-                <tr>
-                    <th scope="col"><input type="checkbox"></th>
-                    <th scope="col">Product</th>
-                    <th scope="col">Category</th>
-                    <th scope="col">Added Date</th>
-                    <th scope="col">Price</th>
-                    <th scope="col">Quantity</th>
-                    <th scope="col">Status</th>
-                    <th scope="col">Action</th>
-                </tr>
+                    <tr>
+                        <th scope="col"><input type="checkbox"></th>
+                        <th scope="col">ID</th>
+                        <th scope="col">Referencia</th>
+                        <th scope="col">Nombre</th>
+                        <th scope="col">Precio</th>
+                        <th scope="col">Cantidad</th>
+                        <th scope="col">Estado</th>
+                        <th scope="col">Editar</th>
+                    </tr>
                 </thead>
                 <tbody id="tableBody">
-                <tr>
-                    <td><input type="checkbox"></td>
-                    <td>#</td>
-                    <td></td>
-                    <td></td>
-                    <td></td>
-                    <td></td>
-                    <td></td>
-                    <td>
-                        <a  class="btn btn-sm btn-primary"><i
-                                    class="fas fa-edit"></i></a>
-                    </td>
-                </tr>
-                <tr>
-                    <td colspan="8" class="text-center">No hay productos registrados</td>
-                </tr>
+                    {% if item %}
+                        {% for items in item %}
+                            <tr>
+                                <td><input type="checkbox"></td>
+                                <td>#{{ items.id }}</td>
+                                <td>{{ items.Referents }}</td>
+                                <td>{{ items.Name }}</td>
+                                <td>{{ items.Price }}</td>
+                                <td>{{ items.Stock }}</td>
+                                <td>
+                                    {% if items.active %}
+                                        activo
+                                    {% else %}
+                                        desactivado
+                                    {% endif %}
+                                </td>
+                                <td>
+                                    <a href="" class="btn btn-sm btn-primary"><i class="fas fa-edit"></i></a>
+                                </td>
+                            </tr>
+                        {% endfor %}
+                    {% else %}
+                        <tr>
+                            <td colspan="8" class="text-center">No hay productos registrados</td>
+                        </tr>
+                    {% endif %}
                 </tbody>
-            </table>
+            </table>            
             <ul id="pagination" class="pagination"></ul>
         </div>
     </div>
