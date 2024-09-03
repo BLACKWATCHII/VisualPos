@@ -61,61 +61,56 @@
     <div class="card shadow">
         <div class="card-body">
             <div class="section d-flex justify-content-between align-items-center mb-3">
-                <div class="card-header" style="background-color: #2ca6be; color: white;">
-                    Clientes registrados
-                </div>
+                <h2>Productos</h2>
                 <div class="search-container">
                     <div style="margin: 1px;">
-                        <a class="btn btn-primary" href="{% url 'createCustomer' %}">+ Nuevo</a>
+                        <a class="btn btn-primary" href="{% url 'createItem' %}">+ Nuevo</a>
                     </div>
-                    <a class="btn btn-success" id="exportButton">Exportar</a>
                     <input type="text" id="searchInput" placeholder="Buscar...">
                 </div>
             </div>
             <table id="clientsTable" class="table table-hover">
                 <thead class="thead-light">
-                <tr>
-                    <th><input type="checkbox"></th>
-                    <th style="font-weight: bold;">#</th>
-                    <th>Cedula</th>
-                    <th>Nombre</th>
-                    <th>Apellido</th>
-                    <th>Telefono</th>
-                    <th>PDF</th>
-                    <th>Editar</th>
-                </tr>
+                    <tr>
+                        <th scope="col"><input type="checkbox"></th>
+                        <th scope="col">ID</th>
+                        <th scope="col">Referencia</th>
+                        <th scope="col">Nombre</th>
+                        <th scope="col">Precio</th>
+                        <th scope="col">Cantidad</th>
+                        <th scope="col">Estado</th>
+                        <th scope="col">Editar</th>
+                    </tr>
                 </thead>
                 <tbody id="tableBody">
-                {% if clients %}
-                {% for client in clients %}
-                <tr>
-                    <td><input type="checkbox"></td>
-                    <td>#{{ client.id }}</td>
-                    <td>{{ client.cedula }}</td>
-                    <td>{{ client.name }}</td>
-                    <td>{{ client.lastname }}</td>
-                    <td>{{ client.phone }}</td>
-                    <td>
-                        {% if client.pdf %}
-                            <a href="{% url 'download_pdf' client.id %}" class="btn btn-sm btn-info"
-                               data-toggle="modal" data-target="#pdfModal">Descargar PDF</a>
-                        {% else %}
-                            No PDF
-                        {% endif %}
-                    </td>
-                    <td>
-                        <a href="{% url 'update_cliente' client.id %}" class="btn btn-sm btn-primary"><i
-                                    class="fas fa-edit"></i></a>
-                    </td>
-                </tr>
-                {% endfor %}
-                {% else %}
-                <tr>
-                    <td colspan="8" class="text-center">No hay clientes registrados</td>
-                </tr>
-                {% endif %}
+                    {% if item %}
+                        {% for items in item %}
+                            <tr>
+                                <td><input type="checkbox"></td>
+                                <td>#{{ items.id }}</td>
+                                <td>{{ items.Referents }}</td>
+                                <td>{{ items.Name }}</td>
+                                <td>{{ items.Price }}</td>
+                                <td>{{ items.Stock }}</td>
+                                <td>
+                                    {% if items.active %}
+                                        activo
+                                    {% else %}
+                                        desactivado
+                                    {% endif %}
+                                </td>
+                                <td>
+                                    <a href="" class="btn btn-sm btn-primary"><i class="fas fa-edit"></i></a>
+                                </td>
+                            </tr>
+                        {% endfor %}
+                    {% else %}
+                        <tr>
+                            <td colspan="8" class="text-center">No hay productos registrados</td>
+                        </tr>
+                    {% endif %}
                 </tbody>
-            </table>
+            </table>            
             <ul id="pagination" class="pagination"></ul>
         </div>
     </div>

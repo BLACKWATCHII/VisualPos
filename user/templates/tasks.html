@@ -16,26 +16,25 @@
     <div class="row">
         <!-- Caja para gráfico 1 -->
         <div class="col-md-6 mb-4">
-            <div class="card">
-                <div class="card-header" style="background-color: #FF65C2; color: white;">
+            <div class="card shadow p-3">
+                <div class="card-header" style="background-color: #DC3445; color: white;">
                     Ventas diarias
                 </div>
                 <div class="card-body">
-                    <!-- Inserta aquí tu gráfico utilizando una biblioteca como Chart.js o Plotly -->
+
                     <canvas id="chart1" width="400" height="200"></canvas>
                 </div>
             </div>
         </div>
 
-        <!-- Caja para gráfico 2 -->
+        <!-- Caja para gráfico 2  -->
         <div class="col-md-6 mb-4">
-            <div class="card">
-                <div class="card-header" style="background-color: #141c20; color: white;">
-                    Ventas mensuales
+            <div class="card shadow p-3" style="max-width: 720px;">
+                <div class="card-header" style="background-color: #2ca6be; color: white;">
+                    Clientes nuevos
                 </div>
                 <div class="card-body">
-                    <!-- Inserta aquí tu segundo gráfico -->
-                    <canvas id="chart2" width="400" height="200"></canvas>
+                    <canvas id="chart2" width="400" height="165"></canvas>
                 </div>
             </div>
         </div>
@@ -44,8 +43,8 @@
     <div class="row">
         <!-- Caja de productos más vendidos -->
         <div class="col-md-6 mb-4">
-            <div class="card">
-                <div class="card-header" style="background-color: #FF65C2; color: white;">
+            <div class="card shadow p-3">
+                <div class="card-header" style="background-color: green; color: white;">
                     Productos más vendidos
                 </div>
                 <div class="card-body">
@@ -58,7 +57,7 @@
         <!-- Caja con 4 sub-cajas -->
        <!-- Caja con 4 sub-cajas -->
 <div class="col-md-6 mb-4">
-    <div class="card">
+    <div class="card shadow p-3">
         <div class="card-header" style="background-color: #0d1419; color: white;">
             Información general
         </div>
@@ -77,12 +76,14 @@
                 </div>
                 <!-- Sub-caja 2 -->
                 <div class="col-md-6">
-                    <div class="card bg-success text-white hover-card">
-                        <div class="card-body">
-                            <h5 class="card-title">Productos en Stock</h5>
-                            <p class="card-text">500</p>
+                    <a href="{% url 'viewItem' %}" style="text-decoration: none;">
+                        <div class="card bg-success text-white hover-card">
+                            <div class="card-body">
+                                <h5 class="card-title">Productos Disponibles</h5>
+                                <p class="card-text">{{  num_items }}</p>
+                            </div>
                         </div>
-                    </div>
+                    </a>
                 </div>
                 <!-- Sub-caja 3 -->
                 <div class="col-md-6 mt-4">
@@ -109,6 +110,34 @@
 
     </div>
 </div>
+<script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+<script>
+    // Data for the new clients chart
+    const dates = JSON.parse('{{ dates|escapejs }}');
+    const counts = JSON.parse('{{ counts|escapejs }}');
+
+    const ctx2 = document.getElementById('chart2').getContext('2d');
+    new Chart(ctx2, {
+        type: 'bar',
+        data: {
+            labels: dates,
+            datasets: [{
+                label: 'Clientes Nuevos',
+                data: counts,
+                backgroundColor: 'rgba(247, 178, 219)',
+                borderColor: 'rgba(0, 0, 0)',
+                borderWidth: 1
+            }]
+        },
+        options: {
+            scales: {
+                y: {
+                    beginAtZero: true
+                }
+            }
+        }
+    });
+</script>
 
 
 {% endblock %}

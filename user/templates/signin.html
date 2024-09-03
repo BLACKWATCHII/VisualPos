@@ -14,6 +14,7 @@
     box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
     background-color: #ffffff;
     text-align: center;
+    margin-bottom: 20em !important;
   }
   .login-title {
     color: #FF65C3;
@@ -79,7 +80,6 @@
 </style>
 
 <div class="login-container">
-  <!-- <img src="{% static 'img/logo.png' %}" alt="Logo" class="login-logo"> -->
   <h1 class="login-title">Iniciar sesión</h1>
   <p>{{ error }}</p>
   <form action="/signin/" method="POST" class="login-form">

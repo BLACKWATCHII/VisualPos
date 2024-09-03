@@ -7,7 +7,16 @@ from .form import CustomUserCreationForm, CustomAuthenticationForm,ClienteForm
 from customer.models import Cliente
 from django.http import JsonResponse, HttpResponse
 from django.urls import reverse
+from django.db.models import Count
+from item.models import Item
+from tax.models import Tax
 import os
+import pandas as pd
+import json
+from django.contrib import messages
+
+
+# Login and register
 
 def signup(request):
     if request.method == 'GET':
@@ -20,19 +29,37 @@ def signup(request):
                 )
                 user.save()
                 login(request, user)
-                return redirect('tasks')
+                return redirect('Dasboard')
             except IntegrityError:
                 return render(request, 'signup.html', {"form": CustomUserCreationForm(), "error": "El nombre de usuario ya existe."})
         return render(request, 'signup.html', {"form": CustomUserCreationForm(), "error": "Las contraseñas no coinciden."})
 
 
 @login_required
-def tasks(request):
-    customer= Cliente.objects.count()
+def Dasboard(request):
+    customer_count = Cliente.objects.count()
+    items_count = Item.objects.filter(active=True).count()
+    # Calculate new clients per day
+    new_clients_per_day = (
+        Cliente.objects
+        .filter(record_date__isnull=False)
+        .values('record_date')
+        .annotate(count=Count('id'))
+        .order_by('record_date')
+    )
+
+    # Prepare data for the chart
+    dates = [entry['record_date'].strftime('%Y-%m-%d') for entry in new_clients_per_day]
+    counts = [entry['count'] for entry in new_clients_per_day]
+
     context = {
-        'num_clientes': customer  
+        'num_clientes': customer_count,
+        'num_items': items_count,
+        'dates': json.dumps(dates),  # Convert list to JSON format
+        'counts': json.dumps(counts),  
     }
-    return render(request, 'tasks.html',context)
+
+    return render(request, 'tasks.html', context)
 
 
 def home(request):
@@ -54,11 +81,14 @@ def signin(request):
             user = authenticate(username=username, password=password)
             if user is not None:
                 login(request, user)
-                return redirect('tasks')  
+                return redirect('Dasboard')  
     else:
         form = CustomAuthenticationForm()
     return render(request, 'signin.html', {'form': form})
 
+################################################################################################################
+
+## Create Customer and update customer
 def cliente_create_view(request):
     if request.method == 'POST':
         form = ClienteForm(request.POST, request.FILES)  
@@ -80,6 +110,7 @@ def view_Clients(request):
     context = {
         'clients': clients,
     }
+    print(context)
     return render(request, 'Customer/viewClient.html', context)
 
 @login_required
@@ -115,3 +146,113 @@ def update_cliente(request, client_id):
     else:
         form = ClienteForm(instance=client)
     return render(request, 'Customer/updateCustomer.html', {'form': form, 'client_id': client.id})
+
+@login_required
+def export_clients_to_excel(request):
+    clients = Cliente.objects.all()
+    data = {
+        'ID': [client.id for client in clients],
+        'Cedula': [client.cedula for client in clients],
+        'Nombre': [client.name for client in clients],
+        'Apellido': [client.lastname for client in clients],
+        'Telefono': [client.phone for client in clients]
+    }
+
+    df = pd.DataFrame(data)
+    response = HttpResponse(content_type='application/vnd.openxmlformats-officedocument.spreadsheetml.sheet')
+    response['Content-Disposition'] = 'attachment; filename=Clientes.xlsx'
+    df.to_excel(response, index=False)
+    
+    return response
+################################################################################################################
+
+# Create item and view
+@login_required
+def item(request):
+    items = Item.objects.all()  
+    context = {
+        'item': items,  
+    }
+    return render(request, 'items/viewItem.html', context)
+
+@login_required
+def CreateItem(request):
+    taxes = Tax.objects.all()
+    if request.method == 'POST':
+        name = request.POST.get('Name')
+        referents = request.POST.get('Referents')  # Correct field name
+        description = request.POST.get('Description')
+        price = request.POST.get('Price')
+        stock = request.POST.get('Stock')
+        active = request.POST.get('active')
+        tax_id = request.POST.get('Taxes')  
+
+        if tax_id == None :
+            tax_id = None
+
+        # Validación de campos obligatorios
+        if not (name and referents and description and price and stock and active and tax_id):
+            messages.error(request, 'Todos los campos son obligatorios.')
+            return render(request, 'items/createItem.html', {'taxes': taxes})
+        
+        active = (active == 'True')
+
+        try:
+            price = float(price)
+            stock = int(stock)
+        except (ValueError, TypeError):
+            messages.error(request, 'Los campos Precio y Cantidad deben ser números válidos.')
+            return render(request, 'items/createItem.html', {'taxes': taxes})
+
+        try:
+            if Item.objects.filter(Referents=referents).exists():  # Correct field name
+                messages.error(request, 'Ya existe un ítem con esa referencia.')
+                return render(request, 'items/createItem.html', {'taxes': taxes})
+
+            tax = Tax.objects.get(id=tax_id) 
+
+            Item.objects.create(
+                Name=name,  
+                Referents=referents,  
+                Description=description, 
+                Price=price,  
+                Stock=stock,  
+                active=active,
+                tax=tax,  
+                user=request.user
+            )
+            messages.success(request, 'Ítem creado correctamente.')
+            return redirect('viewItem')
+        except IntegrityError:
+            messages.error(request, 'Hubo un problema al crear el ítem.')
+            return render(request, 'items/createItem.html', {'taxes': taxes})
+    return render(request, 'items/createItem.html', {'taxes': taxes})
+
+@login_required
+def UpdateItem(request,item_id):
+    itemID = get_object_or_404(Item, id=item_id)
+    return render(request,'item/UpdateItem.html',{'item',itemID})
+
+
+#Create Tax
+@login_required
+def CreateTax(request):  
+    if request.method == 'POST':
+        Name = request.POST.get('Name')
+        percentaje = request.POST.get('Percentaje')
+        percentajeInt = int(percentaje)
+
+        if Tax.objects.filter(name=Name).exists():
+                    messages.error(request, 'Ya existe un nombre .')
+                    return render(request, 'items/createItem.html')
+        if percentajeInt < 0:
+            messages.error(request,'El porcentaje es mejor a 0')
+            return render(request,'tax/createTax')
+        Tax.objects.create(
+            name=Name,
+            rate=percentajeInt,
+            user=request.user
+        )
+        messages.success(request, 'Tax creado correctamente.')
+        return redirect('viewItem')
+    return render(request,'tax/createTax.html')
