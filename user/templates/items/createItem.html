@@ -6,7 +6,9 @@
 
 <div class="card-container">
     <div class="card">
-        <h1>Productos</h1>
+        <div class="card-header" style="background-color: green; color: white;">
+            Productos
+        </div>
         <div class="section-header">INFORMACIÓN DEL PRODUCTO</div>
         <form method="post" id="create-item-form">
             {% csrf_token %}
@@ -106,7 +108,7 @@
         border-radius: 5px;
     }
     .form-group button {
-        background-color: #ff69b4;
+        background-color: green;
         color: white;
         border: none;
         padding: 10px 20px;

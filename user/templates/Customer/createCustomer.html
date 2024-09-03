@@ -3,7 +3,10 @@
 
 {% block content %}
 <div class="card mt-5" style="margin-top: 6rem!important;">
-    <h2 class="title">CLIENTES</h2>
+    <div class="card-header" style="background-color: #DC3445; color: white;">
+        Clientes
+    </div>
+    <br>
     <form method="POST" action="{% url 'createCustomer' %}" enctype="multipart/form-data">  
         {% csrf_token %}
         <div class="section">
@@ -105,7 +108,7 @@
 
 <style>
     .title {
-        color: #0046b8;
+        color: green;
         text-align: left;
         margin-bottom: 20px;
         font-size: 20px; 
@@ -163,7 +166,7 @@
     }
 
     .btn-primary {
-        background-color: #FF65C3;
+        background-color: #DC3445;
         border: none;
         color: white;
     }
