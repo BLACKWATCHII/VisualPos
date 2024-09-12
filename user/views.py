@@ -185,13 +185,13 @@ def CreateItem(request):
         price = request.POST.get('Price')
         stock = request.POST.get('Stock')
         active = request.POST.get('active')
-        tax_id = request.POST.get('Taxes')  
+        # tax_id = request.POST.get('Taxes')  
 
-        if tax_id == None :
-            tax_id = None
+        # if tax_id == None :
+        #     tax_id = None
 
         # Validación de campos obligatorios
-        if not (name and referents and description and price and stock and active and tax_id):
+        if not (name and referents and description and price and stock and active):
             messages.error(request, 'Todos los campos son obligatorios.')
             return render(request, 'items/createItem.html', {'taxes': taxes})
         
@@ -209,7 +209,7 @@ def CreateItem(request):
                 messages.error(request, 'Ya existe un ítem con esa referencia.')
                 return render(request, 'items/createItem.html', {'taxes': taxes})
 
-            tax = Tax.objects.get(id=tax_id) 
+            # tax = Tax.objects.get(id=tax_id) 
 
             Item.objects.create(
                 Name=name,  
@@ -218,7 +218,7 @@ def CreateItem(request):
                 Price=price,  
                 Stock=stock,  
                 active=active,
-                tax=tax,  
+                # tax=tax,  
                 user=request.user
             )
             messages.success(request, 'Ítem creado correctamente.')

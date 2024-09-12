@@ -61,10 +61,12 @@
     <div class="card shadow">
         <div class="card-body">
             <div class="section d-flex justify-content-between align-items-center mb-3">
-                <h2>Productos</h2>
+                <div class="card-header" style="background-color: #cc3419; color: white;">
+                    Productos Registrados
+                </div>
                 <div class="search-container">
                     <div style="margin: 1px;">
-                        <a class="btn btn-primary" href="{% url 'createItem' %}">+ Nuevo</a>
+                        <a class="btn btn-danger" href="{% url 'createItem' %}">+ Nuevo</a>
                     </div>
                     <input type="text" id="searchInput" placeholder="Buscar...">
                 </div>
@@ -100,7 +102,7 @@
                                     {% endif %}
                                 </td>
                                 <td>
-                                    <a href="" class="btn btn-sm btn-primary"><i class="fas fa-edit"></i></a>
+                                    <a href="" class="btn btn-sm btn-danger"><i class="fas fa-edit"></i></a>
                                 </td>
                             </tr>
                         {% endfor %}
