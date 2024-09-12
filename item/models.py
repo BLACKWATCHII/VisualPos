@@ -16,7 +16,8 @@ class Item(models.Model):
 
     def __str__(self):
         return self.Name
-
+    def default_tax():
+        return Tax.objects.get(pk=1)
 
 
 

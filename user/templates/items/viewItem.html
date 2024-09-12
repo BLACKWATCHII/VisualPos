@@ -1,4 +1,5 @@
 {% extends 'base.html' %}
+{% load static %}
 
 {% block content %}
 <link rel="stylesheet" href="https://cdn.datatables.net/1.10.25/css/dataTables.bootstrap4.min.css">
@@ -85,24 +86,26 @@
                     </tr>
                 </thead>
                 <tbody id="tableBody">
-                    {% if item %}
-                        {% for items in item %}
+                    {% if items %}
+                        {% for item in items %}
                             <tr>
                                 <td><input type="checkbox"></td>
-                                <td>#{{ items.id }}</td>
-                                <td>{{ items.Referents }}</td>
-                                <td>{{ items.Name }}</td>
-                                <td>{{ items.Price }}</td>
-                                <td>{{ items.Stock }}</td>
+                                <td>#{{ item.id }}</td>
+                                <td>{{ item.Referents }}</td>
+                                <td>{{ item.Name }}</td>
+                                <td>{{ item.Price }}</td>
+                                <td>{{ item.Stock }}</td>
                                 <td>
-                                    {% if items.active %}
+                                    {% if item.active %}
                                         activo
                                     {% else %}
                                         desactivado
                                     {% endif %}
                                 </td>
                                 <td>
-                                    <a href="" class="btn btn-sm btn-danger"><i class="fas fa-edit"></i></a>
+                                    <a href="{% url 'UpdateItem' item.id %}" class="btn btn-sm btn-danger">
+                                        <img src="{% static 'img/editar.png' %}" alt="" width="15px">
+                                    </a>
                                 </td>
                             </tr>
                         {% endfor %}

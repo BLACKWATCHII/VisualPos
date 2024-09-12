@@ -13,23 +13,23 @@
         <form method="post" id="create-item-form">
             {% csrf_token %}
             <div class="form-group">
-                <label for="Name">Nombre</label>
+                <label for="Name">Nombre<span style="color: red;">*</span></label>
                 <input type="text" id="Name" name="Name" required>
             </div>
             <div class="form-group">
-                <label for="Referents">Referencias</label>
+                <label for="Referents">Referencias<span style="color: red;">*</span></label>
                 <input id="Referents" name="Referents" required>
             </div>
             <div class="form-group">
-                <label for="Description">Descripción</label>
+                <label for="Description">Descripción<span style="color: red;">*</span></label>
                 <textarea id="Description" name="Description" required></textarea>
             </div>
             <div class="form-group">
-                <label for="Price">Precio</label>
-                <input type="text" name="currency-field" id="currency-field" placeholder="$1,000,000.00">
+                <label for="Price">Precio<span style="color: red;">*</span></label>
+                <input type="number" name="Price" id="currency-field" placeholder="$1,000,000.00">
             </div>
             <div class="form-group">
-                <label for="Stock">Cantidad</label>
+                <label for="Stock">Cantidad<span style="color: red;">*</span></label>
                 <input type="number" id="Stock" name="Stock" required>
             </div>
             <div class="form-group">

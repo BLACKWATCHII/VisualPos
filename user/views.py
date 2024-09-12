@@ -14,6 +14,7 @@ import os
 import pandas as pd
 import json
 from django.contrib import messages
+from decimal import Decimal
 
 
 # Login and register
@@ -169,11 +170,29 @@ def export_clients_to_excel(request):
 # Create item and view
 @login_required
 def item(request):
-    items = Item.objects.all()  
+    items = Item.objects.all()
+
+    formatted_items = []
+    for item in items:
+        formatted_price = f'{item.Price:,.2f}'.replace(',', 'X').replace('.', ',').replace('X', '.')
+        formatted_items.append({
+            'id': item.id,
+            'Name': item.Name,
+            'Referents': item.Referents,
+            'Description': item.Description,
+            'Price': formatted_price,
+            'Stock': item.Stock,
+            'create_date': item.create_date,
+            'active': item.active,
+        })
+
     context = {
-        'item': items,  
+        'items': formatted_items,  
     }
+
     return render(request, 'items/viewItem.html', context)
+
+
 
 @login_required
 def CreateItem(request):
@@ -185,7 +204,7 @@ def CreateItem(request):
         price = request.POST.get('Price')
         stock = request.POST.get('Stock')
         active = request.POST.get('active')
-        # tax_id = request.POST.get('Taxes')  
+        tax_id = request.POST.get('Taxes')  
 
         # if tax_id == None :
         #     tax_id = None
@@ -194,33 +213,41 @@ def CreateItem(request):
         if not (name and referents and description and price and stock and active):
             messages.error(request, 'Todos los campos son obligatorios.')
             return render(request, 'items/createItem.html', {'taxes': taxes})
-        
+       
         active = (active == 'True')
 
         try:
-            price = float(price)
+            price = Decimal(price)
             stock = int(stock)
         except (ValueError, TypeError):
             messages.error(request, 'Los campos Precio y Cantidad deben ser números válidos.')
             return render(request, 'items/createItem.html', {'taxes': taxes})
-
+        
         try:
             if Item.objects.filter(Referents=referents).exists():  # Correct field name
                 messages.error(request, 'Ya existe un ítem con esa referencia.')
                 return render(request, 'items/createItem.html', {'taxes': taxes})
-
-            # tax = Tax.objects.get(id=tax_id) 
-
-            Item.objects.create(
+            tax = Tax.objects.get(id=tax_id) 
+            if taxes == None : 
+                taxes = 0
+            try:
+                print(name,referents,description,price,stock,active)
+                Item.objects.create(
                 Name=name,  
                 Referents=referents,  
                 Description=description, 
-                Price=price,  
+                Price= Decimal(price),  
                 Stock=stock,  
                 active=active,
-                # tax=tax,  
+                tax=tax,  
                 user=request.user
             )
+            except IntegrityError as e:
+                print("Error de integridad al crear el objeto:", e)
+            except ValueError as e:
+                print("Error de valor:", e) 
+            
+            
             messages.success(request, 'Ítem creado correctamente.')
             return redirect('viewItem')
         except IntegrityError:
@@ -229,9 +256,12 @@ def CreateItem(request):
     return render(request, 'items/createItem.html', {'taxes': taxes})
 
 @login_required
-def UpdateItem(request,item_id):
+def UpdateItem(request, item_id):
     itemID = get_object_or_404(Item, id=item_id)
-    return render(request,'item/UpdateItem.html',{'item',itemID})
+    taxes = Tax.objects.all()  
+    return render(request, 'items/updateItem.html', {'item': itemID, 'taxes': taxes})
+
+
 
 
 #Create Tax
