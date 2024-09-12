@@ -3,37 +3,37 @@
 
 {% block content %}
 <div class="card mt-5" style="margin-top: 6rem!important;">
-    <div class="card-header" style="background-color: #DC3445; color: white;">
+    <div class="card-header" style="background-color: #2DA6BE; color: white;">
         Clientes
     </div>
     <br>
     <form method="POST" action="{% url 'createCustomer' %}" enctype="multipart/form-data">  
         {% csrf_token %}
         <div class="section">
-            <h5>INFORMACIÓN DEL CLIENTE</h5>
+            <h5 style="color: rgb(66, 62, 62);">INFORMACIÓN DEL CLIENTE</h5>
             <div class="form-row">
                 <div class="form-group col-md-6">
-                    <label for="id_name">Nombre</label>
+                    <label for="id_name">Nombre <span style="color: red;">*</span></label>
                     {{ form.name }}
                 </div>
                 <div class="form-group col-md-6">
-                    <label for="id_lastname">Apellido</label>
+                    <label for="id_lastname">Apellido<span style="color: red;">*</span></label>
                     {{ form.lastname }}
                 </div>
             </div>
             <div class="form-row">
                 <div class="form-group col-md-6">
-                    <label for="id_cedula">Cédula</label>
+                    <label for="id_cedula">Cédula<span style="color: red;">*</span></label>
                     {{ form.cedula }}
                 </div>
                 <div class="form-group col-md-6">
-                    <label for="id_phone">Teléfono</label>
+                    <label for="id_phone">Teléfono<span style="color: red;">*</span></label>
                     {{ form.phone }}
                 </div>
             </div>
             <div class="form-row">
                 <div class="form-group col-md-6">
-                    <label for="id_email">Correo Electrónico</label>
+                    <label for="id_email">Correo Electrónico<span style="color: red;">*</span></label>
                     {{ form.email }}
                 </div>
                 <div class="form-group col-md-6">
@@ -43,19 +43,19 @@
             </div>
         </div>
         <div class="section">
-            <h5>INFORMACION DE RESIDENCIA</h5>
+            <h5 style="color: rgb(66, 62, 62);">INFORMACION DE RESIDENCIA</h5>
             <div class="form-row">
                 <div class="form-group col-md-6">
-                    <label for="id_address">Dirección</label>
+                    <label for="id_address">Dirección<span style="color: red;">*</span></label>
                     {{ form.address }}
                 </div>
                 <div class="form-group col-md-6">
-                    <label for="id_city">Ciudad</label>
+                    <label for="id_city">Ciudad<span style="color: red;">*</span></label>
                     {{ form.city }}
                 </div>
             </div>
         </div>
-        <button type="submit" class="btn btn-primary">Guardar</button>
+        <button type="submit" class="btn" style="background-color: #2DA6BE; color: white;">Guardar</button>
     </form>
 </div>
 
