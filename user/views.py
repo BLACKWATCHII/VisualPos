@@ -192,6 +192,28 @@ def item(request):
 
     return render(request, 'items/viewItem.html', context)
 
+@login_required
+def export_items_to_excel(request):
+    items = Item.objects.all()
+    
+    data = {
+        'ID': [item.id for item in items],
+        'Nombre': [item.Name for item in items],
+        'Referencia': [item.Referents for item in items],
+        'Descripción': [item.Description for item in items],
+        'Precio': [f'{item.Price:,.2f}' for item in items],  
+        'Cantidad en stock': [item.Stock for item in items],
+        'Estado': ['Activo' if item.active else 'Inactivo' for item in items],
+    }
+
+    df = pd.DataFrame(data)
+    
+    response = HttpResponse(content_type='application/vnd.openxmlformats-officedocument.spreadsheetml.sheet')
+    response['Content-Disposition'] = 'attachment; filename=Items.xlsx'
+    df.to_excel(response, index=False)
+    
+    return response
+
 
 
 @login_required

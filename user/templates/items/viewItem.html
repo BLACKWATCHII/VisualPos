@@ -69,6 +69,9 @@
                     <div style="margin: 1px;">
                         <a class="btn btn-danger" href="{% url 'createItem' %}">+ Nuevo</a>
                     </div>
+                    <div style="margin: 1px;">
+                        <a class="btn btn-success" id="exportButtonItems">Exportar</a>
+                    </div>                    
                     <input type="text" id="searchInput" placeholder="Buscar...">
                 </div>
             </div>
@@ -174,8 +177,8 @@ $(document).ready(function() {
     displayRows(1);
     updatePagination();
 
-    document.getElementById('exportButton').addEventListener('click', function() {
-        window.location.href = "{% url 'export_clients_to_excel' %}";
+    document.getElementById('exportButtonItems').addEventListener('click', function() {
+    window.location.href = "{% url 'export_items_to_excel' %}";
     });
 });
 </script>

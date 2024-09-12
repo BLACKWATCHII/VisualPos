@@ -42,6 +42,7 @@ urlpatterns = [
     path('createItem/',views.CreateItem, name='createItem'),
     path('update/<int:item_id>/', views.UpdateItem, name='UpdateItem'),
     path('createTax/',views.CreateTax, name='createTax'),
+    path('export/items/', views.export_items_to_excel, name='export_items_to_excel'),
     ###################################################################################
 
 
