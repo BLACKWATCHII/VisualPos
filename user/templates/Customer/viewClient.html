@@ -1,4 +1,5 @@
 {% extends 'base.html' %}
+{% load static %}
 
 {% block content %}
 <link rel="stylesheet" href="https://cdn.datatables.net/1.10.25/css/dataTables.bootstrap4.min.css">
@@ -104,8 +105,9 @@
                         {% endif %}
                     </td>
                     <td>
-                        <a href="{% url 'update_cliente' client.id %}" class="btn btn-sm btn-primary"><i
-                                    class="fas fa-edit"></i></a>
+                        <a href="{% url 'update_cliente' client.id %}" class="btn btn-sm btn-danger">
+                            <img src="{% static 'img/editar.png' %}" alt="" width="15px">
+                        </a>
                     </td>
                 </tr>
                 {% endfor %}
@@ -116,7 +118,6 @@
                 {% endif %}
                 </tbody>
             </table>
-            <ul id="pagination" class="pagination"></ul>
         </div>
     </div>
 </div>
@@ -124,59 +125,18 @@
 <script src="https://cdn.datatables.net/1.10.25/js/jquery.dataTables.min.js"></script>
 <script src="https://cdn.datatables.net/1.10.25/js/dataTables.bootstrap4.min.js"></script>
 
+
 <script>
-$(document).ready(function() {
-    const rowsPerPage = 8;
-    let rows = $('#tableBody tr');
-    let rowsCount = rows.length;
-    const pagination = $('#pagination');
-
-    function updatePagination() {
-        pagination.empty();
-        const pageCount = Math.ceil(rowsCount / rowsPerPage);
-
-        for (let i = 1; i <= pageCount; i++) {
-            pagination.append(`<li><a href="#" class="page-link">${i}</a></li>`);
-        }
-
-        pagination.find('a:first').addClass('active');
-    }
-
-    function displayRows(page) {
-        let start = (page - 1) * rowsPerPage;
-        let end = start + rowsPerPage;
-        rows.hide();
-        rows.slice(start, end).show();
-    }
-
-    pagination.on('click', 'a', function(e) {
-        e.preventDefault();
-        pagination.find('a').removeClass('active');
-        $(this).addClass('active');
-        displayRows($(this).text());
-    });
-
-    $('#searchInput').on('keyup', function() {
-        let value = $(this).val().toLowerCase();
-        rows = $('#tableBody tr'); 
-
-        rows.each(function() {
-            let row = $(this);
-            let match = row.text().toLowerCase().indexOf(value) > -1;
-            row.toggle(match);
+    $(document).ready(function() {
+        $('#clientsTable').DataTable({
+            language: {
+                url: "//cdn.datatables.net/plug-ins/1.10.25/i18n/Spanish.json"
+            },
+            pageLength: 8 
         });
-
-        rowsCount = rows.filter(':visible').length;
-        updatePagination();
-        displayRows(1);
+        $('#exportButton').on('click', function() {
+            window.location.href = "{% url 'export_clients_to_excel' %}";
+        });
     });
-
-    displayRows(1);
-    updatePagination();
-
-    document.getElementById('exportButton').addEventListener('click', function() {
-        window.location.href = "{% url 'export_clients_to_excel' %}";
-    });
-});
-</script>
+    </script>
 {% endblock %}

@@ -20,10 +20,11 @@
                 <div class="card-header" style="background-color: #DC3445; color: white;">
                     Ventas diarias
                 </div>
-                <div class="card-body">
-
-                    <canvas id="chart1" width="400" height="200"></canvas>
-                </div>
+                <center>
+                    <div class="card-body" style="width: 300px;">
+                        <canvas id="myPieChart" width="100" height="100"></canvas>
+                    </div>
+                </center>
             </div>
         </div>
 
@@ -34,7 +35,7 @@
                     Clientes nuevos
                 </div>
                 <div class="card-body">
-                    <canvas id="chart2" width="400" height="165"></canvas>
+                    <canvas id="chart2" width="400" height="190"></canvas>
                 </div>
             </div>
         </div>
@@ -47,9 +48,8 @@
                 <div class="card-header" style="background-color: green; color: white;">
                     Productos más vendidos
                 </div>
-                <div class="card-body">
-                    <!-- Contenido de la caja de productos más vendidos -->
-                    <!-- Puedes agregar aquí tus productos más vendidos -->
+                <div class="card-body" style="width: 1500px; height: 240px;">
+                    <canvas id="myLineChart" width="490" height="200"></canvas>
                 </div>
             </div>
         </div>
@@ -112,7 +112,7 @@
 </div>
 <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
 <script>
-    // Data for the new clients chart
+    // Data for the new clients chart 
     const dates = JSON.parse('{{ dates|escapejs }}');
     const counts = JSON.parse('{{ counts|escapejs }}');
 
@@ -137,6 +137,86 @@
             }
         }
     });
+
+
+    const ctx = document.getElementById('myPieChart').getContext('2d');
+    const myPieChart = new Chart(ctx, {
+        type: 'pie',
+        data: {
+            labels: ['Iphone 11', 'Redmi 8', 'lenovo tab', 'Invicta'],
+            datasets: [{
+                data: [300, 50, 100, 150],
+                backgroundColor: ['#FF6384', '#36A2EB', '#FFCE56', '#4CAF50'],
+                hoverBackgroundColor: ['#FF6384', '#36A2EB', '#FFCE56', '#4CAF50'],
+                borderColor: 'rgba(255,255,255,0.5)',
+                borderWidth: 2,
+            }]
+        },
+        options: {
+            responsive: true,
+            plugins: {
+                legend: {
+                    position: 'top',
+                },
+                tooltip: {
+                    backgroundColor: '#DC3445',
+                    titleColor: '#FFF',
+                    bodyColor: '#FFF'
+                }
+            }
+        }
+    });
+
+    const labels = ['January', 'February', 'March', 'April', 'May', 'June', 'July'];
+    const data = {
+        labels: labels,
+        datasets: [{
+            label: 'Iphone 12 pro max',
+            data: [65, 59, 80, 81, 56, 55, 40],
+            fill: false,
+            borderColor: 'rgb(75, 192, 192)',
+            tension: 0.1
+        }]
+    };
+
+    const config = {
+        type: 'line',
+        data: data,
+        options: {
+            responsive: true,
+            plugins: {
+                legend: {
+                    display: true,
+                    position: 'top',
+                },
+                tooltip: {
+                    backgroundColor: 'rgba(0,0,0,0.8)',
+                    titleColor: '#FFF',
+                    bodyColor: '#FFF'
+                }
+            },
+            scales: {
+                x: {
+                    title: {
+                        display: true,
+                        text: 'Meses'
+                    }
+                },
+                y: {
+                    title: {
+                        display: true,
+                        text: 'Cantidad'
+                    },
+                    beginAtZero: true
+                }
+            }
+        }
+    };
+
+    const myLineChart = new Chart(
+        document.getElementById('myLineChart'),
+        config
+    );
 </script>
 
 

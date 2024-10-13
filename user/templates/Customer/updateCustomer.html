@@ -3,7 +3,7 @@
 
 {% block content %}
 <div class="card mt-5" style="margin-top: 6rem!important;">
-    <div class="card-header" style="background-color: #d4bc22; color: white;">
+    <div class="card-header" style="background-color: #2ca6be; color: white;">
         Actualizar cliente
     </div>
     <br>
@@ -15,7 +15,7 @@
                 <div class="form-group col-md-6">
                     <label for="id_name">Nombre</label>
                     {{ form.name }}
-                </div>
+                </div> 
                 <div class="form-group col-md-6">
                     <label for="id_lastname">Apellido</label>
                     {{ form.lastname }}
@@ -55,7 +55,7 @@
                 </div>
             </div>
         </div>
-        <button type="submit" class="btn btn-primary">Actualizar</button>
+        <button type="submit" class="btn" style="background-color: #2ca6be;color: white ;">Actualizar</button>
     </form>
 </div>
 
@@ -66,7 +66,7 @@
 <script>
     $(document).ready(function(){
         $('form').submit(function(event){
-            event.preventDefault();
+            event.preventDefault(); 
             var formData = new FormData(this);
             $.ajax({
                 type: 'POST',
