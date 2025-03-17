@@ -164,6 +164,27 @@ def export_clients_to_excel(request):
     df.to_excel(response, index=False)
     
     return response
+
+@login_required
+def cargar_datos_excel(request):
+    if request.method == 'POST' and request.FILES['archivo']:
+        archivo = request.FILES['archivo']
+        
+        # Cargar el archivo Excel usando Pandas
+        try:
+            df = pd.read_excel(archivo)
+            for index, row in df.iterrows():
+                Cliente.objects.create(
+                    cedula=row['Cedula'],
+                    name=row['Nombre'],
+                    lastname=row['Apellido'],
+                    phone=row['Telefono']
+                )
+            return JsonResponse({'status': 'success', 'message': 'Datos cargados correctamente.'})
+        except Exception as e:
+            return JsonResponse({'status': 'error', 'message': str(e)})
+
+    return JsonResponse({'status': 'error', 'message': 'No se recibió ningún archivo.'})
 ################################################################################################################
 
 # Create item and view
@@ -174,6 +195,8 @@ def item(request):
         'item': items,  
     }
     return render(request, 'items/viewItem.html', context)
+
+
 
 @login_required
 def CreateItem(request):
