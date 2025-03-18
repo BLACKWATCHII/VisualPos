@@ -3,99 +3,100 @@
 {% block content %}
 <style>
   body {
-    background: linear-gradient(rgba(0, 0, 0, 0.5), rgba(0, 0, 0, 0.5)), url("{% static 'img/backgroundLogin.jpg' %}") no-repeat center center fixed;
-    background-size: cover;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    height: 100vh;
   }
-  .login-container {
-    max-width: 400px;
-    margin: 50px auto;
-    padding: 20px;
+  .container {
+    display: flex;
     border-radius: 10px;
-    box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
-    background-color: #ffffff;
-    text-align: center;
-    margin-bottom: 20em !important;
+    overflow: hidden;
+    max-width: 900px;
+    width: 100%;
+    box-shadow: 0 4px 8px rgba(0, 0, 0, 0.2);
   }
-  .login-title {
-    color: #FF65C3;
+  .login-section {
+    flex: 1;
+    padding: 40px;
+    background: #000;
+    color: white;
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+  }
+  .login-section h2 {
     margin-bottom: 20px;
   }
-  .login-form p {
-    color: black;
-    font-weight: 500;
-  }
-  .floating-label-group {
-    position: relative;
-    margin-bottom: 15px;
-  }
-  .floating-label-group input {
+  .login-section input {
     width: 100%;
     padding: 10px;
+    margin-bottom: 15px;
     border: 1px solid #83C8EC;
     border-radius: 5px;
-    box-sizing: border-box;
+    background: transparent;
+    color: white;
   }
-  .floating-label-group label {
-    position: absolute;
-    pointer-events: none;
-    left: 10px;
-    top: 10px;
-    transition: 0.2s ease all;
-    color: #999;
+  .login-section input::placeholder {
+    color: #bbb;
   }
-  .floating-label-group input:focus ~ label,
-  .floating-label-group input:not(:placeholder-shown) ~ label {
-    top: -10px;
-    left: 10px;
-    font-size: 12px;
-    color: #FF65C3;
-    background: white;
-    padding: 0 5px;
-  }
-  .login-form button {
-    background-color: #FF65C3;
+  .login-section button {
+    background-color: #2f855a;
     border: none;
-    padding: 10px 20px;
+    padding: 10px;
     color: white;
     font-size: 16px;
     border-radius: 5px;
     cursor: pointer;
-    transition: background-color 0.3s ease;
+    width: 100%;
   }
-  .login-form button:hover {
-    background-color: #e055b0;
+  .login-section button:hover {
+    background-color: #2f855a;
   }
-  .register-prompt {
+  .social-login {
+    display: flex;
+    justify-content: center;
+    gap: 10px;
     margin-top: 20px;
-    color: #666;
   }
-  .register-prompt a {
-    color: #FF65C3;
-    text-decoration: none;
-    font-weight: bold;
+  .social-login img {
+    width: 40px;
+    height: 40px;
+    cursor: pointer;
   }
-  .register-prompt a:hover {
-    text-decoration: underline;
+  .info-section {
+    flex: 1;
+    padding: 40px;
+    background: #2f855a;
+    color: white;
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
   }
 </style>
 
-<div class="login-container">
-  <h1 class="login-title">Iniciar sesión</h1>
-  <p>{{ error }}</p>
-  <form action="/signin/" method="POST" class="login-form">
-    {% csrf_token %}
-    <div class="floating-label-group">
-      <input type="text" name="username" id="username" placeholder=" " required>
-      <label for="username">Nombre de usuario</label>
+<div class="container">
+  <div class="login-section">
+    <h2>Iniciar sesión</h2>
+    <form action="/signin/" method="POST">
+      {% csrf_token %}
+      <input type="text" name="username" placeholder="Nombre de usuario" required>
+      <input type="password" name="password" placeholder="Contraseña" required>
+      <button type="submit">Sign in</button>
+    </form>
+    <p><a href="#" style="color: #2f855a">Forgot Password?</a></p>
+    <div class="social-login">
+      <img src="{% static 'img/google-icon.png' %}" alt="Google">
+      <img src="{% static 'img/github-icon.png' %}" alt="GitHub">
+      <img src="{% static 'img/facebook-icon.png' %}" alt="Facebook">
     </div>
-    <div class="floating-label-group">
-      <input type="password" name="password" id="password" placeholder=" " required>
-      <label for="password">Contraseña</label>
-    </div>
-    <button type="submit">Iniciar sesión</button>
-  </form>
-  <div class="register-prompt">
-    <p>¿No tienes cuenta? <a href="/signup/">Regístrate</a></p>
+    <p>¿No tienes cuenta? <a href="/signup/" style="color: #2f855a;">Regístrate</a></p>
+  </div>
+  <div class="info-section">
+    <h2>What's our Jobseekers Said.</h2>
+    <p>“Search and find your dream job is now easier than ever. Just browse a job and apply if you need to.”</p>
+    <p><strong>Mas Parjono</strong></p>
+    <p>UI Designer at Google</p>
   </div>
 </div>
 {% endblock %}

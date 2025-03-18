@@ -1,20 +1,29 @@
 {% load static %}
 <style>
   .btn-custom {
-    background-color: #FF65C3;
-    border-color: #FF65C3;
+    background-color: #def7c7;
+    border-color: #19a637;
     color: white;
   }
 
   .btn-custom:hover {
-    background-color: #e055b0;
-    border-color: #e055b0;
+    background-color: #19a637;
+    border-color: #19a637;
   }
+  .navbar {
+  height: 70px; 
+  }
+
+.navbar img {
+  width: 180px; 
+  height: auto; 
+  max-height: 100%; 
+}
+
 </style>
-<nav class="navbar navbar-expand-lg navbar-dark bg-black fixed-top">
+<nav class="navbar navbar-expand-lg navbar-light bg-light fixed-top">
   <div class="container">
-    <img src="{% static 'img/logo.png' %}" alt="Bootstrap" width="40px" style="margin:5px;">
-    <a class="navbar-brand" href="/">CeluPro Co</a>
+    <img src="{% static 'img/BersekerLogoPrime.png' %}" alt="Bootstrap" width="80px">
     <button
       class="navbar-toggler"
       type="button"
@@ -50,7 +59,6 @@
           <ul class="dropdown-menu" aria-labelledby="clientesDropdown">
             <li><a class="dropdown-item" href="{% url 'viewClient' %}">Ver Clientes</a></li>
             <li><a class="dropdown-item" href="{% url 'createCustomer' %}">Crear Cliente</a></li>
-            <!-- <li><a class="dropdown-item" href="">Actualizar Cliente</a></li> -->
           </ul>
         </li>
         <li class="nav-item">
