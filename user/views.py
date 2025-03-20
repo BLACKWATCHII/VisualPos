@@ -73,6 +73,9 @@ def signout(request):
 
 
 def signin(request):
+    storage = messages.get_messages(request)
+    storage.used = True
+
     if request.method == 'POST':
         form = CustomAuthenticationForm(request, data=request.POST)
         if form.is_valid():
@@ -81,9 +84,16 @@ def signin(request):
             user = authenticate(username=username, password=password)
             if user is not None:
                 login(request, user)
-                return redirect('Dasboard')  
+                messages.success(request, "Login successful")
+                return redirect('Dasboard')
+            else:
+                messages.error(request, "Incorrect username or password.")
+        else:
+            messages.error(request, "Incorrect username or password.")
+
     else:
         form = CustomAuthenticationForm()
+
     return render(request, 'signin.html', {'form': form})
 
 ################################################################################################################

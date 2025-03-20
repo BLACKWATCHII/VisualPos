@@ -1,7 +1,7 @@
 {% load static %}
 <style>
   .btn-custom {
-    background-color: #def7c7;
+    background-color: #2f855a;
     border-color: #19a637;
     color: white;
   }
@@ -84,6 +84,18 @@
         </li>
         {% else %}
         <li class="nav-item">
+          <a class="nav-link active" aria-current="page" href="#">Home</a>
+        </li>
+        <li class="nav-item">
+          <a class="nav-link active" aria-current="page" href="#">About</a>
+        </li>
+        <li class="nav-item">
+          <a class="nav-link active" aria-current="page" href="#">Service</a>
+        </li>
+        <li class="nav-item">
+          <a class="nav-link active" aria-current="page" href="#">Contact</a>
+        </li>
+        <li class="nav-item" style="margin-left: 10px;">
           <a href="/signup" class="btn btn-custom">Registrarse</a>
         </li>
         {% endif %}

@@ -1,68 +1,109 @@
-{% extends 'base.html' %} {% block content %}
+{% extends 'base.html' %} 
+{% block content %}
 {% load static %}
+
 <style>
-  .carousel-item {
-    position: relative;
+  body {
+    background-color: #000;
+    color: white;
   }
-  .carousel-item::after {
-    content: "";
-    position: absolute;
-    top: 0;
-    left: 0;
-    width: 100%;
-    height: 100%;
-    background: linear-gradient(to bottom, rgba(0, 0, 0, 0.5), rgba(0, 0, 0, 0.5));
-    z-index: 1;
+
+  .navbar {
+    background-color: white !important;
   }
-  
-  .carousel-item img {
-    height: 700px;
-    object-fit: cover; 
-    width: 100%;
-  }
-  
-  .carousel-caption {
-    bottom: 20%;
-    z-index: 2;
-  }
+
   .btn-custom {
-    background-color: #64D434;
-    border-color: #64D434;
+    background-color: #2f855a;
+    border-color: #2f855a;
     color: white;
   }
 
   .btn-custom:hover {
-    background-color: #64D434;
-    border-color: #64D434;
+    background-color: #276749;
+    border-color: #276749;
+  }
+
+  .carousel-item img {
+    height: 700px;
+    object-fit: cover;
+    width: 100%;
+  }
+
+  .carousel-caption {
+    bottom: 25%;
+  }
+
+  .services-section {
+    background-color: #111;
+    padding: 60px 0;
+    text-align: center;
+  }
+
+  .service-box {
+    padding: 20px;
+    border-radius: 10px;
+    background-color: #222;
+    color: white;
   }
 </style>
+
+<nav class="navbar navbar-expand-lg navbar-dark">
+  <div class="container">
+    <a class="navbar-brand" href="#">Loggie</a>
+  </div>
+</nav>
+
 <div id="carouselExample" class="carousel slide">
   <div class="carousel-inner">
     <div class="carousel-item active">
-      <img src="{% static 'img/carrouselFoto1.jpg' %}" class="d-block w-100" alt="...">
-    </div>
-    <div class="carousel-item">
-      <img src="{% static 'img/carrouselFoto1.jpg' %}" class="d-block w-100" alt="...">
-    </div>
-    <div class="carousel-item">
-      <img src="{% static 'img/carrouselFoto1.jpg' %}" class="d-block w-100" alt="...">
+      <img src="{% static 'img/FondoHomePages.jpg' %}" class="d-block w-100" alt="...">
     </div>
   </div>
-  <button class="carousel-control-prev" type="button" data-bs-target="#carouselExample" data-bs-slide="prev">
-    <span class="carousel-control-prev-icon" aria-hidden="true"></span>
-    <span class="visually-hidden">Previous</span>
-  </button>
-  <button class="carousel-control-next" type="button" data-bs-target="#carouselExample" data-bs-slide="next">
-    <span class="carousel-control-next-icon" aria-hidden="true"></span>
-    <span class="visually-hidden">Next</span>
-  </button>
   {% if user.is_authenticated %}
   <!--Aqui no va nada porque si no agrego esta condicion mostrara el boton inicio de session-->
   {% else %}
-  <div class="carousel-caption d-none d-md-block" style="margin-bottom: 40px;">
-    <h1>Bienvenido a Berserker</h1>
-    <a href="/signin" class="btn btn-custom">Iniciar sesion</a>
+  <div class="carousel-caption">
+    <h1>Welcome to Berserker Corporate</h1>
+    <p>Where your finances are protected and your bills are organized</p>
+    <a href="/signin" class="btn btn-custom">Login</a>
   </div>
   {% endif %}
 </div>
+
+<section class="services-section">
+  <div class="container">
+    <h2 class="text-white">Our Services</h2>
+    <div class="row mt-4">
+      <!-- Servicio 1: Hacer facturas -->
+      <div class="col-md-3">
+        <div class="service-box">
+          <h5>Invoice Management</h5>
+          <p>Efficient creation and management of invoices for your business.</p>
+        </div>
+      </div>
+      <!-- Servicio 2: Manejar inventario -->
+      <div class="col-md-3">
+        <div class="service-box">
+          <h5>Inventory Control</h5>
+          <p>Accurate tracking and management of your stock and supplies.</p>
+        </div>
+      </div>
+      <!-- Servicio 3: Manejo de clientes -->
+      <div class="col-md-3">
+        <div class="service-box">
+          <h5>Customer Management</h5>
+          <p>Organized handling of client data and interactions.</p>
+        </div>
+      </div>
+      <!-- Servicio 4: Reportes de ventas -->
+      <div class="col-md-3">
+        <div class="service-box">
+          <h5>Sales Reports</h5>
+          <p>Detailed sales analysis and performance reports.</p>
+        </div>
+      </div>
+    </div>
+  </div>
+</section>
+
 {% endblock %}
