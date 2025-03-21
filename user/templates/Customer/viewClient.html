@@ -65,7 +65,7 @@
     <div class="card shadow">
         <div class="card-body">
             <div class="section d-flex justify-content-between align-items-center mb-3">
-                <div class="card-header" style="background-color: #2ca6be; color: white;">
+                <div class="card-header" style="background-color: #2f855a; color: white;">
                     Clientes registrados
                 </div>
                 <div class="search-container">
@@ -257,8 +257,17 @@ $(document).ready(function() {
     // Enviar el archivo
     xhr.send(formData);
 });
+            document.getElementById("descargarPlantilla").addEventListener("click", function(event) {
+                event.preventDefault();
+                const archivo = '/static/archived/Clientes.xlsx';  // Ruta estática del archivo
 
-
+                const a = document.createElement("a");
+                a.href = archivo;
+                a.download = "Clientes.xlsx";
+                document.body.appendChild(a);
+                a.click();
+                document.body.removeChild(a);
+            });
 });
 </script>
 {% endblock %}
