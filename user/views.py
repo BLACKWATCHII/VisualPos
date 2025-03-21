@@ -14,7 +14,8 @@ import os
 import pandas as pd
 import json
 from django.contrib import messages
-
+from django.http import FileResponse, HttpResponseNotFound
+from django.conf import settings
 
 # Login and register
 
@@ -206,7 +207,14 @@ def item(request):
     }
     return render(request, 'items/viewItem.html', context)
 
-
+def download_plant(request):
+    file_path = os.path.join(settings.BASE_DIR, 'static/archived/Clientes.xlsx')
+    if os.path.exists(file_path):
+        response = FileResponse(open(file_path, 'rb'), content_type='application/vnd.openxmlformats-officedocument.spreadsheetml.sheet')
+        response['Content-Disposition'] = 'attachment; filename="Clientes.xlsx"'
+        return response
+    else:
+        return HttpResponseNotFound("El archivo no existe.")
 
 @login_required
 def CreateItem(request):

@@ -43,6 +43,7 @@ urlpatterns = [
     path('createItem/',views.CreateItem, name='createItem'),
     path('update/<int:item_id>/', views.UpdateItem, name='UpdateItem'),
     path('createTax/',views.CreateTax, name='createTax'),
+    path('descargar-plantilla/', views.download_plant, name='descargar_plantilla'),
     ###################################################################################
 
 
