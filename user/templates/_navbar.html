@@ -80,7 +80,7 @@
           </ul>
         </li>
         <li class="nav-item">
-          <a class="btn btn-danger" href="/logout">Cerrar sesion</a>
+          <a class="btn btn-danger" id="logoutButton" href="/logout">Cerrar sesion</a>
         </li>
         {% else %}
         <li class="nav-item">
@@ -104,20 +104,22 @@
   </div>
 </nav>
 
+<script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
 
 <script>
   document.getElementById('logoutButton').addEventListener('click', function(event) {
-    event.preventDefault();
+    event.preventDefault();  
+
     Swal.fire({
       title: 'Cerrando sesión',
       text: 'Por favor, espere...',
       icon: 'info',
       timer: 2000,
       onOpen: () => {
-        Swal.showLoading();
-        setTimeout(() => {
-          window.location.href = '/logout';
-        }, 2000);
+        Swal.showLoading();  
+      },
+      willClose: () => {
+        window.location.href = '/logout';  
       }
     });
   });
