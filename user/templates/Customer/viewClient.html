@@ -3,6 +3,9 @@
 
 {% block content %}
 <link rel="stylesheet" href="https://cdn.datatables.net/1.10.25/css/dataTables.bootstrap4.min.css">
+<link rel="stylesheet" href="https://stackpath.bootstrapcdn.com/bootstrap/4.5.2/css/bootstrap.min.css">
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/5.15.4/css/all.min.css">
+
 <style>
     .card-margin-top {
         margin-top: 8rem !important;
@@ -74,7 +77,6 @@
                         <a class="btn btn-success btn-spaced" id="exportButton">Exportar</a>
                         <a class="btn btn-danger" id="importButton" data-bs-toggle="modal" data-bs-target="#miModal">Importar</a>
                       </div>
-                    <input type="text" id="searchInput" placeholder="Buscar...">
                 </div>
             </div>
             <table id="clientsTable" class="table table-hover">
@@ -109,8 +111,9 @@
                         {% endif %}
                     </td>
                     <td>
-                        <a href="{% url 'update_cliente' client.id %}" class="btn btn-sm btn-primary"><i
-                                    class="fas fa-edit"></i></a>
+                        <a href="{% url 'update_cliente' client.id %}" class="btn btn-sm btn-success">
+                            <i id="icono-editar" class="fas fa-edit"></i>
+                        </a>                        
                     </td>
                 </tr>
                 {% endfor %}
@@ -164,56 +167,32 @@
 <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
 <script src="https://cdn.datatables.net/1.10.25/js/jquery.dataTables.min.js"></script>
 <script src="https://cdn.datatables.net/1.10.25/js/dataTables.bootstrap4.min.js"></script>
+<script src="https://stackpath.bootstrapcdn.com/bootstrap/4.5.2/js/bootstrap.bundle.min.js"></script>
 
 <script>
-$(document).ready(function() {
-    const rowsPerPage = 8;
-    let rows = $('#tableBody tr');
-    let rowsCount = rows.length;
-    const pagination = $('#pagination');
+    $(document).ready(function() {
+        $.noConflict(); 
 
-    function updatePagination() {
-        pagination.empty();
-        const pageCount = Math.ceil(rowsCount / rowsPerPage);
-
-        for (let i = 1; i <= pageCount; i++) {
-            pagination.append(`<li><a href="#" class="page-link">${i}</a></li>`);
+        if ($.fn.DataTable) {
+            $('#clientsTable').DataTable({
+                "paging": true,
+                "searching": true,
+                "ordering": true,
+                "lengthChange": true,
+                "pageLength": 10,
+                "language": {
+                    "search": "Buscar:",
+                    "lengthMenu": "Mostrar _MENU_ registros",
+                    "info": "Mostrando _START_ a _END_ de _TOTAL_ registros",
+                    "paginate": {
+                        "previous": "Anterior",
+                        "next": "Siguiente"
+                    }
+                }
+            });
+        } else {
+            console.error('DataTable plugin no está cargado correctamente.');
         }
-
-        pagination.find('a:first').addClass('active');
-    }
-
-    function displayRows(page) {
-        let start = (page - 1) * rowsPerPage;
-        let end = start + rowsPerPage;
-        rows.hide();
-        rows.slice(start, end).show();
-    }
-
-    pagination.on('click', 'a', function(e) {
-        e.preventDefault();
-        pagination.find('a').removeClass('active');
-        $(this).addClass('active');
-        displayRows($(this).text());
-    });
-
-    $('#searchInput').on('keyup', function() {
-        let value = $(this).val().toLowerCase();
-        rows = $('#tableBody tr'); // Actualizar las filas disponibles
-
-        rows.each(function() {
-            let row = $(this);
-            let match = row.text().toLowerCase().indexOf(value) > -1;
-            row.toggle(match);
-        });
-
-        rowsCount = rows.filter(':visible').length;
-        updatePagination();
-        displayRows(1);
-    });
-
-    displayRows(1);
-    updatePagination();
 
     document.getElementById('exportButton').addEventListener('click', function() {
         window.location.href = "{% url 'export_clients_to_excel' %}";
