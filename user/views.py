@@ -159,6 +159,13 @@ def update_cliente(request, client_id):
     return render(request, 'Customer/updateCustomer.html', {'form': form, 'client_id': client.id})
 
 @login_required
+def delete_cliente(request, client_id):
+    client = get_object_or_404(Cliente, id=client_id)
+    client.delete()
+    return redirect('viewClient')   
+
+
+@login_required
 def export_clients_to_excel(request):
     clients = Cliente.objects.all()
     data = {
@@ -269,10 +276,19 @@ def CreateItem(request):
             return render(request, 'items/createItem.html', {'taxes': taxes})
     return render(request, 'items/createItem.html', {'taxes': taxes})
 
+
+@login_required
+def DeleteItem(request,item_id):
+    print(item_id)
+    itemID = get_object_or_404(Item, id=item_id)
+    itemID.delete()
+    return redirect('viewItem')
+
 @login_required
 def UpdateItem(request,item_id):
     itemID = get_object_or_404(Item, id=item_id)
     return render(request,'item/UpdateItem.html',{'item',itemID})
+
 
 
 #Create Tax

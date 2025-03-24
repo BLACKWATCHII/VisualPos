@@ -89,7 +89,7 @@
                     <th>Apellido</th>
                     <th>Telefono</th>
                     <th>PDF</th>
-                    <th>Editar</th>
+                    <th>Acciones</th>
                 </tr>
                 </thead>
                 <tbody id="tableBody">
@@ -113,7 +113,12 @@
                     <td>
                         <a href="{% url 'update_cliente' client.id %}" class="btn btn-sm btn-success">
                             <i id="icono-editar" class="fas fa-edit"></i>
-                        </a>                        
+                        </a>       
+                        <a href="{% url 'delete_cliente' client.id %}" 
+                            class="btn btn-sm btn-danger delete-btn" 
+                            data-url="{% url 'delete_cliente' client.id %}">
+                            <i id="icono-eliminar" class="fas fa-trash"></i>
+                        </a>                   
                     </td>
                 </tr>
                 {% endfor %}
@@ -235,7 +240,7 @@
     
     // Enviar el archivo
     xhr.send(formData);
-});
+    });
             document.getElementById("descargarPlantilla").addEventListener("click", function(event) {
                 event.preventDefault();
                 const archivo = '/static/archived/Clientes.xlsx';  // Ruta estática del archivo
@@ -247,6 +252,31 @@
                 a.click();
                 document.body.removeChild(a);
             });
+
+            const deleteButtons = document.querySelectorAll('.delete-btn');
+        
+        deleteButtons.forEach(button => {
+            button.addEventListener('click', function (event) {
+                event.preventDefault(); // Evita la redirección inmediata
+                
+                const url = this.getAttribute('data-url');
+                
+                Swal.fire({
+                    title: `¿Estás seguro que quieres eliminar a este cliente?`,
+                    text: "¡No podrás revertir esta acción!",
+                    icon: 'warning',
+                    showCancelButton: true,
+                    confirmButtonColor: '#d33',
+                    cancelButtonColor: '#3085d6',
+                    confirmButtonText: 'Sí, eliminar',
+                    cancelButtonText: 'Cancelar'
+                }).then((result) => {
+                    if (result.isConfirmed) {
+                        window.location.href = url;
+                    }
+                });
+            });
+        });
 });
 </script>
 {% endblock %}
