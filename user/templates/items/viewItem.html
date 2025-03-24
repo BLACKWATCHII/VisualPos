@@ -1,62 +1,15 @@
 {% extends 'base.html' %}
 
 {% block content %}
-<link rel="stylesheet" href="https://cdn.datatables.net/1.10.25/css/dataTables.bootstrap4.min.css">
+<!-- DataTables (Versión única y compatible) -->
+<link rel="stylesheet" href="https://cdn.datatables.net/1.13.4/css/dataTables.bootstrap4.min.css">
+
 <style>
     .card-margin-top {
         margin-top: 8rem !important;
     }
-
-    .search-container {
-        display: flex;
-        justify-content: flex-end;
-        margin-bottom: 15px;
-    }
-
-    .search-container input[type="text"] {
-        padding: 5px;
-        margin-left: 10px;
-        border: 1px solid #ccc;
-        border-radius: 5px;
-    }
-
-    .pagination {
-        display: flex;
-        justify-content: center;
-        list-style-type: none;
-        padding: 0;
-    }
-
-    .pagination li {
-        display: inline;
-        margin: 0 5px;
-    }
-
-    .pagination a {
-        color: white;
-        background-color: #007bff;
-        padding: 8px 16px;
-        text-decoration: none;
-        border-radius: 5px;
-        cursor: pointer;
-    }
-
-    .pagination a.active {
-        background-color: #343a40;
-    }
-
-    .pagination a.disabled {
-        background-color: #e9ecef;
-        color: #6c757d;
-        cursor: default;
-    }
-
-    .pagination a:hover:not(.active):not(.disabled) {
-        background-color: #0056b3;
-    }
 </style>
-</head>
-<body>
+
 <div class="container mt-5 card-margin-top">
     <div class="card shadow">
         <div class="card-body">
@@ -64,116 +17,98 @@
                 <div class="card-header" style="background-color: #2f855a; color: white;">
                     Productos Registrados
                 </div>
-                <div class="search-container">
-                    <div style="margin: 1px;">
-                        <a class="btn btn-success" href="{% url 'createItem' %}">+ Nuevo</a>
-                    </div>
-                    <input type="text" id="searchInput" placeholder="Buscar...">
+                <div>
+                    <a class="btn btn-success" href="{% url 'createItem' %}">+ Nuevo</a>
                 </div>
             </div>
-            <table id="clientsTable" class="table table-hover">
-                <thead class="thead-light">
+            <table id="itemsTable" class="table table-hover">
+                <thead>
                     <tr>
-                        <th scope="col"><input type="checkbox"></th>
-                        <th scope="col">ID</th>
-                        <th scope="col">Referencia</th>
-                        <th scope="col">Nombre</th>
-                        <th scope="col">Precio</th>
-                        <th scope="col">Cantidad</th>
-                        <th scope="col">Estado</th>
-                        <th scope="col">Editar</th>
+                        <th><input type="checkbox"></th>
+                        <th>Referencia</th>
+                        <th>Nombre</th>
+                        <th>Precio</th>
+                        <th>Cantidad</th>
+                        <th>Editar</th>
                     </tr>
                 </thead>
-                <tbody id="tableBody">
-                    {% if item %}
-                        {% for items in item %}
+                <tbody>
+                    {% if items %}
+                        {% for item in items %}
                             <tr>
                                 <td><input type="checkbox"></td>
-                                <td>#{{ items.id }}</td>
-                                <td>{{ items.Referents }}</td>
-                                <td>{{ items.Name }}</td>
-                                <td>{{ items.Price }}</td>
-                                <td>{{ items.Stock }}</td>
+                                <td>{{ item.Referents }}</td>
+                                <td>{{ item.Name }}</td>
+                                <td>{{ item.Price }}</td>
+                                <td>{{ item.Stock }}</td>
                                 <td>
-                                    {% if items.active %}
-                                        activo
-                                    {% else %}
-                                        desactivado
-                                    {% endif %}
-                                </td>
-                                <td>
-                                    <a href="" class="btn btn-sm btn-danger"><i class="fas fa-edit"></i></a>
+                                    <a href="{% url 'editItem' item.id %}" class="btn btn-sm btn-warning"><i class="fas fa-edit"></i></a>
+                                    <a href="{% url 'deleteItem' item.id %}" class="btn btn-sm btn-danger"><i class="fas fa-trash"></i></a>
                                 </td>
                             </tr>
                         {% endfor %}
                     {% else %}
                         <tr>
-                            <td colspan="8" class="text-center">No hay productos registrados</td>
+                            <td colspan="7" class="text-center">No hay productos registrados</td>
                         </tr>
                     {% endif %}
+
                 </tbody>
-            </table>            
-            <ul id="pagination" class="pagination"></ul>
+                
+            </table>
         </div>
     </div>
 </div>
+
+<!-- jQuery (should be loaded first) -->
 <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
-<script src="https://cdn.datatables.net/1.10.25/js/jquery.dataTables.min.js"></script>
-<script src="https://cdn.datatables.net/1.10.25/js/dataTables.bootstrap4.min.js"></script>
+
+<!-- DataTables -->
+<script src="https://cdn.datatables.net/1.13.4/js/jquery.dataTables.min.js"></script>
+<script src="https://cdn.datatables.net/1.13.4/js/dataTables.bootstrap4.min.js"></script>
+
+<!-- Bootstrap Bundle -->
+<script src="https://stackpath.bootstrapcdn.com/bootstrap/4.5.2/js/bootstrap.bundle.min.js"></script>
 
 <script>
-$(document).ready(function() {
-    const rowsPerPage = 8;
-    let rows = $('#tableBody tr');
-    let rowsCount = rows.length;
-    const pagination = $('#pagination');
+document.addEventListener("DOMContentLoaded", function() {
+    const table = $('#itemsTable');
+    console.log(table.length); // Should be > 0 if the table exists
 
-    function updatePagination() {
-        pagination.empty();
-        const pageCount = Math.ceil(rowsCount / rowsPerPage);
-
-        for (let i = 1; i <= pageCount; i++) {
-            pagination.append(`<li><a href="#" class="page-link">${i}</a></li>`);
-        }
-
-        pagination.find('a:first').addClass('active');
-    }
-
-    function displayRows(page) {
-        let start = (page - 1) * rowsPerPage;
-        let end = start + rowsPerPage;
-        rows.hide();
-        rows.slice(start, end).show();
-    }
-
-    pagination.on('click', 'a', function(e) {
-        e.preventDefault();
-        pagination.find('a').removeClass('active');
-        $(this).addClass('active');
-        displayRows($(this).text());
-    });
-
-    $('#searchInput').on('keyup', function() {
-        let value = $(this).val().toLowerCase();
-        rows = $('#tableBody tr'); // Actualizar las filas disponibles
-
-        rows.each(function() {
-            let row = $(this);
-            let match = row.text().toLowerCase().indexOf(value) > -1;
-            row.toggle(match);
+    if (table.length > 0) {
+        table.DataTable({
+            paging: true,
+            ordering: true,
+            info: true,
+            searching: true,
+            lengthChange: true,
+            autoWidth: false,
+            pageLength: 10,
+            language: {
+                "processing": "Procesando...",
+                "search": "Buscar:",
+                "lengthMenu": "Mostrar _MENU_ registros",
+                "info": "Mostrando de _START_ a _END_ de _TOTAL_ registros",
+                "infoEmpty": "Mostrando 0 a 0 de 0 registros",
+                "infoFiltered": "(filtrado de _MAX_ registros en total)",
+                "loadingRecords": "Cargando...",
+                "zeroRecords": "No se encontraron resultados",
+                "emptyTable": "No hay datos disponibles en la tabla",
+                "paginate": {
+                    "first": "Primero",
+                    "previous": "Anterior",
+                    "next": "Siguiente",
+                    "last": "Último"
+                },
+                "aria": {
+                    "sortAscending": ": activar para ordenar la columna de manera ascendente",
+                    "sortDescending": ": activar para ordenar la columna de manera descendente"
+                }
+            }
         });
-
-        rowsCount = rows.filter(':visible').length;
-        updatePagination();
-        displayRows(1);
-    });
-
-    displayRows(1);
-    updatePagination();
-
-    document.getElementById('exportButton').addEventListener('click', function() {
-        window.location.href = "{% url 'export_clients_to_excel' %}";
-    });
+    }
 });
+
+
 </script>
 {% endblock %}
