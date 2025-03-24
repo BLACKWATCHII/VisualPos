@@ -64,11 +64,11 @@ def Dasboard(request):
 
 
 def home(request):
-    return render(request, 'home.html')
+    return render(request, 'pages/home.html')
 
 
-@login_required
-def signout(request):
+@login_required 
+def signout(request): #Fixed delete cookies token crfsr
     logout(request)
     return redirect('home')
 
