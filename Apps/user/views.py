@@ -1,18 +1,13 @@
-from django.shortcuts import render, redirect,get_object_or_404
+from django.shortcuts import render, redirect
 from django.contrib.auth import login, logout, authenticate
 from django.contrib.auth.models import User
 from django.db import IntegrityError
 from django.contrib.auth.decorators import login_required
-from .form import CustomUserCreationForm, CustomAuthenticationForm,ClienteForm
+from .form import CustomUserCreationForm, CustomAuthenticationForm
 from django.db.models import Count
 from item.models import Item
-from tax.models import Tax
-import os
-import pandas as pd
 import json
 from django.contrib import messages
-from django.http import FileResponse, HttpResponseNotFound
-from django.conf import settings
 from customer.models import Cliente
 
 # Login and register
@@ -41,7 +36,6 @@ def signup(request):
 def Dasboard(request):
     customer_count = Cliente.objects.count()
     items_count = Item.objects.filter(active=True).count()
-    # Calculate new clients per day
     new_clients_per_day = (
         Cliente.objects
         .filter(record_date__isnull=False)
@@ -49,25 +43,21 @@ def Dasboard(request):
         .annotate(count=Count('id'))
         .order_by('record_date')
     )
-
-    # Prepare data for the chart
     dates = [entry['record_date'].strftime('%Y-%m-%d') for entry in new_clients_per_day]
     counts = [entry['count'] for entry in new_clients_per_day]
 
     context = {
         'num_clientes': customer_count,
         'num_items': items_count,
-        'dates': json.dumps(dates),  # Convert list to JSON format
+        'dates': json.dumps(dates), 
         'counts': json.dumps(counts),  
     }
 
     return render(request, 'tasks.html', context)
 
 
-
-
 @login_required 
-def signout(request): #Fixed delete cookies token crfsr
+def signout(request): 
     logout(request)
     return redirect('home')
 
@@ -96,7 +86,6 @@ def signin(request):
 
     return render(request, 'signin.html', {'form': form})
 
-################################################################################################################
 
 
 
