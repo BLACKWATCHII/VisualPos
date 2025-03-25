@@ -52,9 +52,9 @@ Berserker es un software de ventas diseñado para optimizar y agilizar la gesti�
 
 ## 📞 Contacto
 
-📧 Email: [contacto@berserker.com](mailto\:contacto@berserker.com)\
-🌐 Sitio Web: [www.berserker.com](https://www.berserker.com)\
-🐦 Twitter: [@BerserkerSales](https://twitter.com/BerserkerSales)
+📧 Email: [contacto@berserker.com](mailto\:kevin.hernandez25@zohomail.com)\
+🌐 Sitio Web: [berserker.com](https://berserker-v2.mailerpage.io/)\
+🐦 Ceo: [Kevin Hernandez](https://www.linkedin.com/in/kevin-hernandez-431464235/)
 
 ---
 
