@@ -10,7 +10,9 @@
     .card-margin-top {
         margin-top: 8rem !important;
     }
-
+    #Color-Background{
+        background-color: darkgray;
+    }
     .search-container {
         display: flex;
         justify-content: flex-end;
@@ -64,6 +66,7 @@
 </style>
 </head>
 <body>
+
 <div class="container mt-5 card-margin-top">
     <div class="card shadow">
         <div class="card-body">
@@ -74,7 +77,7 @@
                 <div class="search-container">
                     <div>
                         <a class="btn btn-primary btn-spaced" href="{% url 'createCustomer' %}">+ Nuevo</a>
-                        <a class="btn btn-success btn-spaced" id="exportButton">Exportar</a>
+                        <a class="btn btn-success btn-spaced" id="exportButton" data-url="{% url 'export_clients_to_excel' %}">Exportar</a>
                         <a class="btn btn-danger" id="importButton" data-bs-toggle="modal" data-bs-target="#miModal">Importar</a>
                       </div>
                 </div>
@@ -140,7 +143,7 @@
                       <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Cerrar"></button>
                     </div>
                     <div class="modal-body">
-                      <form id="formCargarArchivo" enctype="multipart/form-data">
+                      <form id="formCargarArchivo" enctype="multipart/form-data" data-url="{% url 'cargar_datos_excel' %}">
                         {% csrf_token %}
                         <div class="mb-3">
                           <label for="archivoExcel" class="form-label">Selecciona un archivo Excel</label>
@@ -174,109 +177,5 @@
 <script src="https://cdn.datatables.net/1.10.25/js/dataTables.bootstrap4.min.js"></script>
 <script src="https://stackpath.bootstrapcdn.com/bootstrap/4.5.2/js/bootstrap.bundle.min.js"></script>
 
-<script>
-    $(document).ready(function() {
-        $.noConflict(); 
-
-        if ($.fn.DataTable) {
-            $('#clientsTable').DataTable({
-                "paging": true,
-                "searching": true,
-                "ordering": true,
-                "lengthChange": true,
-                "pageLength": 10,
-                "language": {
-                    "search": "Buscar:",
-                    "lengthMenu": "Mostrar _MENU_ registros",
-                    "info": "Mostrando _START_ a _END_ de _TOTAL_ registros",
-                    "paginate": {
-                        "previous": "Anterior",
-                        "next": "Siguiente"
-                    }
-                }
-            });
-        } else {
-            console.error('DataTable plugin no está cargado correctamente.');
-        }
-
-    document.getElementById('exportButton').addEventListener('click', function() {
-        window.location.href = "{% url 'export_clients_to_excel' %}";
-    });
-
-    // CARGA DE DATOS DE USUARIOS
-    document.getElementById('formCargarArchivo').addEventListener('submit', function(event) {
-    event.preventDefault();
-    
-    var formData = new FormData(this);
-    
-    // Mostrar el progreso de carga
-    document.getElementById('progresoCarga').style.display = 'block';
-    
-    var xhr = new XMLHttpRequest();
-    xhr.open('POST', '{% url "cargar_datos_excel" %}', true);
-    
-    // Mostrar progreso en la barra
-    xhr.upload.onprogress = function(event) {
-        if (event.lengthComputable) {
-            var porcentaje = (event.loaded / event.total) * 100;
-            document.getElementById('progresoBarra').style.width = porcentaje + '%';
-            document.getElementById('progresoPorcentaje').textContent = Math.round(porcentaje) + '%';
-        }
-    };
-    
-    xhr.onload = function() {
-        if (xhr.status == 200) {
-            var respuesta = JSON.parse(xhr.responseText);
-            if (respuesta.status == 'success') {
-                document.getElementById('resultadoCarga').style.display = 'block';
-                document.getElementById('descargarPlantilla').href = '/static/Customers.xlsx'; 
-            } else {
-                alert(respuesta.message);
-            }
-        } else {
-            alert('Error al cargar el archivo');
-        }
-    };
-    
-    // Enviar el archivo
-    xhr.send(formData);
-    });
-            document.getElementById("descargarPlantilla").addEventListener("click", function(event) {
-                event.preventDefault();
-                const archivo = '/static/archived/Clientes.xlsx';  // Ruta estática del archivo
-
-                const a = document.createElement("a");
-                a.href = archivo;
-                a.download = "Clientes.xlsx";
-                document.body.appendChild(a);
-                a.click();
-                document.body.removeChild(a);
-            });
-
-        const deleteButtons = document.querySelectorAll('.delete-btn');
-        
-        deleteButtons.forEach(button => {
-            button.addEventListener('click', function (event) {
-                event.preventDefault(); // Evita la redirección inmediata
-                
-                const url = this.getAttribute('data-url');
-                
-                Swal.fire({
-                    title: `¿Estás seguro que quieres eliminar a este cliente?`,
-                    text: "¡No podrás revertir esta acción!",
-                    icon: 'warning',
-                    showCancelButton: true,
-                    confirmButtonColor: '#d33',
-                    cancelButtonColor: '#3085d6',
-                    confirmButtonText: 'Sí, eliminar',
-                    cancelButtonText: 'Cancelar'
-                }).then((result) => {
-                    if (result.isConfirmed) {
-                        window.location.href = url;
-                    }
-                });
-            });
-        });
-});
-</script>
+<script src="{% static 'js/viewClient.js' %}"></script>
 {% endblock %}
