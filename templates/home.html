@@ -45,6 +45,15 @@
     background-color: #222;
     color: white;
   }
+  #hover-card {
+        transition: transform 0.3s ease;
+    }
+    
+    #hover-card:hover {
+        transform: scale(1.05);
+        background-color: #2f855a;
+        color: white;
+    }
 </style>
 
 <nav class="navbar navbar-expand-lg navbar-dark">
@@ -76,28 +85,28 @@
     <div class="row mt-4">
       <!-- Servicio 1: Hacer facturas -->
       <div class="col-md-3">
-        <div class="service-box">
+        <div class="service-box"  id="hover-card">
           <h5>Invoice Management</h5>
           <p>Efficient creation and management of invoices for your business.</p>
         </div>
       </div>
       <!-- Servicio 2: Manejar inventario -->
-      <div class="col-md-3">
-        <div class="service-box">
+      <div class="col-md-3" >
+        <div class="service-box" id="hover-card">
           <h5>Inventory Control</h5>
           <p>Accurate tracking and management of your stock and supplies.</p>
         </div>
       </div>
       <!-- Servicio 3: Manejo de clientes -->
-      <div class="col-md-3">
-        <div class="service-box">
+      <div class="col-md-3" >
+        <div class="service-box" id="hover-card">
           <h5>Customer Management</h5>
           <p>Organized handling of client data and interactions.</p>
         </div>
       </div>
       <!-- Servicio 4: Reportes de ventas -->
-      <div class="col-md-3">
-        <div class="service-box">
+      <div class="col-md-3" >
+        <div class="service-box" id="hover-card">
           <h5>Sales Reports</h5>
           <p>Detailed sales analysis and performance reports.</p>
         </div>
