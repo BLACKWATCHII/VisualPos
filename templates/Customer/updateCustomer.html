@@ -2,8 +2,9 @@
 {% load static %}
 
 {% block content %}
+<link rel="stylesheet" href="{% static 'css/Customer/updateCustomer.css' %}">
 <div class="card mt-5" style="margin-top: 6rem!important;">
-    <div class="card-header" style="background-color: #2f855a; color: white;">
+    <div class="card-header">
         Actualizar cliente
     </div>
     <br>
@@ -62,117 +63,5 @@
 <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/sweetalert2@11/dist/sweetalert2.min.css">
 <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
 <script src="https://ajax.googleapis.com/ajax/libs/jquery/3.5.1/jquery.min.js"></script>
-
-<script>
-    $(document).ready(function(){
-        $('form').submit(function(event){
-            event.preventDefault();
-            var formData = new FormData(this);
-            $.ajax({
-                type: 'POST',
-                url: $(this).attr('action'),
-                data: formData,
-                processData: false,
-                contentType: false,
-                success: function(response){
-                    Swal.fire({
-                        icon: 'success',
-                        title: 'Actualizado exitosamente',
-                        showConfirmButton: false,
-                        timer: 1500
-                    }).then(function() {
-                        window.location.href = response.redirect;
-                    });
-                },
-                error: function(response){
-                    if (response.status === 400) {
-                        Swal.fire({
-                            icon: 'error',
-                            title: 'Oops...',
-                            text: response.responseJSON.error,
-                        });
-                    }
-                }
-            });
-        });
-    });
-</script>
-
-<style>
-    .title {
-        color: #0046b8;
-        text-align: left;
-        margin-bottom: 20px;
-        font-size: 20px; 
-        font-weight: bold;
-    }
-
-    .card {
-        background-color: #f8f9fa;
-        padding: 20px;
-        border-radius: 10px;
-        box-shadow: 0 0 10px rgba(0,0,0,0.1);
-        max-width: 800px;  
-        margin: 0 auto;  
-    }
-
-    .section {
-        margin-bottom: 20px;
-    }
-
-    .section h5 {
-        background-color: #E9ECEF;  
-        padding: 10px;
-        border-radius: 5px;
-        color: #8E8E8E;
-        margin-bottom: 15px;
-        font-size: 14px; 
-        font-weight: bold;
-    }
-
-    .form-row {
-        display: flex;
-        flex-wrap: wrap;
-        justify-content: space-between;
-    }
-
-    .form-group {
-        flex: 0 0 48%;
-        margin-bottom: 15px;
-    }
-
-    .form-control {
-        width: 100%;
-        padding: 10px;
-        margin-top: 5px;
-        border-radius: 5px;
-        border: 1px solid #ced4da;
-        font-size: 14px;  
-    }
-
-    .btn {
-        padding: 8px 16px;  
-        border-radius: 5px;
-        margin-right: 10px;
-        font-size: 14px;  
-    }
-
-    .btn-primary {
-        background-color: #FF65C3;
-        border: none;
-        color: white;
-    }
-
-    .btn-secondary {
-        background-color: #8E8E8E;
-        border: none;
-        color: white;
-    }
-
-    hr {
-        border: 0;
-        border-top: 1px solid #e9ecef;
-        margin: 20px 0;
-    }
-</style>
+<script src="{% static 'js/Customer/updateCustomer.js' %}"></script>
 {% endblock %}

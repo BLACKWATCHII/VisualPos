@@ -5,65 +5,8 @@
 <link rel="stylesheet" href="https://cdn.datatables.net/1.10.25/css/dataTables.bootstrap4.min.css">
 <link rel="stylesheet" href="https://stackpath.bootstrapcdn.com/bootstrap/4.5.2/css/bootstrap.min.css">
 <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/5.15.4/css/all.min.css">
+<link rel="stylesheet" href="{% static 'css/Customer/viewCustomer.css' %}">
 
-<style>
-    .card-margin-top {
-        margin-top: 8rem !important;
-    }
-    #Color-Background{
-        background-color: darkgray;
-    }
-    .search-container {
-        display: flex;
-        justify-content: flex-end;
-        margin-bottom: 15px;
-    }
-
-    .search-container input[type="text"] {
-        padding: 5px;
-        margin-left: 10px;
-        border: 1px solid #ccc;
-        border-radius: 5px;
-    }
-
-    .pagination {
-        display: flex;
-        justify-content: center;
-        list-style-type: none;
-        padding: 0;
-    }
-
-    .pagination li {
-        display: inline;
-        margin: 0 5px;
-    }
-
-    .pagination a {
-        color: white;
-        background-color: #007bff;
-        padding: 8px 16px;
-        text-decoration: none;
-        border-radius: 5px;
-        cursor: pointer;
-    }
-
-    .pagination a.active {
-        background-color: #343a40;
-    }
-
-    .pagination a.disabled {
-        background-color: #e9ecef;
-        color: #6c757d;
-        cursor: default;
-    }
-
-    .pagination a:hover:not(.active):not(.disabled) {
-        background-color: #0056b3;
-    }
-    .btn-spaced {
-         margin-right: 10px; 
-    }
-</style>
 </head>
 <body>
 
@@ -71,7 +14,7 @@
     <div class="card shadow">
         <div class="card-body">
             <div class="section d-flex justify-content-between align-items-center mb-3">
-                <div class="card-header" style="background-color: #2f855a; color: white;">
+                <div class="card-header">
                     Clientes registrados
                 </div>
                 <div class="search-container">
@@ -172,10 +115,11 @@
               </div>
     </div>
 </div>
+
 <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
 <script src="https://cdn.datatables.net/1.10.25/js/jquery.dataTables.min.js"></script>
 <script src="https://cdn.datatables.net/1.10.25/js/dataTables.bootstrap4.min.js"></script>
 <script src="https://stackpath.bootstrapcdn.com/bootstrap/4.5.2/js/bootstrap.bundle.min.js"></script>
+<script src="{% static 'js/Customer/viewCustomer.js' %}"></script>
 
-<script src="{% static 'js/viewClient.js' %}"></script>
 {% endblock %}
