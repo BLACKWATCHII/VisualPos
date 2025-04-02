@@ -1,4 +1,4 @@
-![Banner image](https://workdrive.zohoexternal.com/file/tdyhv73e728ef71334aed9cdfbd7e17733aee)
+![Banner image](https://form.quantum-staffing.com/wp-content/uploads/2025/04/BerserkerWelcome.png)
 
 # Berserker - Boost Your Sales to the Maximum
 
