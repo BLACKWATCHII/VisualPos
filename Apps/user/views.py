@@ -43,13 +43,16 @@ def Dasboard(request):
         .annotate(count=Count('id'))
         .order_by('record_date')
     )
-    dates = [entry['record_date'].strftime('%Y-%m-%d') for entry in new_clients_per_day]
+
+    # Asegurar que las listas no contengan valores None
+    print(new_clients_per_day)
+    dates = [entry['record_date'].strftime('%Y-%m-%d') for entry in new_clients_per_day if entry['record_date']]
     counts = [entry['count'] for entry in new_clients_per_day]
 
     context = {
         'num_clientes': customer_count,
         'num_items': items_count,
-        'dates': json.dumps(dates), 
+        'dates': json.dumps(dates),  
         'counts': json.dumps(counts),  
     }
 

@@ -1,5 +1,6 @@
-   const dates = JSON.parse('{{ dates|escapejs }}');
-   const counts = JSON.parse('{{ counts|escapejs }}');
+const dates = JSON.parse('{{ dates|escapejs }}');
+const counts = JSON.parse('{{ counts|escapejs }}');
+
 
    const ctx2 = document.getElementById('chart2').getContext('2d');
    new Chart(ctx2, {
@@ -20,5 +21,6 @@
                    beginAtZero: true
                }
            }
+
        }
    });
