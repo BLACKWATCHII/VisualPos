@@ -1,0 +1,109 @@
+{% extends 'base.html' %}
+{% load static %}
+
+{% block content %}
+<script src="https://cdn.jsdelivr.net/npm/sweetalert2@10"></script>
+
+<div class="card-container">
+    <div class="card">
+        <h1>Impuestos</h1>
+        <div class="section-header">Crear Impuesto</div>
+        <form method="post" id="createTax-form">
+            {% csrf_token %}
+            <div class="form-group">
+                <label for="Name">Nombre</label>
+                <input type="text" id="Name" name="Name" required>
+            </div>
+            <div class="form-group">
+                <label for="Referents">Porcentaje</label>
+                <input type="number" id="Referents" name="Percentaje" required>
+            </div>
+
+            <!-- <div class="form-group" style="margin-left: 100px; margin-top: 30px;">
+                <input class="form-check-input small-radio" type="radio" name="active" id="inlineRadio1" value="True" required>
+                <label class="form-check-label" for="inlineRadio1" style="margin-right: 50px;">activado</label><br>
+                <input class="form-check-input small-radio" type="radio" name="active" id="inlineRadio2" value="False">
+                <label class="form-check-label" for="inlineRadio2">desactivado</label>
+            </div> -->
+            
+            <div class="form-group">
+                <button type="submit" id="saveForm">Guardar</button>
+            </div>
+        </form>
+    </div>
+</div>
+
+<style>
+    body {
+        font-family: Arial, sans-serif;
+    }
+    .card-container {
+        display: flex;
+        justify-content: center;
+        align-items: center;
+        height: 100vh;
+    }
+    .card {
+        max-width: 800px;
+        width: 100%;
+        padding: 20px;
+        border: 1px solid #ddd;
+        border-radius: 10px;
+        box-shadow: 0 0 10px rgba(0, 0, 0, 0.1);
+        background-color: white;
+    }
+    .card h1 {
+        text-align: left;
+        color: #2f855a;
+        font-size: 29px;
+        font-weight: 250;
+    }
+    .section-header {
+        background-color: #f1f1f1;
+        padding: 10px;
+        border-radius: 5px;
+        margin-bottom: 15px;
+        font-weight: bold;
+        color: #333;
+    }
+    .form-group {
+        margin-bottom: 15px;
+        display: flex;
+        align-items: center;
+        margin-right: 170px;
+    }
+    .form-group label {
+        width: 25%;
+        padding-top: 5px;
+        text-align: right;
+        margin-right: 10px;
+    }
+    .form-group input, .form-group textarea {
+        width: 70%;
+        padding: 8px;
+        box-sizing: border-box;
+        border: 1px solid #ccc;
+        border-radius: 5px;
+    }
+    .form-group button {
+        background-color: #2f855a;
+        color: white;
+        border: none;
+        padding: 10px 20px;
+        cursor: pointer;
+        border-radius: 5px;
+        margin-left: auto;
+    }
+    .form-group button:hover {
+        background-color: #88bba2;
+        color: black;
+    }
+    #saveForm{
+        margin-left: 650px;
+    }
+    .small-radio {
+        width: 15px !important;
+        height: 15px;
+    }
+</style>    
+{% endblock %}

@@ -1,0 +1,60 @@
+.card-margin-top {
+    margin-top: 8rem !important;
+}
+#Color-Background{
+    background-color: darkgray;
+}
+.search-container {
+    display: flex;
+    justify-content: flex-end;
+    margin-bottom: 15px;
+}
+
+.search-container input[type="text"] {
+    padding: 5px;
+    margin-left: 10px;
+    border: 1px solid #ccc;
+    border-radius: 5px;
+}
+
+.pagination {
+    display: flex;
+    justify-content: center;
+    list-style-type: none;
+    padding: 0;
+}
+
+.pagination li {
+    display: inline;
+    margin: 0 5px;
+}
+
+.pagination a {
+    color: white;
+    background-color: #007bff;
+    padding: 8px 16px;
+    text-decoration: none;
+    border-radius: 5px;
+    cursor: pointer;
+}
+
+.pagination a.active {
+    background-color: #343a40;
+}
+
+.pagination a.disabled {
+    background-color: #e9ecef;
+    color: #6c757d;
+    cursor: default;
+}
+
+.pagination a:hover:not(.active):not(.disabled) {
+    background-color: #0056b3;
+}
+.btn-spaced {
+     margin-right: 10px; 
+}
+.card-header{
+    background-color: #2f855a; 
+    color: white;
+}

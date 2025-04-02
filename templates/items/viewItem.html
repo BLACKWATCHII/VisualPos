@@ -1,0 +1,114 @@
+{% extends 'base.html' %}
+
+{% block content %}
+<!-- DataTables (Versión única y compatible) -->
+<link rel="stylesheet" href="https://cdn.datatables.net/1.13.4/css/dataTables.bootstrap4.min.css">
+
+<style>
+    .card-margin-top {
+        margin-top: 8rem !important;
+    }
+</style>
+
+<div class="container mt-5 card-margin-top">
+    <div class="card shadow">
+        <div class="card-body">
+            <div class="section d-flex justify-content-between align-items-center mb-3">
+                <div class="card-header" style="background-color: #2f855a; color: white;">
+                    Productos Registrados
+                </div>
+                <div>
+                    <a class="btn btn-success" href="{% url 'createItem' %}">+ Nuevo</a>
+                </div>
+            </div>
+            <table id="itemsTable" class="table table-hover">
+                <thead>
+                    <tr>
+                        <th><input type="checkbox"></th>
+                        <th>Referencia</th>
+                        <th>Nombre</th>
+                        <th>Precio</th>
+                        <th>Cantidad</th>
+                        <th>Editar</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% if items %}
+                        {% for item in items %}
+                            <tr>
+                                <td><input type="checkbox"></td>
+                                <td>{{ item.Referents }}</td>
+                                <td>{{ item.Name }}</td>
+                                <td>{{ item.Price }}</td>
+                                <td>{{ item.Stock }}</td>
+                                <td>
+                                    <a href="{% url 'editItem' item.id %}" class="btn btn-sm btn-warning"><i class="fas fa-edit"></i></a>
+                                    <a href="{% url 'deleteItem' item.id %}" class="btn btn-sm btn-danger"><i class="fas fa-trash"></i></a>
+                                </td>
+                            </tr>
+                        {% endfor %}
+                    {% else %}
+                        <tr>
+                            <td colspan="7" class="text-center">No hay productos registrados</td>
+                        </tr>
+                    {% endif %}
+
+                </tbody>
+                
+            </table>
+        </div>
+    </div>
+</div>
+
+<!-- jQuery (should be loaded first) -->
+<script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
+
+<!-- DataTables -->
+<script src="https://cdn.datatables.net/1.13.4/js/jquery.dataTables.min.js"></script>
+<script src="https://cdn.datatables.net/1.13.4/js/dataTables.bootstrap4.min.js"></script>
+
+<!-- Bootstrap Bundle -->
+<script src="https://stackpath.bootstrapcdn.com/bootstrap/4.5.2/js/bootstrap.bundle.min.js"></script>
+
+<script>
+document.addEventListener("DOMContentLoaded", function() {
+    const table = $('#itemsTable');
+    console.log(table.length); // Should be > 0 if the table exists
+
+    if (table.length > 0) {
+        table.DataTable({
+            paging: true,
+            ordering: true,
+            info: true,
+            searching: true,
+            lengthChange: true,
+            autoWidth: false,
+            pageLength: 10,
+            language: {
+                "processing": "Procesando...",
+                "search": "Buscar:",
+                "lengthMenu": "Mostrar _MENU_ registros",
+                "info": "Mostrando de _START_ a _END_ de _TOTAL_ registros",
+                "infoEmpty": "Mostrando 0 a 0 de 0 registros",
+                "infoFiltered": "(filtrado de _MAX_ registros en total)",
+                "loadingRecords": "Cargando...",
+                "zeroRecords": "No se encontraron resultados",
+                "emptyTable": "No hay datos disponibles en la tabla",
+                "paginate": {
+                    "first": "Primero",
+                    "previous": "Anterior",
+                    "next": "Siguiente",
+                    "last": "Último"
+                },
+                "aria": {
+                    "sortAscending": ": activar para ordenar la columna de manera ascendente",
+                    "sortDescending": ": activar para ordenar la columna de manera descendente"
+                }
+            }
+        });
+    }
+});
+
+
+</script>
+{% endblock %}

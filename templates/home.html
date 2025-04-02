@@ -1,0 +1,67 @@
+{% extends 'base.html' %} 
+{% block content %}
+{% load static %}
+
+
+<link rel="stylesheet" href="{% static 'css/homePages/home.css' %}">    
+
+<nav class="navbar navbar-expand-lg navbar-dark">
+  <div class="container">
+    <a class="navbar-brand" href="#">Loggie</a>
+  </div>
+</nav>
+
+<div id="carouselExample" class="carousel slide">
+  <div class="carousel-inner">
+    <div class="carousel-item active">
+      <img src="{% static 'img/FondoHomePages.jpg' %}" class="d-block w-100" alt="...">
+    </div>
+  </div>
+  {% if user.is_authenticated %}
+  <!--Aqui no va nada porque si no agrego esta condicion mostrara el boton inicio de session-->
+  {% else %}
+  <div class="carousel-caption">
+    <h1>Welcome to Berserker Corporate</h1>
+    <p>Where your finances are protected and your bills are organized</p>
+    <a href="/signin" class="btn btn-custom">Login</a>
+  </div>
+  {% endif %}
+</div>
+
+<section class="services-section">
+  <div class="container">
+    <h2 class="text-white">Our Services</h2>
+    <div class="row mt-4">
+      <!-- Servicio 1: Hacer facturas -->
+      <div class="col-md-3">
+        <div class="service-box"  id="hover-card">
+          <h5>Invoice Management</h5>
+          <p>Efficient creation and management of invoices for your business.</p>
+        </div>
+      </div>
+      <!-- Servicio 2: Manejar inventario -->
+      <div class="col-md-3" >
+        <div class="service-box" id="hover-card">
+          <h5>Inventory Control</h5>
+          <p>Accurate tracking and management of your stock and supplies.</p>
+        </div>
+      </div>
+      <!-- Servicio 3: Manejo de clientes -->
+      <div class="col-md-3" >
+        <div class="service-box" id="hover-card">
+          <h5>Customer Management</h5>
+          <p>Organized handling of client data and interactions.</p>
+        </div>
+      </div>
+      <!-- Servicio 4: Reportes de ventas -->
+      <div class="col-md-3" >
+        <div class="service-box" id="hover-card">
+          <h5>Sales Reports</h5>
+          <p>Detailed sales analysis and performance reports.</p>
+        </div>
+      </div>
+    </div>
+  </div>
+</section>
+
+{% endblock %}

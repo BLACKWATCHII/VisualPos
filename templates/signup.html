@@ -1,0 +1,21 @@
+{% extends "base.html" %}
+{% load static %}
+{% block content %}
+
+<link rel="stylesheet" href="{% static 'css/homePages/signup.css' %}"> 
+
+<div class="register-container">
+  <h1 class="register-title">Registrarse</h1>
+  <p>{{ error }}</p>
+  <form action="/signup/" method="POST" class="register-form">
+    {% csrf_token %}
+    {% for field in form %}
+    <div class="floating-label-group">
+      {{ field }}
+      <label for="{{ field.id_for_label }}">{{ field.label }}</label>
+    </div>
+    {% endfor %}
+    <button type="submit">Registrarse</button>
+  </form>
+</div>
+{% endblock %}

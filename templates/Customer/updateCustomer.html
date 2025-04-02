@@ -1,0 +1,67 @@
+{% extends 'base.html' %}
+{% load static %}
+
+{% block content %}
+<link rel="stylesheet" href="{% static 'css/Customer/updateCustomer.css' %}">
+<div class="card mt-5" style="margin-top: 6rem!important;">
+    <div class="card-header">
+        Actualizar cliente
+    </div>
+    <br>
+    <form method="POST" action="{% url 'update_cliente' client_id %}" enctype="multipart/form-data">
+        {% csrf_token %}
+        <div class="section">
+            <h5>INFORMACIÓN DEL CLIENTE</h5>
+            <div class="form-row">
+                <div class="form-group col-md-6">
+                    <label for="id_name">Nombre</label>
+                    {{ form.name }}
+                </div>
+                <div class="form-group col-md-6">
+                    <label for="id_lastname">Apellido</label>
+                    {{ form.lastname }}
+                </div>
+            </div>
+            <div class="form-row">
+                <div class="form-group col-md-6">
+                    <label for="id_cedula">Cédula</label>
+                    {{ form.cedula }}
+                </div>
+                <div class="form-group col-md-6">
+                    <label for="id_phone">Teléfono</label>
+                    {{ form.phone }}
+                </div>
+            </div>
+            <div class="form-row">
+                <div class="form-group col-md-6">
+                    <label for="id_email">Correo Electrónico</label>
+                    {{ form.email }}
+                </div>
+                <div class="form-group col-md-6">
+                    <label for="id_pdf">Archivo PDF</label>
+                    {{ form.pdf }}
+                </div>
+            </div>
+        </div>
+        <div class="section">
+            <h5>INFORMACION DE RESIDENCIA</h5>
+            <div class="form-row">
+                <div class="form-group col-md-6">
+                    <label for="id_address">Dirección</label>
+                    {{ form.address }}
+                </div>
+                <div class="form-group col-md-6">
+                    <label for="id_city">Ciudad</label>
+                    {{ form.city }}
+                </div>
+            </div>
+        </div>
+        <button type="submit" class="btn btn-success">Actualizar</button>
+    </form>
+</div>
+
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/sweetalert2@11/dist/sweetalert2.min.css">
+<script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
+<script src="https://ajax.googleapis.com/ajax/libs/jquery/3.5.1/jquery.min.js"></script>
+<script src="{% static 'js/Customer/updateCustomer.js' %}"></script>
+{% endblock %}

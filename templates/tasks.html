@@ -1,0 +1,140 @@
+
+{% extends 'base.html' %}
+{% load static %}
+{% block content %}
+
+<link rel="stylesheet" href="{% static 'css/homePages/tasks.css' %}">     
+
+<div class="container mt-4" style="margin-top: 6rem!important;">
+    <div class="row">
+        <!-- Caja para gráfico 1 -->
+        <div class="col-md-6 mb-4">
+            <div class="card shadow p-3">
+                <div class="card-header" style="background-color: #2f855a; color: white;">
+                    Ventas diarias
+                </div>
+                <div class="card-body">
+
+                    <canvas id="chart1" width="400" height="200"></canvas>
+                </div>
+            </div>
+        </div>
+
+        <!-- Caja para gráfico 2  -->
+        <div class="col-md-6 mb-4">
+            <div class="card shadow p-3" style="max-width: 720px;">
+                <div class="card-header" style="background-color: #2f855a; color: white;">
+                    Clientes nuevos
+                </div>
+                <div class="card-body">
+                    <canvas id="chart2" width="400" height="165"></canvas>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="row">
+        <!-- Caja de productos más vendidos -->
+        <div class="col-md-6 mb-4">
+            <div class="card shadow p-3">
+                <div class="card-header" style="background-color: black; color: white;">
+                    Productos más vendidos
+                </div>
+                <div class="card-body">
+                    <!-- Contenido de la caja de productos más vendidos -->
+                    <!-- Puedes agregar aquí tus productos más vendidos -->
+                </div>
+            </div>
+        </div>
+
+        <!-- Caja con 4 sub-cajas -->
+       <!-- Caja con 4 sub-cajas -->
+<div class="col-md-6 mb-4">
+    <div class="card shadow p-3">
+        <div class="card-header" style="background-color: #0d1419; color: white;">
+            Información general
+        </div>
+        <div class="card-body">
+            <div class="row">
+                <!-- Sub-caja 1 -->
+                <div class="col-md-6">
+                    <a href="{% url 'viewClient' %}" style="text-decoration: none;">
+                        <div class="card bg-info text-white hover-card">
+                            <div class="card-body">
+                                <h5 class="card-title">Clientes Registrados</h5>
+                                <p class="card-text">{{ num_clientes }}</p>
+                            </div>
+                        </div>
+                    </a>
+                </div>
+                <!-- Sub-caja 2 -->
+                <div class="col-md-6">
+                    <a href="{% url 'viewItem' %}" style="text-decoration: none;">
+                        <div class="card bg-success text-white hover-card">
+                            <div class="card-body">
+                                <h5 class="card-title">Productos Disponibles</h5>
+                                <p class="card-text">{{  num_items }}</p>
+                            </div>
+                        </div>
+                    </a>
+                </div>
+                <!-- Sub-caja 3 -->
+                <div class="col-md-6 mt-4">
+                    <div class="card bg-warning text-white hover-card">
+                        <div class="card-body">
+                            <h5 class="card-title">Ventas del Mes</h5>
+                            <p class="card-text">$10,000</p>
+                        </div>
+                    </div>
+                </div>
+                <!-- Sub-caja 4 -->
+                <div class="col-md-6 mt-4">
+                    <div class="card bg-danger text-white hover-card">
+                        <div class="card-body">
+                            <h5 class="card-title">Pedidos Pendientes</h5>
+                            <p class="card-text">20</p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+    </div>
+</div>
+<script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+
+<script>
+    
+    const dates = JSON.parse('{{ dates|escapejs }}');
+    const counts = JSON.parse('{{ counts|escapejs }}');
+
+
+   const ctx2 = document.getElementById('chart2').getContext('2d');
+   new Chart(ctx2, {
+       type: 'bar',
+       data: {
+           labels: dates,
+           datasets: [{
+               label: 'Clientes Nuevos',
+               data: counts,
+               backgroundColor: 'rgba(54, 176, 9)',
+               borderColor: 'rgba(0, 0, 0)',
+               borderWidth: 1
+           }]
+       },
+       options: {
+           scales: {
+               y: {
+                   beginAtZero: true
+               }
+           }
+
+       }
+   });
+</script>
+
+
+
+{% endblock %}
