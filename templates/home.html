@@ -2,59 +2,8 @@
 {% block content %}
 {% load static %}
 
-<style>
-  body {
-    background-color: #000;
-    color: white;
-  }
 
-  .navbar {
-    background-color: white !important;
-  }
-
-  .btn-custom {
-    background-color: #2f855a;
-    border-color: #2f855a;
-    color: white;
-  }
-
-  .btn-custom:hover {
-    background-color: #276749;
-    border-color: #276749;
-  }
-
-  .carousel-item img {
-    height: 700px;
-    object-fit: cover;
-    width: 100%;
-  }
-
-  .carousel-caption {
-    bottom: 25%;
-  }
-
-  .services-section {
-    background-color: #111;
-    padding: 60px 0;
-    text-align: center;
-  }
-
-  .service-box {
-    padding: 20px;
-    border-radius: 10px;
-    background-color: #222;
-    color: white;
-  }
-  #hover-card {
-        transition: transform 0.3s ease;
-    }
-    
-    #hover-card:hover {
-        transform: scale(1.05);
-        background-color: #2f855a;
-        color: white;
-    }
-</style>
+<link rel="stylesheet" href="{% static 'css/homePages/home.css' %}">    
 
 <nav class="navbar navbar-expand-lg navbar-dark">
   <div class="container">
