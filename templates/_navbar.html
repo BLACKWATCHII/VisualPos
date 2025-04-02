@@ -1,26 +1,6 @@
 {% load static %}
-<style>
-  .btn-custom {
-    background-color: #2f855a;
-    border-color: #19a637;
-    color: white;
-  }
 
-  .btn-custom:hover {
-    background-color: #19a637;
-    border-color: #19a637;
-  }
-  .navbar {
-  height: 70px; 
-  }
-
-.navbar img {
-  width: 180px; 
-  height: auto; 
-  max-height: 100%; 
-}
-
-</style>
+<link rel="stylesheet" href="{% static 'css/homePages/navbar.css' %}">   
 <nav class="navbar navbar-expand-lg navbar-light bg-light fixed-top">
   <div class="container">
     <img src="{% static 'img/BersekerLogoPrime.png' %}" alt="Bootstrap" width="80px">
@@ -105,28 +85,4 @@
 </nav>
 
 <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
-
-<script>
-  document.getElementById('logoutButton').addEventListener('click', function(event) {
-    event.preventDefault();  
-
-    Swal.fire({
-      title: 'Cerrando sesión',
-      text: 'Por favor, espere...',
-      icon: 'info',
-      timer: 2000,
-      background: '#fff',
-      showConfirmButton: false,
-      iconColor: '#2f855a',
-      allowOutsideClick:false,
-      allowEscapeKey:false,
-      
-      onOpen: () => {
-        Swal.showLoading();  
-      },
-      willClose: () => {
-        window.location.href = '/logout';  
-      }
-    });
-  });
-</script>
+<script src="{% static 'js/homePages/navbar.js' %}"></script>

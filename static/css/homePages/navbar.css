@@ -1,0 +1,19 @@
+.btn-custom {
+    background-color: #2f855a;
+    border-color: #19a637;
+    color: white;
+  }
+
+  .btn-custom:hover {
+    background-color: #19a637;
+    border-color: #19a637;
+  }
+  .navbar {
+  height: 70px; 
+  }
+
+.navbar img {
+  width: 180px; 
+  height: auto; 
+  max-height: 100%; 
+}
