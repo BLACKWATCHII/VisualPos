@@ -3,16 +3,8 @@
 {% load static %}
 {% block content %}
 
-<style>
-    .hover-card {
-        transition: transform 0.3s ease;
-    }
-    
-    .hover-card:hover {
-        transform: scale(1.05);
-    }
-    </style>
-    
+<link rel="stylesheet" href="{% static 'css/homePages/tasks.css' %}">     
+
 <div class="container mt-4" style="margin-top: 6rem!important;">
     <div class="row">
         <!-- Caja para gráfico 1 -->
@@ -111,8 +103,8 @@
 
     </div>
 </div>
-<script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
 
+<script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
 <script src="{% static 'js/homePages/tasks.js' %}"></script>
 
 
