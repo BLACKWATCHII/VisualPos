@@ -1,79 +1,8 @@
 {% extends "base.html" %}
 {% load static %}
 {% block content %}
-<style>
-  body {
-    display: flex;
-    justify-content: center;
-    align-items: center;
-    height: 100vh;
-  }
-  .login-container {
-    display: flex;
-    border-radius: 10px;
-    overflow: hidden;
-    max-width: 900px;
-    width: 100%;
-    box-shadow: 0 4px 8px rgba(0, 0, 0, 0.2);
-  }
-  .login-section {
-    flex: 1;
-    padding: 40px;
-    background: #000;
-    color: white;
-    display: flex;
-    flex-direction: column;
-    justify-content: center;
-  }
-  .login-section h2 {
-    margin-bottom: 20px;
-  }
-  .login-section input {
-    width: 100%;
-    padding: 10px;
-    margin-bottom: 15px;
-    border: 1px solid #83C8EC;
-    border-radius: 5px;
-    background: transparent;
-    color: white;
-  }
-  .login-section input::placeholder {
-    color: #bbb;
-  }
-  .login-section button {
-    background-color: #2f855a;
-    border: none;
-    padding: 10px;
-    color: white;
-    font-size: 16px;
-    border-radius: 5px;
-    cursor: pointer;
-    width: 100%;
-  }
-  .login-section button:hover {
-    background-color: #276749;
-  }
-  .social-login {
-    display: flex;
-    justify-content: center;
-    gap: 20px;
-    margin-top: 20px;
-  }
-  .social-login img {
-    width: 40px;
-    height: 40px;
-    cursor: pointer;
-  }
-  .info-section {
-    flex: 1;
-    padding: 40px;
-    background: #2f855a;
-    color: white;
-    display: flex;
-    flex-direction: column;
-    justify-content: center;
-  }
-</style>
+
+<link rel="stylesheet" href="{% static 'css/homePages/signin.css' %}">    
 
 <div class="login-container">
   <div class="login-section">
@@ -84,13 +13,13 @@
       <input type="password" name="password" placeholder="Contraseña" required>
       <button type="submit">Sign in</button>
     </form>
-    <p><a href="#" style="color: #2f855a">Forgot Password?</a></p>
+    <p><a href="#" id="forgotPass">Forgot Password?</a></p>
     <div class="social-login">
       <img src="{% static 'img/google-icon.png' %}" alt="Google">
       <img src="{% static 'img/github-icon.png' %}" alt="GitHub">
       <img src="{% static 'img/facebook-icon.png' %}" alt="Facebook">
     </div>
-    <p>Don't have an account?  <a href="/signup/" style="color: #2f855a;">Sign up</a></p>
+    <p>Don't have an account?  <a href="/signup/" id="DontAccount">Sign up</a></p>
   </div>
   <div class="info-section">
     <h2>With tools like Beserker</h2>
@@ -112,35 +41,6 @@
 </div>
 
 <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
-<script>
-  document.addEventListener("DOMContentLoaded", function () {
-    const successMessages = document.querySelectorAll(".success-message");
-    const errorMessages = document.querySelectorAll(".error-message");
 
-  
-    successMessages.forEach(element => {
-      Swal.fire({
-        icon: "success",
-        title: "Success",
-        text: element.textContent,
-        timer: 3000, 
-        showConfirmButton: false
-      }).then(() => {
-        element.remove();
-      });
-    });
-
-   
-    errorMessages.forEach(element => {
-      Swal.fire({
-        icon: "error",
-        title: "Error",
-        text: element.textContent
-      }).then(() => {
-        element.remove();
-      });
-    });
-  });
-</script>
-
+<script src="{% static 'js/homePages/signin.js' %}"></script>
 {% endblock %}
