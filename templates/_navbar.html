@@ -3,7 +3,9 @@
 <link rel="stylesheet" href="{% static 'css/homePages/navbar.css' %}">   
 <nav class="navbar navbar-expand-lg navbar-light bg-light fixed-top">
   <div class="container">
-    <img src="{% static 'img/BersekerLogoPrime.png' %}" alt="Bootstrap" width="80px">
+    <a href="{% url 'home' %}">
+      <img src="{% static 'img/BersekerLogoPrime.png' %}" alt="Bootstrap" width="80px">
+    </a>
     <button
       class="navbar-toggler"
       type="button"
