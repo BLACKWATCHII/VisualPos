@@ -83,7 +83,7 @@ def export_clients_to_excel(request):
         'Apellido': [client.lastname for client in clients],
         'Telefono': [client.phone for client in clients]
     }
-
+    
     df = pd.DataFrame(data)
     response = HttpResponse(content_type='application/vnd.openxmlformats-officedocument.spreadsheetml.sheet')
     response['Content-Disposition'] = 'attachment; filename=Clientes.xlsx'
@@ -93,20 +93,44 @@ def export_clients_to_excel(request):
 
 @login_required
 def cargar_datos_excel(request):
-    if request.method == 'POST' and request.FILES['archivo']:
+    if request.method == 'POST' and request.FILES.get('archivo'):
         archivo = request.FILES['archivo']
-        
-        # Cargar el archivo Excel usando Pandas
+        cedulas_repetidas = []  # Lista para almacenar cédulas duplicadas
+
         try:
-            df = pd.read_excel(archivo)
-            for index, row in df.iterrows():
-                Cliente.objects.create(
-                    cedula=row['Cedula'],
-                    name=row['Nombre'],
-                    lastname=row['Apellido'],
-                    phone=row['Telefono']
-                )
-            return JsonResponse({'status': 'success', 'message': 'Datos cargados correctamente.'})
+            df = pd.read_excel(archivo, dtype={'Cedula': str})  # Asegurar que la cédula sea tratada como string
+            
+            # Eliminar filas con valores NaN en la columna Cedula
+            df = df.dropna(subset=['Cedula'])
+
+            cedulas_existentes = set(Cliente.objects.values_list('cedula', flat=True))  # Obtener cédulas existentes en la BD
+
+            clientes_nuevos = []
+            for _, row in df.iterrows():
+                cedula = str(row['Cedula']).strip()  # Convertir a string y eliminar espacios extra
+                if cedula in cedulas_existentes:
+                    cedulas_repetidas.append(cedula)  # Guardar la cédula repetida
+                else:
+                    clientes_nuevos.append(
+                        Cliente(
+                            cedula=cedula,
+                            name=row.get('Nombre', '').strip(),
+                            lastname=row.get('Apellido', '').strip(),
+                            phone=row.get('Telefono', '').strip()
+                        )
+                    )
+
+            # Guardar solo los clientes nuevos
+            if clientes_nuevos:
+                Cliente.objects.bulk_create(clientes_nuevos)
+
+            # Construcción de la respuesta
+            if cedulas_repetidas:
+                mensaje = f"Los siguientes registros no fueron importados porque ya existen: {', '.join(cedulas_repetidas)}"
+                return JsonResponse({'status': 'warning', 'message': mensaje, 'duplicados': cedulas_repetidas})
+            else:
+                return JsonResponse({'status': 'success', 'message': 'Datos cargados correctamente.'})
+
         except Exception as e:
             return JsonResponse({'status': 'error', 'message': str(e)})
 

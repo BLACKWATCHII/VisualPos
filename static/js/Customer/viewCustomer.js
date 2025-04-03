@@ -9,7 +9,7 @@ $(document).ready(function() {
                 "ordering": true,
                 "lengthChange": true,
                 "pageLength": 10,
-                "deferRender": true,  // Evita errores al renderizar
+                "deferRender": true, 
                 "language": {
                     "search": "Buscar:",
                     "lengthMenu": "Mostrar _MENU_ registros",
@@ -20,7 +20,7 @@ $(document).ready(function() {
                     }
                 }
             });
-        }, 500); // Espera un poco antes de inicializar
+        }, 500); 
     } else {
         console.error('DataTable plugin no está cargado correctamente.');
     }
@@ -42,16 +42,13 @@ document.getElementById('formCargarArchivo').addEventListener('submit', function
     }
 
     var formData = new FormData(this);
-    var importUrl = this.getAttribute('data-url');  // Obtener la URL desde el form
+    var importUrl = this.getAttribute('data-url');
 
     if (!importUrl) {
         console.error("La URL de importación no está definida.");
         return;
     }
 
-    console.log("Enviando archivo a:", importUrl);
-
-    // Mostrar la barra de progreso
     document.getElementById('progresoCarga').style.display = 'block';
 
     var xhr = new XMLHttpRequest();
@@ -68,28 +65,48 @@ document.getElementById('formCargarArchivo').addEventListener('submit', function
     xhr.onload = function() {
         if (xhr.status == 200) {
             var respuesta = JSON.parse(xhr.responseText);
-            if (respuesta.status == 'success') {
-                document.getElementById('resultadoCarga').style.display = 'block';
-                location.reload();
-                document.getElementById('descargarPlantilla').href = '/static/Customers.xlsx';
+
+            if (respuesta.status === 'success') {
+                Swal.fire({
+                    title: "Éxito",
+                    text: "Datos importados correctamente.",
+                    icon: "success",
+                    confirmButtonText: "OK"
+                }).then(() => {
+                    location.reload();
+                });
+
+            } else if (respuesta.status === 'warning') {
+                Swal.fire({
+                    title: "Advertencia",
+                    text: respuesta.message,
+                    icon: "warning",
+                    confirmButtonText: "Aceptar"
+                }).then(() => {
+                    location.reload();
+                });
+                
             } else {
                 Swal.fire("Error", respuesta.message, "error");
+                location.reload();
             }
         } else {
             Swal.fire("Error", "Error al cargar el archivo", "error");
+            location.reload();
         }
+    };
+
+    xhr.onerror = function() {
+        Swal.fire("Error", "No se pudo conectar con el servidor.", "error");
     };
 
     xhr.send(formData);
 });
 
-
-// Enviar el archivo
-xhr.send(formData);
 });
         document.getElementById("descargarPlantilla").addEventListener("click", function(event) {
             event.preventDefault();
-            const archivo = '/static/archived/Customers.xlsx';  // Ruta estática del archivo
+            const archivo = '/static/archived/Customers.xlsx';  
 
             const a = document.createElement("a");
             a.href = archivo;

@@ -76,3 +76,13 @@ hr {
     border-top: 1px solid #e9ecef;
     margin: 20px 0;
 }
+.nav-link{
+    color: black;
+  }
+  .nav-link:hover{
+    color: #2f855a;
+  }
+
+body {
+    background-color: #f5f5f5; 
+}
