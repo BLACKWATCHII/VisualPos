@@ -50,8 +50,7 @@
                     <td>{{ client.phone }}</td>
                     <td>
                         {% if client.pdf %}
-                            <a href="{% url 'download_pdf' client.id %}" class="btn btn-sm btn-info"
-                               data-toggle="modal" data-target="#pdfModal">Descargar PDF</a>
+                            <a href="{% url 'download_pdf' client.id %}" class="btn btn-sm btn-info" data-target="#pdfModal">Descargar PDF</a>
                         {% else %}
                             No PDF
                         {% endif %}
