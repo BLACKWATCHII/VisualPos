@@ -24,7 +24,7 @@
         <div class="col-md-6 mb-4">
             <div class="card shadow p-3" style="max-width: 720px;">
                 <div class="card-header" style="background-color: #2f855a; color: white;">
-                    Clientes nuevos
+                    Customers nuevos
                 </div>
                 <div class="card-body">
                     <canvas id="chart2" width="400" height="165"></canvas>
@@ -61,8 +61,8 @@
                     <a href="{% url 'viewClient' %}" style="text-decoration: none;">
                         <div class="card bg-info text-white hover-card">
                             <div class="card-body">
-                                <h5 class="card-title">Clientes Registrados</h5>
-                                <p class="card-text">{{ num_clientes }}</p>
+                                <h5 class="card-title">Customers Registrados</h5>
+                                <p class="card-text">{{ num_Customers }}</p>
                             </div>
                         </div>
                     </a>
@@ -117,7 +117,7 @@
        data: {
            labels: dates,
            datasets: [{
-               label: 'Clientes Nuevos',
+               label: 'Customers Nuevos',
                data: counts,
                backgroundColor: 'rgba(54, 176, 9)',
                borderColor: 'rgba(0, 0, 0)',

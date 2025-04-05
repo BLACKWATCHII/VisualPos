@@ -22,10 +22,10 @@
       <ul class="navbar-nav ms-auto">
         {% if user.is_authenticated %}
         <li class="nav-item dropdown">
-          <a class="nav-link dropdown-toggle" href="#" id="clientesDropdown" role="button" data-bs-toggle="dropdown" aria-expanded="false">
+          <a class="nav-link dropdown-toggle" href="#" id="CustomersDropdown" role="button" data-bs-toggle="dropdown" aria-expanded="false">
             Productos
           </a>
-          <ul class="dropdown-menu" aria-labelledby="clientesDropdown">
+          <ul class="dropdown-menu" aria-labelledby="CustomersDropdown">
             <li><a class="dropdown-item" href="{% url 'viewItem' %}">ver productos</a></li>
             <li><a class="dropdown-item" href="{% url 'createItem' %}">Crear productos</a></li>
             <li><a class="dropdown-item" href="{% url 'createTax' %}">Crear impuestos</a></li>
@@ -36,12 +36,12 @@
           <a href="{% url 'Dasboard' %}" class="nav-link">Paneles</a>
         </li>
         <li class="nav-item dropdown">
-          <a class="nav-link dropdown-toggle" href="#" id="clientesDropdown" role="button" data-bs-toggle="dropdown" aria-expanded="false">
-            Clientes
+          <a class="nav-link dropdown-toggle" href="#" id="CustomersDropdown" role="button" data-bs-toggle="dropdown" aria-expanded="false">
+            Customers
           </a>
-          <ul class="dropdown-menu" aria-labelledby="clientesDropdown">
-            <li><a class="dropdown-item" href="{% url 'viewClient' %}">Ver Clientes</a></li>
-            <li><a class="dropdown-item" href="{% url 'createCustomer' %}">Crear Cliente</a></li>
+          <ul class="dropdown-menu" aria-labelledby="CustomersDropdown">
+            <li><a class="dropdown-item" href="{% url 'viewClient' %}">Ver Customers</a></li>
+            <li><a class="dropdown-item" href="{% url 'createCustomer' %}">Crear Customer</a></li>
           </ul>
         </li>
         <li class="nav-item">

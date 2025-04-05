@@ -5,13 +5,13 @@
 <link rel="stylesheet" href="{% static 'css/Customer/createCustomer.css' %}">
 <div class="card mt-5" style="margin-top: 6rem!important;">
     <div class="card-header">
-        Clientes
+        Customers
     </div>
     <br>
     <form method="POST" action="{% url 'createCustomer' %}" enctype="multipart/form-data">  
         {% csrf_token %}
         <div class="section">
-            <h5>INFORMACIÓN DEL CLIENTE</h5>
+            <h5>INFORMACIÓN DEL Customer</h5>
             <div class="form-row">
                 <div class="form-group col-md-6">
                     <label for="id_name">Nombre</label>

@@ -19,10 +19,10 @@ def item(request):
     return render(request, 'items/viewItem.html', context)
 
 def download_plant(request):
-    file_path = os.path.join(settings.BASE_DIR, 'static/archived/Clientes.xlsx')
+    file_path = os.path.join(settings.BASE_DIR, 'static/archived/Customers.xlsx')
     if os.path.exists(file_path):
         response = FileResponse(open(file_path, 'rb'), content_type='application/vnd.openxmlformats-officedocument.spreadsheetml.sheet')
-        response['Content-Disposition'] = 'attachment; filename="Clientes.xlsx"'
+        response['Content-Disposition'] = 'attachment; filename="Customers.xlsx"'
         return response
     else:
         return HttpResponseNotFound("El archivo no existe.")

@@ -1,3 +1,5 @@
+
+//DataTable
 $(document).ready(function() {
     $.noConflict(); 
 
@@ -104,13 +106,15 @@ document.getElementById('formCargarArchivo').addEventListener('submit', function
 });
 
 });
+
+        //Download Template For import of customer
         document.getElementById("descargarPlantilla").addEventListener("click", function(event) {
             event.preventDefault();
             const archivo = '/static/archived/Customers.xlsx';  
 
             const a = document.createElement("a");
             a.href = archivo;
-            a.download = "Clientes.xlsx";
+            a.download = "Customers.xlsx";
             document.body.appendChild(a);
             a.click();
             document.body.removeChild(a);
@@ -118,6 +122,7 @@ document.getElementById('formCargarArchivo').addEventListener('submit', function
 
     const deleteButtons = document.querySelectorAll('.delete-btn');
     
+    // Alert for remove a customer
     deleteButtons.forEach(button => {
         button.addEventListener('click', function (event) {
             event.preventDefault(); 
@@ -125,7 +130,7 @@ document.getElementById('formCargarArchivo').addEventListener('submit', function
             const url = this.getAttribute('data-url');
             
             Swal.fire({
-                title: `¿Estás seguro que quieres eliminar a este cliente?`,
+                title: `¿Estás seguro que quieres eliminar a este Customer?`,
                 text: "¡No podrás revertir esta acción!",
                 icon: 'warning',
                 showCancelButton: true,

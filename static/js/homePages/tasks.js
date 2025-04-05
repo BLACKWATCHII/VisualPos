@@ -8,7 +8,7 @@ const counts = JSON.parse('{{ counts|escapejs }}');
        data: {
            labels: dates,
            datasets: [{
-               label: 'Clientes Nuevos',
+               label: 'Customers Nuevos',
                data: counts,
                backgroundColor: 'rgba(54, 176, 9)',
                borderColor: 'rgba(0, 0, 0)',
