@@ -35,20 +35,13 @@ def view_Clients(request):
 @login_required
 def download_pdf(request, client_id):
     client = get_object_or_404(Cliente, id=client_id)
+    print(client)
     pdf_path = client.pdf.path
     with open(pdf_path, 'rb') as pdf_file:
         response = HttpResponse(pdf_file.read(), content_type='application/pdf')
         response['Content-Disposition'] = f'attachment; filename={os.path.basename(pdf_path)}'
         return response
 
-@login_required
-def preview_pdf(request, client_id):
-    client = get_object_or_404(Cliente, id=client_id)
-    pdf_path = client.pdf.path
-    with open(pdf_path, 'rb') as pdf_file:
-        response = HttpResponse(pdf_file.read(), content_type='application/pdf')
-        response['Content-Disposition'] = 'inline'
-        return response
 
 @login_required
 def update_cliente(request, client_id):
