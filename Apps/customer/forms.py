@@ -55,17 +55,27 @@ class CustomerForm(forms.ModelForm):
 
     class Meta:
         model = Customer
-        fields = ['name', 'lastname', 'address', 'city', 'cedula', 'phone', 'email', 'pdf']
+        fields = [
+            'name', 'lastname', 'address', 'city', 'neighborhood', 'cedula', 'phone',
+            'email', 'income', 'source_of_income', 'employment_situation', 'producto_solicitados',
+            'pdf'
+        ]
         widgets = {
             'name': forms.TextInput(attrs={'class': 'form-control'}),
-            'lastname': forms.TextInput(attrs={'class': 'form-control'}),
+            'lastName': forms.TextInput(attrs={'class': 'form-control'}),
             'address': forms.TextInput(attrs={'class': 'form-control'}),
             'city': forms.TextInput(attrs={'class': 'form-control'}),
+            'neighborhood': forms.TextInput(attrs={'class': 'form-control'}),
             'phone': forms.TextInput(attrs={'class': 'form-control'}),
             'email': forms.EmailInput(attrs={'class': 'form-control'}),
+            'income': forms.NumberInput(attrs={'class': 'form-control'}),
+            'source_of_income': forms.TextInput(attrs={'class': 'form-control'}),
+            'employment_situation': forms.TextInput(attrs={'class': 'form-control'}),
+            'producto_solicitados': forms.TextInput(attrs={'class': 'form-control'}),
             'pdf': forms.FileInput(attrs={'class': 'form-control'}),
         }
 
+        
     def clean_cedula(self):
         cedula = self.cleaned_data.get('cedula')
         if not cedula.isdigit() or not (8 <= len(cedula) <= 10):
