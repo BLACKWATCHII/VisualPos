@@ -1,27 +1,24 @@
 .btn-custom {
-    background-color: #2f855a;
-    border-color: #19a637;
-    color: white;
-  }
-
-  .btn-custom:hover {
-    background-color: #19a637;
-    border-color: #19a637;
-  }
-  .navbar {
-  height: 70px; 
-  box-shadow: 0px 6px 10px rgba(0, 0, 0, 0.19);
-  }
-
-.navbar img {
-  width: 180px; 
-  height: auto; 
-  max-height: 100%; 
+  background-color: #2f855a;
+  border-color: #19a637;
+  color: white;
 }
-
-.nav-link{
+.btn-custom:hover {
+  background-color: #19a637;
+  border-color: #19a637;
+}
+.navbar {
+  height: 70px;
+  box-shadow: 0px 6px 10px rgba(0, 0, 0, 0.19);
+}
+.navbar img {
+  width: 180px;
+  height: auto;
+  max-height: 100%;
+}
+.nav-link {
   color: black;
 }
-.nav-link:hover{
+.nav-link:hover {
   color: #2f855a;
 }

@@ -91,37 +91,45 @@ def export_clients_to_excel(request):
 def cargar_datos_excel(request):
     if request.method == 'POST' and request.FILES.get('archivo'):
         archivo = request.FILES['archivo']
-        cedulas_repetidas = []  # Lista para almacenar cédulas duplicadas
+        cedulas_repetidas = []
 
         try:
-            df = pd.read_excel(archivo, dtype={'Cedula': str})  # Asegurar que la cédula sea tratada como string
-            
-            # Eliminar filas con valores NaN en la columna Cedula
+            df = pd.read_excel(archivo, dtype={'Cedula': str})
+
             df = df.dropna(subset=['Cedula'])
 
-            cedulas_existentes = set(Customer.objects.values_list('cedula', flat=True))  # Obtener cédulas existentes en la BD
+            cedulas_existentes = set(Customer.objects.values_list('cedula', flat=True))
 
-            Customers_nuevos = []
+            customers_nuevos = []
             for _, row in df.iterrows():
-                cedula = str(row['Cedula']).strip()  # Convertir a string y eliminar espacios extra
+                cedula = str(row.get('Cedula', '')).strip()
                 if cedula in cedulas_existentes:
-                    cedulas_repetidas.append(cedula)  # Guardar la cédula repetida
-                else:
-                    Customers_nuevos.append(
+                    cedulas_repetidas.append(cedula)
+                    continue
+
+                try:
+                    customers_nuevos.append(
                         Customer(
+                            name=safe_strip(row.get('Nombre', '')),
+                            lastname=safe_strip(row.get('Apellido', '')),
                             cedula=cedula,
-                            name=row.get('Nombre', '').strip(),
-                            lastname=row.get('Apellido', '').strip(),
-                            phone=row.get('Telefono', '').strip(),
-                            Address = row.get('Direccion', '').strp()
+                            phone=safe_strip(row.get('Telefono', '')),
+                            neighborhood=safe_strip(row.get('Barrio', '')),
+                            address=safe_strip(row.get('Direccion', '')),
+                            email=safe_strip(row.get('Correo electronico', '')),
+                            income=float(row.get('Ingreso mensual', 0) or 0),
+                            source_of_income=safe_strip(row.get('Fuente de ingreso', '')),
+                            employment_situation=safe_strip(row.get('Situacion laboral', '')),
+                            producto_solicitados=safe_strip(row.get('Producto solicitado', ''))
                         )
                     )
+                except Exception as e:
+                    print(f"Error procesando fila {row.to_dict()}: {e}")
+                    continue
 
-            # Guardar solo los Customers nuevos
-            if Customers_nuevos:
-                Customer.objects.bulk_create(Customers_nuevos)
+            if customers_nuevos:
+                Customer.objects.bulk_create(customers_nuevos)
 
-            # Construcción de la respuesta
             if cedulas_repetidas:
                 mensaje = f"Los siguientes registros no fueron importados porque ya existen: {', '.join(cedulas_repetidas)}"
                 return JsonResponse({'status': 'warning', 'message': mensaje, 'duplicados': cedulas_repetidas})
@@ -132,5 +140,8 @@ def cargar_datos_excel(request):
             return JsonResponse({'status': 'error', 'message': str(e)})
 
     return JsonResponse({'status': 'error', 'message': 'No se recibió ningún archivo.'})
+
+def safe_strip(value):
+    return str(value).strip() if value is not None else ''
 ################################################################################################################
 

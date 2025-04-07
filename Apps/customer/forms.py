@@ -60,9 +60,10 @@ class CustomerForm(forms.ModelForm):
             'email', 'income', 'source_of_income', 'employment_situation', 'producto_solicitados',
             'pdf'
         ]
+        exclude = ['neighborhood', 'income', 'source_of_income', 'employment_situation', 'producto_solicitados']
         widgets = {
             'name': forms.TextInput(attrs={'class': 'form-control'}),
-            'lastName': forms.TextInput(attrs={'class': 'form-control'}),
+            'lastname': forms.TextInput(attrs={'class': 'form-control'}),
             'address': forms.TextInput(attrs={'class': 'form-control'}),
             'city': forms.TextInput(attrs={'class': 'form-control'}),
             'neighborhood': forms.TextInput(attrs={'class': 'form-control'}),
