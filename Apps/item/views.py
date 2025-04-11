@@ -32,7 +32,7 @@ def CreateItem(request):
     taxes = Tax.objects.all()
     if request.method == 'POST':
         name = request.POST.get('Name')
-        referents = request.POST.get('Referents')  # Correct field name
+        referents = request.POST.get('Referents') 
         description = request.POST.get('Description')
         price = request.POST.get('Price')
         stock = request.POST.get('Stock')
@@ -52,7 +52,7 @@ def CreateItem(request):
             return render(request, 'items/createItem.html', {'taxes': taxes})
 
         try:
-            if Item.objects.filter(Referents=referents).exists():  # Correct field name
+            if Item.objects.filter(Referents=referents).exists():  
                 messages.error(request, 'Ya existe un ítem con esa referencia.')
                 return render(request, 'items/createItem.html', {'taxes': taxes})
 
