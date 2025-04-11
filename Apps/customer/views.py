@@ -116,7 +116,7 @@ def cargar_datos_excel(request):
                             phone=safe_strip(row.get('Telefono', '')),
                             neighborhood=safe_strip(row.get('Barrio', '')),
                             address=safe_strip(row.get('Direccion', '')),
-                            email=safe_strip(row.get('Correo electronico', '')),
+                            email=safe_strip(row.get('Email', '')),
                             income=float(row.get('Ingreso mensual', 0) or 0),
                             source_of_income=safe_strip(row.get('Fuente de ingreso', '')),
                             employment_situation=safe_strip(row.get('Situacion laboral', '')),

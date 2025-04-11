@@ -10,7 +10,7 @@
             Productos
         </div>
         <div class="section-header">INFORMACIÓN DEL PRODUCTO</div>
-        <form method="post" id="create-item-form">
+        <form method="post" action="{% url 'createItem' %}"  id="create-item-form">
             {% csrf_token %}
             <div class="form-group">
                 <label for="Name">Nombre</label>

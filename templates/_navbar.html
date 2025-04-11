@@ -23,7 +23,7 @@
         {% if user.is_authenticated %}
         <li class="nav-item dropdown">
           <a class="nav-link dropdown-toggle" href="#" id="CustomersDropdown" role="button" data-bs-toggle="dropdown" aria-expanded="false">
-            Productos
+            Inventario
           </a>
           <ul class="dropdown-menu" aria-labelledby="CustomersDropdown">
             <li><a class="dropdown-item" href="{% url 'viewItem' %}">ver productos</a></li>
@@ -43,9 +43,6 @@
             <li><a class="dropdown-item" href="{% url 'viewClient' %}">Ver Clientes</a></li>
             <li><a class="dropdown-item" href="{% url 'createCustomer' %}">Crear Clientes</a></li>
           </ul>
-        </li>
-        <li class="nav-item">
-          <a href="" class="nav-link">Inventario</a>
         </li>
         <li class="nav-item">
           <a href="" class="nav-link">Facturas</a>
