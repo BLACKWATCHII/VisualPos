@@ -11,7 +11,7 @@ class Item(models.Model):
     create_date = models.DateTimeField(auto_now_add=True)
     active = models.BooleanField(default=True)
     updateDate = models.DateTimeField(auto_now_add=True)
-    tax = models.ForeignKey(Tax,on_delete= models.CASCADE)
+    tax = models.ForeignKey(Tax,on_delete= models.CASCADE,null=True, blank=True)
     user = models.ForeignKey(User, on_delete=models.CASCADE, related_name='productos')
 
     def __str__(self):

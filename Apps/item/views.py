@@ -27,10 +27,15 @@ def download_plant(request):
     else:
         return HttpResponseNotFound("El archivo no existe.")
 
+from django.db import IntegrityError
+
 @login_required
 def CreateItem(request):
+    print("Entrando en la vista CreateItem")
     taxes = Tax.objects.all()
+
     if request.method == 'POST':
+        print("Método POST detectado")
         name = request.POST.get('Name')
         referents = request.POST.get('Referents') 
         description = request.POST.get('Description')
@@ -46,13 +51,14 @@ def CreateItem(request):
 
         try:
             price = float(price)
-            stock = int(stock)
+            stock = float(stock)
         except (ValueError, TypeError):
             messages.error(request, 'Los campos Precio y Cantidad deben ser números válidos.')
             return render(request, 'items/createItem.html', {'taxes': taxes})
 
         try:
             if Item.objects.filter(Referents=referents).exists():  
+                print("Referencia duplicada")
                 messages.error(request, 'Ya existe un ítem con esa referencia.')
                 return render(request, 'items/createItem.html', {'taxes': taxes})
 
@@ -63,15 +69,18 @@ def CreateItem(request):
                 Price=price,  
                 Stock=stock,  
                 active=active,
-                # tax=tax,  
                 user=request.user
             )
             messages.success(request, 'Ítem creado correctamente.')
             return redirect('viewItem')
-        except IntegrityError:
+        except IntegrityError as e:
+            print(f"Error de integridad: {e}")
             messages.error(request, 'Hubo un problema al crear el ítem.')
             return render(request, 'items/createItem.html', {'taxes': taxes})
+
+    print("Método GET: renderizando formulario vacío")
     return render(request, 'items/createItem.html', {'taxes': taxes})
+
 
 
 @login_required
