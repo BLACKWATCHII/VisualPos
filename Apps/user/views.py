@@ -8,7 +8,7 @@ from django.db.models import Count
 from item.models import Item
 import json
 from django.contrib import messages
-from customer.models import Cliente
+from customer.models import Customer
 
 # Login and register
 
@@ -34,10 +34,10 @@ def signup(request):
 
 @login_required
 def Dasboard(request):
-    customer_count = Cliente.objects.count()
+    customer_count = Customer.objects.count()
     items_count = Item.objects.filter(active=True).count()
     new_clients_per_day = (
-        Cliente.objects
+        Customer.objects
         .filter(record_date__isnull=False)
         .values('record_date')
         .annotate(count=Count('id'))
@@ -50,7 +50,7 @@ def Dasboard(request):
     counts = [entry['count'] for entry in new_clients_per_day]
 
     context = {
-        'num_clientes': customer_count,
+        'num_Customers': customer_count,
         'num_items': items_count,
         'dates': json.dumps(dates),  
         'counts': json.dumps(counts),  

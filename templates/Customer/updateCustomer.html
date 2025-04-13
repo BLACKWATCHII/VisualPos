@@ -5,13 +5,13 @@
 <link rel="stylesheet" href="{% static 'css/Customer/updateCustomer.css' %}">
 <div class="card mt-5" style="margin-top: 6rem!important;">
     <div class="card-header">
-        Actualizar cliente
+        Actualizar Customer
     </div>
     <br>
-    <form method="POST" action="{% url 'update_cliente' client_id %}" enctype="multipart/form-data">
+    <form method="POST" action="{% url 'update_Customer' client_id %}" enctype="multipart/form-data">
         {% csrf_token %}
         <div class="section">
-            <h5>INFORMACIÓN DEL CLIENTE</h5>
+            <h5>INFORMACIÓN DEL EMPLEADO</h5>
             <div class="form-row">
                 <div class="form-group col-md-6">
                     <label for="id_name">Nombre</label>

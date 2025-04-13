@@ -10,7 +10,7 @@
             Productos
         </div>
         <div class="section-header">INFORMACIÓN DEL PRODUCTO</div>
-        <form method="post" id="create-item-form">
+        <form method="post" action="{% url 'createItem' %}"  id="create-item-form">
             {% csrf_token %}
             <div class="form-group">
                 <label for="Name">Nombre</label>
@@ -25,8 +25,8 @@
                 <textarea id="Description" name="Description" required></textarea>
             </div>
             <div class="form-group">
-                <label for="Price">Precio</label>
-                <input type="text" name="currency-field" id="currency-field" placeholder="$1,000,000.00">
+                <!-- <label for="Precio">Precio</label> -->
+                <input type="text" name="Price" id="currency-field" placeholder="$1,000,000.00">
             </div>
             <div class="form-group">
                 <label for="Stock">Cantidad</label>
@@ -53,6 +53,19 @@
         </form>
     </div>
 </div>
+{% if messages %}
+    <script id="django-messages-json" type="application/json">
+        [
+            {% for message in messages %}
+                {
+                    "level": "{{ message.tags }}",
+                    "message": "{{ message|escapejs }}"
+                }{% if not forloop.last %},{% endif %}
+            {% endfor %}
+        ]
+    </script>
+{% endif %}
+<script src="{% static 'js/Inventory/createItem.js' %}"></script>
 
 <style>
     body {

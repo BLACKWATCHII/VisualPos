@@ -13,105 +13,106 @@
 <div class="container mt-5 card-margin-top">
     <div class="card shadow">
         <div class="card-body">
-            <div class="section d-flex justify-content-between align-items-center mb-3">
-                <div class="card-header">
-                    Clientes registrados
-                </div>
-                <div class="search-container">
-                    <div>
-                        <a class="btn btn-primary btn-spaced" href="{% url 'createCustomer' %}">+ Nuevo</a>
-                        <a class="btn btn-success btn-spaced" id="exportButton" data-url="{% url 'export_clients_to_excel' %}">Exportar</a>
-                        <a class="btn btn-danger" id="importButton" data-bs-toggle="modal" data-bs-target="#miModal">Importar</a>
-                      </div>
+            <div class="d-flex flex-column flex-md-row justify-content-between align-items-start align-items-md-center mb-3 gap-2 flex-wrap">
+                <h5 class="card-header mb-0">Clientes registrados</h5>
+                <div class="search-container d-flex flex-wrap justify-content-md-end gap-2">
+                    <a class="btn btn-primary btn-sm btn-spaced" href="{% url 'createCustomer' %}">+ Nuevo</a>
+                    <a class="btn btn-success btn-sm btn-spaced" id="exportButton" data-url="{% url 'export_clients_to_excel' %}">Exportar</a>
+                    <a class="btn btn-danger btn-sm" id="importButton" data-bs-toggle="modal" data-bs-target="#miModal">Importar</a>
                 </div>
             </div>
-            <table id="clientsTable" class="table table-hover">
-                <thead class="thead-light">
-                <tr>
-                    <th><input type="checkbox"></th>
-                    <th style="font-weight: bold;">#</th>
-                    <th>Cedula</th>
-                    <th>Nombre</th>
-                    <th>Apellido</th>
-                    <th>Telefono</th>
-                    <th>PDF</th>
-                    <th>Acciones</th>
-                </tr>
-                </thead>
-                <tbody id="tableBody">
-                {% if clients %}
-                {% for client in clients %}
-                <tr>
-                    <td><input type="checkbox"></td>
-                    <td>#{{ client.id }}</td>
-                    <td>{{ client.cedula }}</td>
-                    <td>{{ client.name }}</td>
-                    <td>{{ client.lastname }}</td>
-                    <td>{{ client.phone }}</td>
-                    <td>
-                        {% if client.pdf %}
-                            <a href="{% url 'download_pdf' client.id %}" class="btn btn-sm btn-info" data-target="#pdfModal">Descargar PDF</a>
-                        {% else %}
-                            No PDF
-                        {% endif %}
-                    </td>
-                    <td>
-                        <a href="{% url 'update_cliente' client.id %}" class="btn btn-sm btn-success">
-                            <i id="icono-editar" class="fas fa-edit"></i>
-                        </a>       
-                        <a href="{% url 'delete_cliente' client.id %}" 
-                            class="btn btn-sm btn-danger delete-btn" 
-                            data-url="{% url 'delete_cliente' client.id %}">
-                            <i id="icono-eliminar" class="fas fa-trash"></i>
-                        </a>                   
-                    </td>
-                </tr>
-                {% endfor %}
-                {% else %}
-                <tr>
-                    <td colspan="8" class="text-center">No hay clientes registrados</td>
-                </tr>
-                {% endif %}
-                </tbody>
-            </table>
+
+            <div class="table-responsive">
+                <table id="clientsTable" class="table table-hover">
+                    <thead class="thead-light">
+                    <tr>
+                        <th><input type="checkbox"></th>
+                        <th style="font-weight: bold;">#</th>
+                        <th>Cedula</th>
+                        <th>Nombre</th>
+                        <th>Apellido</th>
+                        <th>Telefono</th>
+                        <th>PDF</th>
+                        <th>Acciones</th>
+                    </tr>
+                    </thead>
+                    <tbody id="tableBody">
+                    {% if clients %}
+                    {% for client in clients %}
+                    <tr>
+                        <td><input type="checkbox"></td>
+                        <td>#{{ client.id }}</td>
+                        <td>{{ client.cedula }}</td>
+                        <td>{{ client.name }}</td>
+                        <td>{{ client.lastname }}</td>
+                        <td>{{ client.phone }}</td>
+                        <td>
+                            {% if client.pdf %}
+                                <a href="{% url 'download_pdf' client.id %}" class="btn btn-sm btn-info" data-target="#pdfModal">Descargar PDF</a>
+                            {% else %}
+                                No PDF
+                            {% endif %}
+                        </td>
+                        <td>
+                            <a href="{% url 'update_Customer' client.id %}" class="btn btn-sm btn-success">
+                                <i id="icono-editar" class="fas fa-edit"></i>
+                            </a>       
+                            <a href="{% url 'delete_Customer' client.id %}" 
+                                class="btn btn-sm btn-danger delete-btn" 
+                                data-url="{% url 'delete_Customer' client.id %}">
+                                <i id="icono-eliminar" class="fas fa-trash"></i>
+                            </a>                   
+                        </td>
+                    </tr>
+                    {% endfor %}
+                    {% else %}
+                    <tr>
+                        <td colspan="8" class="text-center">No hay Clientes registrados</td>
+                    </tr>
+                    {% endif %}
+                    </tbody>
+                </table>
+            </div>
+
             <ul id="pagination" class="pagination"></ul>
         </div>
+
         <!-- Modal -->
-            <div class="modal fade" id="miModal" tabindex="-1" aria-labelledby="miModalLabel" aria-hidden="true">
-                <div class="modal-dialog">
-                  <div class="modal-content">
-                    <div class="modal-header">
-                      <h5 class="modal-title" id="miModalLabel">Carga masiva de datos</h5>
-                      <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Cerrar"></button>
+        <div class="modal fade" id="miModal" tabindex="-1" aria-labelledby="miModalLabel" aria-hidden="true">
+            <div class="modal-dialog">
+              <div class="modal-content">
+                <div class="modal-header">
+                  <h5 class="modal-title" id="miModalLabel">Carga masiva de datos</h5>
+                  <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Cerrar"></button>
+                </div>
+                <div class="modal-body">
+                  <form id="formCargarArchivo" enctype="multipart/form-data" data-url="{% url 'cargar_datos_excel' %}">
+                    {% csrf_token %}
+                    <div class="mb-3">
+                      <label for="archivoExcel" class="form-label">Selecciona un archivo Excel</label>
+                      <input type="file" class="form-control" id="archivoExcel" name="archivo" accept=".xlsx, .xls">
                     </div>
-                    <div class="modal-body">
-                      <form id="formCargarArchivo" enctype="multipart/form-data" data-url="{% url 'cargar_datos_excel' %}">
-                        {% csrf_token %}
-                        <div class="mb-3">
-                          <label for="archivoExcel" class="form-label">Selecciona un archivo Excel</label>
-                          <input type="file" class="form-control" id="archivoExcel" name="archivo" accept=".xlsx, .xls">
-                        </div>
-                        <div class="d-flex justify-content-center" style="margin-right: 10px;">
-                          <button type="submit" class="btn btn-primary" id="btnCargar">Cargar</button>
-                          <a  id="descargarPlantilla" class="btn btn-success">Descargar Plantilla</a>
-                        </div>
-                        <div id="progresoCarga" class="mt-3" style="display:none;">
-                          <p>Cargando... <span id="progresoPorcentaje">0%</span></p>
-                          <div class="progress">
-                            <div id="progresoBarra" class="progress-bar" style="width: 0%"></div>
-                          </div>
-                        </div>
-                      </form>
-                      <div id="resultadoCarga" style="display:none;">
-                        <p>Archivo cargado correctamente.</p>
+                    <div class="d-flex justify-content-center flex-wrap gap-2">
+                      <button type="submit" class="btn btn-primary" id="btnCargar">Cargar</button>
+                      <a  id="descargarPlantilla" class="btn btn-success">Descargar Plantilla</a>
+                    </div>
+                    <div id="progresoCarga" class="mt-3" style="display:none;">
+                      <p>Cargando... <span id="progresoPorcentaje">0%</span></p>
+                      <div class="progress">
+                        <div id="progresoBarra" class="progress-bar" style="width: 0%"></div>
                       </div>
                     </div>
-                    <div class="modal-footer">
-                      <button type="button" class="btn btn-danger" data-bs-dismiss="modal">Cerrar</button>
-                    </div>
+                  </form>
+                  <div id="resultadoCarga" style="display:none;">
+                    <p>Archivo cargado correctamente.</p>
                   </div>
                 </div>
+                <div class="modal-footer">
+                  <button type="button" class="btn btn-danger" data-bs-dismiss="modal">Cerrar</button>
+                </div>
               </div>
+            </div>
+          </div>
     </div>
 </div>
 

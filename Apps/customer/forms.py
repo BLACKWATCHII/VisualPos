@@ -2,7 +2,7 @@ from django import forms
 from django.contrib.auth.forms import UserCreationForm
 from django.contrib.auth.models import User
 from django.contrib.auth.forms import AuthenticationForm
-from customer.models import Cliente
+from customer.models import Customer
 from item.models import Item
 from django.core.validators import RegexValidator
 from django.core.exceptions import ValidationError
@@ -44,7 +44,7 @@ class NumericCedulaField(forms.CharField):
             code='invalid_cedula'
         ))
 
-class ClienteForm(forms.ModelForm):
+class CustomerForm(forms.ModelForm):
     cedula = NumericCedulaField(
         label="Cédula",
         widget=forms.TextInput(attrs={'class': 'form-control'}),
@@ -54,25 +54,36 @@ class ClienteForm(forms.ModelForm):
     )
 
     class Meta:
-        model = Cliente
-        fields = ['name', 'lastname', 'address', 'city', 'cedula', 'phone', 'email', 'pdf']
+        model = Customer
+        fields = [
+            'name', 'lastname', 'address', 'city', 'neighborhood', 'cedula', 'phone',
+            'email', 'income', 'source_of_income', 'employment_situation', 'producto_solicitados',
+            'pdf'
+        ]
+        exclude = ['neighborhood', 'income', 'source_of_income', 'employment_situation', 'producto_solicitados']
         widgets = {
             'name': forms.TextInput(attrs={'class': 'form-control'}),
             'lastname': forms.TextInput(attrs={'class': 'form-control'}),
             'address': forms.TextInput(attrs={'class': 'form-control'}),
             'city': forms.TextInput(attrs={'class': 'form-control'}),
+            'neighborhood': forms.TextInput(attrs={'class': 'form-control'}),
             'phone': forms.TextInput(attrs={'class': 'form-control'}),
             'email': forms.EmailInput(attrs={'class': 'form-control'}),
+            'income': forms.NumberInput(attrs={'class': 'form-control'}),
+            'source_of_income': forms.TextInput(attrs={'class': 'form-control'}),
+            'employment_situation': forms.TextInput(attrs={'class': 'form-control'}),
+            'producto_solicitados': forms.TextInput(attrs={'class': 'form-control'}),
             'pdf': forms.FileInput(attrs={'class': 'form-control'}),
         }
 
+        
     def clean_cedula(self):
         cedula = self.cleaned_data.get('cedula')
         if not cedula.isdigit() or not (8 <= len(cedula) <= 10):
             raise ValidationError('Ingrese una cédula válida de entre 8 y 10 dígitos.')
 
         instance_id = self.instance.id if self.instance else None
-        if Cliente.objects.filter(cedula=cedula).exclude(id=instance_id).exists():
+        if Customer.objects.filter(cedula=cedula).exclude(id=instance_id).exists():
             raise ValidationError('La cédula ya está registrada.')
 
         return cedula
