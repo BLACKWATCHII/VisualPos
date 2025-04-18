@@ -50,6 +50,15 @@ Berserker is a sales software designed to optimize and streamline the commercial
    python manage.py runserver
    ```
 
+## Extra📢
+
+Command Delete file migrations and cache
+
+  ```sh
+Get-ChildItem -Recurse -Directory -Filter "migrations" | Where-Object { $_.FullName -notmatch "\\env\\" } | Remove-Item -Recurse -Force
+Get-ChildItem -Recurse -Directory -Filter "__pycache__" | Where-Object { $_.FullName -notmatch "\\env\\" } | Remove-Item -Recurse -Force
+  ```
+
 ## 📢 Contributions
 
 Contributions are welcome! If you want to collaborate, please open an issue or submit a pull request.
