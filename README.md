@@ -32,16 +32,20 @@ Berserker is a sales software designed to optimize and streamline the commercial
    ```sh
    cd berserker
    ```
-3. Install dependencies:
+3. Install Virtual environment
+   ```sh
+   pyton -m venv env
+   ```
+4. Install dependencies:
    ```sh
    pip install -r requirements.txt
    ```
-4. Configure the environment in the `.env` file.
-5. Apply migrations:
+5. Configure the environment in the `.env` file.
+6. Apply migrations:
    ```sh
    python manage.py migrate
    ```
-6. Start the server:
+7. Start the server:
    ```sh
    python manage.py runserver
    ```
