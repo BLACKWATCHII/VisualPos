@@ -9,6 +9,7 @@ from item.models import Item
 import json
 from django.contrib import messages
 from customer.models import Customer
+from django.apps import AppConfig
 
 # Login and register
 
@@ -88,6 +89,8 @@ def signin(request):
         form = CustomAuthenticationForm()
 
     return render(request, 'signin.html', {'form': form})
+
+
 
 
 
