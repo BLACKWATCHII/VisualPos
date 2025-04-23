@@ -89,6 +89,7 @@ def export_clients_to_excel(request):
 
 @login_required
 def cargar_datos_excel(request):
+    print("Se recibió una petición para importar Excel") 
     if request.method == 'POST' and request.FILES.get('archivo'):
         archivo = request.FILES['archivo']
         cedulas_repetidas = []

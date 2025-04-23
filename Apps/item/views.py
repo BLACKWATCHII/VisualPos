@@ -13,7 +13,7 @@ from django.db import IntegrityError
 def item(request):
     items = Item.objects.all()  
     context = {
-        'item': items,  
+        'items': items,  
     }
     return render(request, 'items/viewItem.html', context)
 
