@@ -8,13 +8,12 @@ from django.conf import settings
 from django.contrib import messages
 from django.db import IntegrityError
 
-
 # Create item and view
 @login_required
 def item(request):
     items = Item.objects.all()  
     context = {
-        'item': items,  
+        'items': items,  
     }
     return render(request, 'items/viewItem.html', context)
 
@@ -27,7 +26,7 @@ def download_plant(request):
     else:
         return HttpResponseNotFound("El archivo no existe.")
 
-from django.db import IntegrityError
+
 
 @login_required
 def CreateItem(request):
@@ -77,8 +76,6 @@ def CreateItem(request):
             print(f"Error de integridad: {e}")
             messages.error(request, 'Hubo un problema al crear el ítem.')
             return render(request, 'items/createItem.html', {'taxes': taxes})
-
-    print("Método GET: renderizando formulario vacío")
     return render(request, 'items/createItem.html', {'taxes': taxes})
 
 

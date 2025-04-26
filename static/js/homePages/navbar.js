@@ -2,7 +2,7 @@ document.getElementById('logoutButton').addEventListener('click', function(event
     event.preventDefault();  
 
     Swal.fire({
-      title: 'Cerrando sesión',
+      title: 'Cerrando sesión', 
       text: 'Por favor, espere...',
       icon: 'info',
       timer: 2000,

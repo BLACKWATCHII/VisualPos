@@ -1,88 +1,107 @@
 {% load static %}
+<link rel="stylesheet" href="{% static 'css/homePages/navbar.css' %}">
+<link href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.10.5/font/bootstrap-icons.css" rel="stylesheet">
 
-<link rel="stylesheet" href="{% static 'css/homePages/navbar.css' %}">   
-<nav class="navbar navbar-expand-lg navbar-light bg-light fixed-top ">
-  <div class="container">
-    <a href="{% url 'home' %}">
-      <img src="{% static 'img/BersekerLogoPrime.png' %}" alt="Bootstrap" width="80px">
+<nav class="navbar navbar-expand-lg navbar-dark fixed-top shadow-sm">
+  <div class="container-fluid px-4">
+    <a class="navbar-brand d-flex align-items-center" href="{% url 'home' %}">
+      <img src="{% static 'img/BersekerLogoPrime.png' %}" alt="Logo" width="40" class="me-2">
     </a>
-    <button
-      class="navbar-toggler"
-      type="button"
-      data-bs-toggle="collapse"
-      data-bs-target="#navbarNav"
-      aria-controls="navbarNav"
-      aria-expanded="false"
-      aria-label="Toggle navigation"
-    >
+
+    <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbarNavDropdown">
       <span class="navbar-toggler-icon"></span>
     </button>
 
-    <div class="collapse navbar-collapse" id="navbarNav">
-      <ul class="navbar-nav ms-auto">
+    <div class="collapse navbar-collapse justify-content-end" id="navbarNavDropdown">
+      <ul class="navbar-nav align-items-center">
+
         {% if user.is_authenticated %}
-        <li class="nav-item dropdown">
-          <a class="nav-link dropdown-toggle" href="#" id="CustomersDropdown" role="button" data-bs-toggle="dropdown" aria-expanded="false">
-            Inventario
+        <!-- Dashboard -->
+        <li class="nav-item mx-1">
+          <a class="nav-link" href="{% url 'Dasboard' %}">
+            <i class="bi bi-speedometer2"></i> Dashboard
           </a>
-          <ul class="dropdown-menu" aria-labelledby="CustomersDropdown">
-            <li><a class="dropdown-item" href="{% url 'viewItem' %}">ver productos</a></li>
+        </li>
+
+        <!-- Inventory Dropdown -->
+        <li class="nav-item dropdown mx-1">
+          <a class="nav-link dropdown-toggle" href="#" id="inventoryDropdown" role="button" data-bs-toggle="dropdown">
+            <i class="bi bi-box-seam"></i> Inventario
+          </a>
+          <ul class="dropdown-menu dropdown">
+            <li><a class="dropdown-item" href="{% url 'viewItem' %}">Ver productos</a></li>
             <li><a class="dropdown-item" href="{% url 'createItem' %}">Crear productos</a></li>
             <li><a class="dropdown-item" href="{% url 'createTax' %}">Crear impuestos</a></li>
-            <li><a class="dropdown-item" href="">Actualizar productos</a></li>
           </ul>
         </li>
-        <li class="nav-item">
-          <a href="{% url 'Dasboard' %}" class="nav-link">Paneles</a>
-        </li>
-        <li class="nav-item dropdown">
-          <a class="nav-link dropdown-toggle" href="#" id="CustomersDropdown" role="button" data-bs-toggle="dropdown" aria-expanded="false">
-            Clientes
+
+        <!-- Clientes Dropdown -->
+        <li class="nav-item dropdown mx-1">
+          <a class="nav-link dropdown-toggle" href="#" id="clientesDropdown" role="button" data-bs-toggle="dropdown">
+            <i class="bi bi-people"></i> Clientes
           </a>
-          <ul class="dropdown-menu" aria-labelledby="CustomersDropdown">
+          <ul class="dropdown-menu dropdown-menu-dark">
             <li><a class="dropdown-item" href="{% url 'viewClient' %}">Ver Clientes</a></li>
             <li><a class="dropdown-item" href="{% url 'createCustomer' %}">Crear Clientes</a></li>
           </ul>
         </li>
-        <li class="nav-item">
-          <a href="" class="nav-link">Facturas</a>
+
+        <!-- Facturas -->
+        <li class="nav-item mx-1">
+          <a class="nav-link" href="#"><i class="bi bi-receipt-cutoff"></i> Facturas</a>
         </li>
-        <li class="nav-item">
-          <a href="" class="nav-link">Reportes</a>
+
+        <!-- Reportes -->
+        <li class="nav-item mx-1">
+          <a class="nav-link" href="#"><i class="bi bi-bar-chart-line"></i> Reportes</a>
         </li>
-        <li class="nav-item dropdown">
-          <a class="nav-link dropdown-toggle" href="#" id="navbarDropdown" role="button" data-bs-toggle="dropdown" aria-expanded="false">
-            Configuración
+
+        <!-- Configuración -->
+        <li class="nav-item dropdown mx-1">
+          <a class="nav-link dropdown-toggle" href="#" id="configDropdown" role="button" data-bs-toggle="dropdown">
+            <i class="bi bi-gear"></i> Configuración
           </a>
-          <ul class="dropdown-menu" aria-labelledby="navbarDropdown">
-            <li><a class="dropdown-item" href="">Usuarios</a></li>
-            <li><a class="dropdown-item" href="">Configuración General</a></li>
+          <ul class="dropdown-menu dropdown-menu-dark">
+            <li><a class="dropdown-item" href="#">Usuarios</a></li>
+            <li><a class="dropdown-item" href="#">Configuración General</a></li>
           </ul>
         </li>
-        <li class="nav-item">
-          <a class="btn btn-danger" id="logoutButton" href="/logout">Cerrar sesion</a>
+
+        <!-- Avatar + Dropdown de Usuario SIN flecha -->
+        <li class="nav-item dropdown mx-2">
+          <a class="nav-link p-0" href="#" id="userDropdown" role="button" data-bs-toggle="dropdown" aria-expanded="false">
+            <div class="rounded-circle bg-warning text-dark d-flex justify-content-center align-items-center" style="width: 35px; height: 35px;">
+              <strong>{{ user.username|first|upper }}</strong>
+            </div>
+          </a>
+          <ul class="dropdown-menu dropdown-menu-end shadow" aria-labelledby="userDropdown" style="min-width: 250px;">
+            <li class="text-center py-2">
+              <img src="{% static 'img/LogoPrime.png' %}" alt="Avatar" class="rounded-circle mb-2" width="10" height="10">
+              <div><strong>{{ user.get_full_name|default:user.username }}</strong></div>
+              <small class="text-muted">{{ user.email }}</small>
+            </li>
+            <li><hr class="dropdown-divider"></li>
+            <li><a class="dropdown-item" href="#"><i class="bi bi-person"></i> Perfil</a></li>
+            <li><a class="dropdown-item" href="#"><i class="bi bi-speedometer2"></i> Dashboard</a></li>
+            <li><a class="dropdown-item" href="#"><i class="bi bi-clock-history"></i> Actividad</a></li>
+            <li><a class="dropdown-item" href="#"><i class="bi bi-gear"></i> Configuración</a></li>
+            <li><a class="dropdown-item" href="#"><i class="bi bi-question-circle"></i> Centro de ayuda</a></li>
+            <li><hr class="dropdown-divider"></li>
+            <li><a class="dropdown-item text-danger" id="logoutButton" href="{% url 'logout' %}"><i class="bi bi-box-arrow-right" ></i> Cerrar sesión</a></li>
+          </ul>
         </li>
         {% else %}
-        <li class="nav-item">
-          <a class="nav-link active" aria-current="page" href="#">Home</a>
-        </li>
-        <li class="nav-item">
-          <a class="nav-link active" aria-current="page" href="#">About</a>
-        </li>
-        <li class="nav-item">
-          <a class="nav-link active" aria-current="page" href="#">Service</a>
-        </li>
-        <li class="nav-item">
-          <a class="nav-link active" aria-current="page" href="#">Contact</a>
-        </li>
-        <li class="nav-item" style="margin-left: 10px;">
-          <a href="/signup" class="btn btn-custom">Registrarse</a>
-        </li>
+        <li class="nav-item"><a class="nav-link active" href="#">Home</a></li>
+        <li class="nav-item"><a class="nav-link" href="#">About</a></li>
+        <li class="nav-item"><a class="nav-link" href="#">Service</a></li>
+        <li class="nav-item"><a class="nav-link" href="#">Contact</a></li>
+        <li class="nav-item ms-2"><a href="/signup" class="btn btn-custom">Registrarse</a></li>
         {% endif %}
       </ul>
     </div>
   </div>
 </nav>
 
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/sweetalert2@11/dist/sweetalert2.min.css">
 <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
 <script src="{% static 'js/homePages/navbar.js' %}"></script>

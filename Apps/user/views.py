@@ -10,12 +10,14 @@ import json
 from django.contrib import messages
 from customer.models import Customer
 
+
 # Login and register
 
 def home(request):
     return render(request, 'home.html')
 
 def signup(request):
+    print(request)
     if request.method == 'GET':
         return render(request, 'signup.html', {"form": CustomUserCreationForm()})
     else:
@@ -88,6 +90,8 @@ def signin(request):
         form = CustomAuthenticationForm()
 
     return render(request, 'signin.html', {'form': form})
+
+
 
 
 

@@ -1,5 +1,5 @@
 body {
-    padding-top: 80px; /* ajusta este valor según el alto de tu navbar */
+    padding-top: 80px; 
 }
  
 .card-margin-top {
@@ -68,47 +68,3 @@ body {
     background-color: #0056b3;
 }
 
-.nav-link {
-    color: black;
-}
-
-.nav-link:hover {
-    color: #2f855a;
-}
-
-/* Responsive Styles */
-@media (max-width: 768px) {
-    .offcanvas-start {
-        position: relative;
-        transform: none;
-        visibility: visible !important;
-        background: transparent;
-        border: none;
-      }
-    .action-buttons {
-        display: flex;
-        flex-direction: column;
-        gap: 0.5rem;
-        margin-bottom: 1rem;
-    }
-    .search-container {
-        justify-content: center !important;
-        flex-direction: column;
-        align-items: stretch;
-    }
-
-    .search-container .btn {
-        margin: 5px 0;
-        width: 100%;
-    }
-
-    .card-header {
-        width: 100%;
-        text-align: center;
-        margin-bottom: 10px;
-    }
-
-    .modal-dialog {
-        max-width: 90%;
-    }
-}
