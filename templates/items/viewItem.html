@@ -1,2 +1,130 @@
 
 
+{% extends 'base.html' %}
+{% load static %}
+
+
+{% block title %}Inventario{% endblock %}
+
+{% block content %}
+<link rel="stylesheet" href="https://cdn.datatables.net/1.10.25/css/dataTables.bootstrap4.min.css">
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/5.15.4/css/all.min.css">
+<link rel="stylesheet" href="{% static 'css/Inventory/viewItem.css' %}">
+
+
+<div class="container mt-5 card-margin-top">
+    <div class="card shadow">
+        <div class="card-body">
+            <div class="d-flex flex-column flex-md-row justify-content-between align-items-start align-items-md-center mb-3 gap-2 flex-wrap">
+                <h5 class="card-header mb-0">Productos disponibles</h5>
+                <div class="search-container d-flex flex-wrap justify-content-md-end gap-2">
+                    <a class="btn btn-primary btn-sm btn-spaced" href="{% url 'createItem' %}">+ Nuevo</a>
+                    <a class="btn btn-success btn-sm btn-spaced"  download>Exportar</a>
+                    <a class="btn btn-danger btn-sm btn-spaced" id="importButton" data-bs-toggle="modal" data-bs-target="#miModal">Importar</a>
+                </div>
+            </div>
+
+            <div class="table-responsive">
+                <table id="itemsTable" class="table table-hover">
+                    <thead class="thead-light">
+                        <tr>
+                            <th><input type="checkbox"></th>
+                            <th>#</th>
+                            <th>Producto</th>
+                            <th>Referencia</th>
+                            <th>Descripcion</th>
+                            <th>Precio</th>
+                            <th>Cantidad</th>
+                            <th>Disponibilidad</th>
+                            <th>Acciones</th>
+                        </tr>
+                    </thead>
+                    <tbody id="tableBody">
+                        {% if items %}
+                            {% for item in items %}
+                                <tr>
+                                    <td><input type="checkbox"></td>
+                                    <td>#{{ item.id }}</td>
+                                    <td>{{ item.Name }}</td>
+                                    <td>{{ item.Referents }}</td>
+                                    <td>{{ item.Description }}</td>
+                                    <td>{{ item.Price}}</td>
+                                    <td>{{ item.Stock }}</td>
+                                    <td>
+                                        {% if item.active == 1 %}
+                                            <span class="badge rounded-pill bg-success">Activo</span>
+                                        {% elif item.active == 0 %}
+                                            <span class="badge rounded-pill bg-danger">Inactivo</span>
+                                        {% else %}
+                                            <span class="badge rounded-pill bg-secondary">Desconocido</span>
+                                        {% endif %}
+                                    </td>
+                                    <td>
+                                        <a href="{% url 'updateItem' item.id %}" class="btn btn-sm btn-success">
+                                            <i class="fas fa-edit"></i>
+                                        </a>
+                                        <a href="{% url 'deleteItem' item.id %}" class="btn btn-sm btn-danger delete-btn" data-url="{% url 'deleteItem' item.id %}">
+                                            <i class="fas fa-trash"></i>
+                                        </a>
+                                    </td>
+                                </tr>
+                            {% endfor %}
+                        {% else %}
+                            <tr>
+                                <td colspan="8" class="text-center">No hay productos registrados</td>
+                            </tr>
+                        {% endif %}
+                    </tbody>
+                </table>
+            </div>
+        </div>
+
+        <!-- Modal -->
+        <div class="modal fade" id="miModal" tabindex="-1" aria-labelledby="miModalLabel" aria-hidden="true">
+            <div class="modal-dialog">
+                <div class="modal-content">
+                    <div class="modal-header">
+                        <h5 class="modal-title" id="miModalLabel">Carga masiva de datos</h5>
+                        <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Cerrar"></button>
+                    </div>
+                    <div class="modal-body">
+                        <form id="formCargarArchivo" enctype="multipart/form-data" data-url="{% url 'import_data_excel' %}">
+                            {% csrf_token %}
+                            <div class="mb-3">
+                                <label for="archivoExcel" class="form-label">Selecciona un archivo Excel</label>
+                                <input type="file" class="form-control" id="archivoExcel" name="archivo" accept=".xlsx, .xls">
+                            </div>
+                            <div class="d-flex justify-content-center flex-wrap gap-2">
+                                <button type="submit" class="btn btn-primary" id="btnCargar">Cargar</button>
+                                <a id="descargarPlantilla" class="btn btn-success">Descargar Plantilla</a>
+                            </div>
+                            <div id="progresoCarga" class="mt-3" style="display:none;">
+                                <p>Cargando... <span id="progresoPorcentaje">0%</span></p>
+                                <div class="progress">
+                                    <div id="progresoBarra" class="progress-bar" style="width: 0%"></div>
+                                </div>
+                            </div>
+                        </form>
+                    </div>
+                    <div class="modal-footer">
+                        <button type="button" class="btn btn-danger" data-bs-dismiss="modal">Cerrar</button>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+
+
+{% endblock %}
+
+{% block extra_scripts %}
+
+<!-- DataTables JS -->
+<script src="https://cdn.datatables.net/1.10.25/js/jquery.dataTables.min.js"></script>
+<script src="https://cdn.datatables.net/1.10.25/js/dataTables.bootstrap4.min.js"></script>
+
+<!-- script personalizado -->
+<script src="{% static 'js/Inventory/viewItem.js' %}"></script>
+{% endblock %}

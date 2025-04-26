@@ -58,7 +58,10 @@ Command Delete file migrations and cache
 Get-ChildItem -Recurse -Directory -Filter "migrations" | Where-Object { $_.FullName -notmatch "\\env\\" } | Remove-Item -Recurse -Force
 Get-ChildItem -Recurse -Directory -Filter "__pycache__" | Where-Object { $_.FullName -notmatch "\\env\\" } | Remove-Item -Recurse -Force
   ```
-
+  
+  ```sh mac
+  find . -type d \( -name "migrations" -o -name "__pycache__" \) -not -path "*env*" -exec rm -rf {} +
+   ```
 ## 📢 Contributions
 
 Contributions are welcome! If you want to collaborate, please open an issue or submit a pull request.

@@ -1,9 +1,9 @@
 body {
     padding-top: 80px; 
 }
- 
+
 .card-margin-top {
-    margin-top: 7rem;
+    margin-top: 3rem !important;
 }
 
 .search-container {
@@ -67,4 +67,3 @@ body {
 .pagination a:hover:not(.active):not(.disabled) {
     background-color: #0056b3;
 }
-

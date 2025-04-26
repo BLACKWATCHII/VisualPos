@@ -6,13 +6,40 @@ from django.http import JsonResponse, HttpResponse
 from customer.models import Customer
 import os
 import pandas as pd
+from customer.sendEmail import send_email
+
 
 ## Create Customer and update customer
 def Customer_create_view(request):
     if request.method == 'POST':
-        form = CustomerForm(request.POST, request.FILES)  
+        form = CustomerForm(request.POST, request.FILES)
+        print(form)
         if form.is_valid():
-            form.save()
+            customer = form.save()
+            destinatario = customer.email 
+            asunto = '¡Bienvenido a nuestra plataforma!'
+            contenido_texto = f'Hola {customer}, ¡gracias por registrarte!'
+            
+            contenido_html = f"""
+            <html>
+              <body style="font-family: Arial, sans-serif; background-color: #f4f4f4; padding: 20px;">
+                <div style="max-width: 600px; margin: auto; background: white; padding: 20px; border-radius: 10px;">
+                  <h2 style="color: #333;">¡Hola {customer}!</h2>
+                  <p style="color: #555;">
+                    Bienvenido a nuestra plataforma. Estamos felices de tenerte con nosotros.
+                  </p>
+                  <a href="https://berserker.com" 
+                     style="display: inline-block; padding: 10px 20px; margin-top: 20px;
+                            background-color: #007bff; color: white; text-decoration: none; border-radius: 5px;">
+                     Explora ahora
+                  </a>
+                  <p style="color: #999; margin-top: 40px;">Cualquier duda, estamos para ayudarte.</p>
+                </div>
+              </body>
+            </html>
+            """
+            send_email(destinatario, asunto, contenido_texto, contenido_html)
+
             return JsonResponse({'redirect': reverse('viewClient')})
         else:
             cedula_error = form.errors.get('cedula')
@@ -22,6 +49,9 @@ def Customer_create_view(request):
         form = CustomerForm()
     return render(request, 'Customer/createCustomer.html', {'form': form})
 
+
+
+    
 
 @login_required
 def view_Clients(request):
@@ -77,7 +107,13 @@ def export_clients_to_excel(request):
         'Telefono': [client.phone for client in clients],
         'Email': [client.email for client in clients],
         'Direccion': [client.address for client in clients],
-        'Ciudad': [client.city for client in clients]
+        'Ciudad': [client.city for client in clients],
+        'Barrio': [client.neighborhood for client in clients],
+        'Ingresos': [client.income for client in clients],
+        'Ocupacion': [client.source_of_income for client in clients],
+        'Situacion laboral': [client.employment_situation for client in clients],
+        'producto solicitado': [client.producto_solicitados for client in clients],
+        'Fecha de registro': [client.record_date for client in clients],
     }
     
     df = pd.DataFrame(data)
@@ -89,7 +125,6 @@ def export_clients_to_excel(request):
 
 @login_required
 def cargar_datos_excel(request):
-    print("Se recibió una petición para importar Excel") 
     if request.method == 'POST' and request.FILES.get('archivo'):
         archivo = request.FILES['archivo']
         cedulas_repetidas = []

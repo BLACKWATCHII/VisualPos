@@ -35,7 +35,7 @@ $(document).ready(function () {
     });
     
 
-    // Manejar envío del formulario de carga de archivo Excel
+
     $('#formCargarArchivo').on('submit', function (event) {
         console.log("Interceptando submit de importación...");
         event.preventDefault();
@@ -91,14 +91,14 @@ $(document).ready(function () {
         xhr.send(formData);
     });
 
-    // Manejar descarga de plantilla
+
     $(document).on('click', '#descargarPlantilla', function (event) {
         console.log("Descargando plantilla...");
         event.preventDefault();
-        const archivo = '/static/archived/Customers.xlsx';
+        const archivo = '/static/archived/item.xlsx';
         const a = document.createElement("a");
         a.href = archivo;
-        a.download = "Customers.xlsx";
+        a.download = "item.xlsx";
         document.body.appendChild(a);
         a.click();
         document.body.removeChild(a);

@@ -4,7 +4,7 @@ $(document).ready(function() {
         var formData = new FormData(this);
 
         Swal.fire({
-            title: 'Guardando producto...',
+            title: 'Actualizando...',
             text: 'Por favor espera',
             allowOutsideClick: false,
             didOpen: () => {
@@ -14,33 +14,33 @@ $(document).ready(function() {
 
         $.ajax({
             type: 'POST',
-            url: $(this).attr('action'),
+            url: window.location.pathname,
             data: formData,
             processData: false,
             contentType: false,
             success: function(response) {
                 Swal.fire({
                     icon: 'success',
-                    title: '¡Producto creado!',
+                    title: '¡Producto actualizado!',
                     showConfirmButton: false,
                     timer: 1500
                 }).then(function() {
-                    window.location.href = '/items/viewItem/'; 
+                    window.location.href = response.redirect;
                 });
             },
             error: function(response) {
-                Swal.close();
+                Swal.close(); // Cierra el loader
                 if (response.status === 400) {
                     Swal.fire({
                         icon: 'error',
-                        title: 'Error en el formulario',
+                        title: 'Error al actualizar',
                         text: response.responseJSON.error,
                     });
                 } else {
                     Swal.fire({
                         icon: 'error',
                         title: 'Error inesperado',
-                        text: 'Ocurrió un error, intenta más tarde.',
+                        text: 'Intenta nuevamente más tarde.',
                     });
                 }
             }

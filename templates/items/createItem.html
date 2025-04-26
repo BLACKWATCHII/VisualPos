@@ -57,18 +57,7 @@
 </div>
 
 <script src="{% static 'js/Inventory/createItem.js' %}"></script>
-<script>
-    const messages = [];
 
-    {% if messages %}
-        {% for message in messages %}
-            messages.push({
-                level: "{{ message.tags }}",
-                text: "{{ message|escapejs }}"
-            });
-        {% endfor %}
-    {% endif %}
-</script>
 
 
 
