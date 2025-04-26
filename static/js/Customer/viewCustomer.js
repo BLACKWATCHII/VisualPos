@@ -1,7 +1,5 @@
-// Ejecutar cuando el DOM esté completamente cargado
-$(document).ready(function () {
 
-    // Inicializar DataTable
+$(document).ready(function () {
     if ($.fn.DataTable) {
         setTimeout(() => {
             $('#clientsTable').DataTable({
@@ -95,6 +93,7 @@ $(document).ready(function () {
 
     // Manejar descarga de plantilla
     $(document).on('click', '#descargarPlantilla', function (event) {
+        console.log("Descargando plantilla...");
         event.preventDefault();
         const archivo = '/static/archived/Customers.xlsx';
         const a = document.createElement("a");
@@ -112,7 +111,7 @@ $(document).ready(function () {
         const url = $(this).data('url');
 
         Swal.fire({
-            title: `¿Estás seguro que quieres eliminar a este Customer?`,
+            title: `¿Estás seguro que quieres eliminar a este Cliente?`,
             text: "¡No podrás revertir esta acción!",
             icon: 'warning',
             showCancelButton: true,
