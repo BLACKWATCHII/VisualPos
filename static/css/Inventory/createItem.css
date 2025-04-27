@@ -18,6 +18,10 @@
         box-shadow: 0 0 10px rgba(0, 0, 0, 0.1);
         background-color: white;
     }
+    .card-header {
+        color:white;
+        background-color: #2f855a;
+    }
     .card h1 {
         text-align: left;
         color: #0044cc;
@@ -25,6 +29,7 @@
         font-weight: 250;
     }
     .section-header {
+        margin-top: 1rem;
         background-color: #f1f1f1;
         padding: 10px;
         border-radius: 5px;
@@ -52,7 +57,7 @@
         border-radius: 5px;
     }
     .form-group button {
-        background-color: green;
+        background-color: #2f855a;
         color: white;
         border: none;
         padding: 10px 20px;
@@ -61,7 +66,7 @@
         margin-left: auto;
     }
     .form-group button:hover {
-        background-color: #ff85c1;
+        background-color: #385f4b;
     }
     #saveForm {
         margin-left: 650px;
