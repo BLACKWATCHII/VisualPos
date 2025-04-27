@@ -12,4 +12,5 @@ urlpatterns = [
     path('Dasboard/', views.Dasboard, name='Dasboard'),
     path('logout/', views.signout, name='logout'),
     path('signin/', views.signin, name='signin'),
+    path('invoice/', include('Invoice.urls')),
 ]

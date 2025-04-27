@@ -115,8 +115,7 @@ def UpdateItem(request, item_id):
             tax = Tax.objects.get(id=tax_id)
         except Tax.DoesNotExist:
             return JsonResponse({'error': 'El impuesto seleccionado no existe.'}, status=400)
-
-
+        
         itemID.Name = name
         itemID.Referents = referents
         itemID.Description = description
