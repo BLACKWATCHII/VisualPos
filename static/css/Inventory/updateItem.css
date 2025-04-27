@@ -17,14 +17,14 @@ body {
         box-shadow: 0 0 10px rgba(0, 0, 0, 0.1);
         background-color: white;
     }
-    .card h1 {
+    .card-header {
         text-align: left;
-        color: #0044cc;
-        font-size: 29px;
-        font-weight: 250;
+        background-color: #2f855a;
+        color: white;
     }
     .section-header {
-        background-color: #f1f1f1;
+        background-color: #dddddd;
+        margin-top: 1rem;
         padding: 10px;
         border-radius: 5px;
         margin-bottom: 15px;
@@ -51,7 +51,7 @@ body {
         border-radius: 5px;
     }
     .form-group button {
-        background-color: #ff69b4;
+        background-color: #2f855a;
         color: white;
         border: none;
         padding: 10px 20px;
@@ -60,7 +60,7 @@ body {
         margin-left: auto;
     }
     .form-group button:hover {
-        background-color: #ff85c1;
+        background-color: #385f4b;
     }
     #saveForm {
         margin-left: 650px;
