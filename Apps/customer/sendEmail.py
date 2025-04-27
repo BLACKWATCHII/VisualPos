@@ -19,4 +19,7 @@ def send_email(destinatario, asunto, contenido_texto, contenido_html):
 
     with smtplib.SMTP_SSL('smtp.gmail.com', 465) as smtp:
         smtp.login(remitente, password)
-        smtp.send_message(mensaje)
+        try:
+            smtp.send_message(mensaje)
+        except Exception as e:
+            print(f"Error al enviar el correo: {e}")

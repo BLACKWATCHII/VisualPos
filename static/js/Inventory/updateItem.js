@@ -29,7 +29,7 @@ $(document).ready(function() {
                 });
             },
             error: function(response) {
-                Swal.close(); // Cierra el loader
+                Swal.close(); 
                 if (response.status === 400) {
                     Swal.fire({
                         icon: 'error',

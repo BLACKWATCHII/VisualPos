@@ -25,7 +25,7 @@ $(document).ready(function () {
     }
 
     $('#exportButton').on('click', function (event) {
-        event.preventDefault(); // solo si es necesario
+        event.preventDefault();
         const exportUrl = $(this).data('url');
         if (exportUrl) {
             window.location.href = exportUrl;
@@ -95,16 +95,16 @@ $(document).ready(function () {
     $(document).on('click', '#descargarPlantilla', function (event) {
         console.log("Descargando plantilla...");
         event.preventDefault();
-        const archivo = '/static/archived/item.xlsx';
+        const archivo = '/static/archived/Customers.xlsx';
         const a = document.createElement("a");
         a.href = archivo;
-        a.download = "item.xlsx";
+        a.download = "Customers.xlsx";
         document.body.appendChild(a);
         a.click();
         document.body.removeChild(a);
     });
 
-    // Manejar eliminación de cliente (delegado)
+
     $(document).on('click', '.delete-btn', function (event) {
         event.preventDefault();
 

@@ -9,8 +9,8 @@ import pandas as pd
 from customer.sendEmail import send_email
 
 
-## Create Customer and update customer
-def Customer_create_view(request):
+@login_required
+def Customer_create_view(request):  
     if request.method == 'POST':
         form = CustomerForm(request.POST, request.FILES)
         print(form)
@@ -48,10 +48,6 @@ def Customer_create_view(request):
     else:
         form = CustomerForm()
     return render(request, 'Customer/createCustomer.html', {'form': form})
-
-
-
-    
 
 @login_required
 def view_Clients(request):
@@ -179,5 +175,4 @@ def cargar_datos_excel(request):
 
 def safe_strip(value):
     return str(value).strip() if value is not None else ''
-################################################################################################################
 

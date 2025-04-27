@@ -12,7 +12,7 @@ from django.urls import reverse
 import os
 import pandas as pd
 
-# Create item and view
+
 @login_required
 def item(request):
     items = Item.objects.all()  
@@ -29,8 +29,6 @@ def download_plant(request):
         return response
     else:
         return HttpResponseNotFound("El archivo no existe.")
-
-
 
 @login_required
 def CreateItem(request):
@@ -82,8 +80,6 @@ def CreateItem(request):
             return render(request, 'items/createItem.html', {'taxes': taxes})
     return render(request, 'items/createItem.html', {'taxes': taxes})
 
-
-
 @login_required
 def DeleteItem(request,item_id):
     print(item_id)
@@ -133,7 +129,6 @@ def UpdateItem(request, item_id):
         return JsonResponse({'redirect': reverse('viewItem')})
 
     return render(request, 'items/UpdateItem.html', {'item': itemID, 'taxes': taxes})
-
 
 @login_required
 def import_datos_excel(request):
@@ -185,7 +180,6 @@ def import_datos_excel(request):
             return JsonResponse({'status': 'error', 'message': str(e)})
 
     return JsonResponse({'status': 'error', 'message': 'No se recibió ningún archivo.'})
-
 
 def safe_strip(value):
     return str(value).strip() if value is not None else ''
