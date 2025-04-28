@@ -1,6 +1,7 @@
 from django.db import models
 from customer.models import Customer
 from item.models import Item
+from django.contrib.auth.models import User
 
 class Invoice(models.Model):
     customer = models.ForeignKey(Customer, on_delete=models.CASCADE)
@@ -22,7 +23,7 @@ class Invoice(models.Model):
     invoice_number = models.CharField(max_length=20, unique=True,blank=True, null=True)  
     notes = models.TextField(blank=True, null=True)  
     quotas = models.PositiveIntegerField()
-
+    user = models.ForeignKey(User, on_delete=models.CASCADE, related_name='Invoice')
 
     def __str__(self):
         return f'Factura #{self.id} - {self.customer.name}'
