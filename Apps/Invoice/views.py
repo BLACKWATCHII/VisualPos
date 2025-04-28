@@ -2,7 +2,12 @@ from django.shortcuts import render, redirect
 from .models import Invoice
 from Invoice.Form import InvoiceForm, InvoiceItem
 from item.models import Item
+from decimal import Decimal
+import json
+from django.db.models import Sum
+from django.contrib.auth.decorators import login_required
 
+@login_required
 def create_invoice(request):
     if request.method == 'POST':
         form = InvoiceForm(request.POST)
@@ -18,6 +23,7 @@ def create_invoice(request):
             quotas = request.POST.get('quotas')
             notes = request.POST.get('notes')
             
+            
             if status is None:
                 status = 'Pagada'
             if payment_method == 'Credit':
@@ -29,6 +35,8 @@ def create_invoice(request):
             invoice.payment_method = payment_method 
             invoice.status = status
             invoice.notes = notes
+            invoice.user = request.user
+
             total = 0
             for quantity, price in zip(quantities, prices):
                 if quantity and price:
@@ -68,3 +76,34 @@ def create_invoice(request):
         'form': form,
         'items': items,
     })
+
+
+@login_required
+def invoices_report(request):
+    invoices = Invoice.objects.all()
+    
+    # total pagado
+    total = Invoice.objects.filter(status='Pagada').aggregate(
+        result=Sum('total')
+    )
+    total_payment = float(total.get('result', 0))
+    # Preparar datos para JSON
+    invoice_list = [{
+        'id': invoice.id,
+        'date': invoice.date.strftime('%Y-%m-%d %H:%M:%S'),
+        'invoice_number': invoice.invoice_number,
+        'customer_id': invoice.customer_id,
+        'total': float(invoice.total) if isinstance(invoice.total, Decimal) else invoice.total,
+        'payment_method': invoice.payment_method,
+        'status': invoice.status,
+        'discount': float(invoice.discount) if isinstance(invoice.discount, Decimal) else invoice.discount,
+        'notes': invoice.notes,
+        'quotas': invoice.quotas,
+    } for invoice in invoices]
+
+    return render(request, 'Invoice/Report_invoice.html', {
+        'invoices': invoices,
+        'invoices_json': json.dumps(invoice_list),
+        'total_pagado': total_payment,
+    })
+
