@@ -11,7 +11,7 @@
     <div class="card shadow flex-fill" style="min-width: 320px; max-width: 48%;">
       <div class="card-header bg-success text-white">Ventas diarias</div>
       <div class="card-body">
-        <canvas id="chart1" width="400" height="200"></canvas>
+        <canvas id="chart1" width="200" height="200"></canvas>
       </div>
     </div>
 
@@ -27,7 +27,7 @@
     <div class="card shadow flex-fill" style="min-width: 320px; max-width: 48%;">
       <div class="card-header bg-dark text-white">Productos más vendidos</div>
       <div class="card-body">
-        <!-- Aquí agregas el contenido de productos -->
+        <canvas id="chart3" width="400" height="165"></canvas>
       </div>
     </div>
 
@@ -73,28 +73,97 @@
 
 <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
 <script>
-  const dates = JSON.parse('{{ dates|escapejs }}');
-  const counts = JSON.parse('{{ counts|escapejs }}');
+const datesClients = JSON.parse('{{ dates_clients|escapejs }}');
+const countsClients = JSON.parse('{{ counts_clients|escapejs }}');
+const datesSales = JSON.parse('{{ dates_sales|escapejs }}');
+const totalsSales = JSON.parse('{{ totals_sales|escapejs }}');
+const productsNames = JSON.parse('{{ products_names|escapejs }}');
+const productsSales = JSON.parse('{{ products_sales|escapejs }}');
 
-  const ctx2 = document.getElementById('chart2').getContext('2d');
-  new Chart(ctx2, {
+const ctx2 = document.getElementById('chart2').getContext('2d');
+new Chart(ctx2, {
     type: 'bar',
     data: {
-      labels: dates,
-      datasets: [{
-        label: 'Clientes Nuevos',
-        data: counts,
-        backgroundColor: 'rgba(54, 176, 9)',
-        borderColor: 'rgba(0, 0, 0)',
-        borderWidth: 1
-      }]
+        labels: datesClients,
+        datasets: [{
+            label: 'Clientes Nuevos',
+            data: countsClients,
+            backgroundColor: '#2f855a',
+            borderColor: 'rgba(0, 0, 0)',
+            borderWidth: 1
+        }]
     },
     options: {
-      scales: {
-        y: { beginAtZero: true }
-      }
+        scales: {
+            y: { beginAtZero: true }
+        }
     }
-  });
+});
+
+// Gráfico de Ventas Diarias (tipo Donut)
+const ctx1 = document.getElementById('chart1').getContext('2d');
+new Chart(ctx1, {
+    type: 'doughnut',
+    data: {
+        labels: datesSales,
+        datasets: [{
+            label: 'Ventas Diarias',
+            data: totalsSales,
+            backgroundColor: [
+                '#2f855a', '#00000', '#FFCE56', '#4BC0C0', '#9966FF', '#FF9F40'
+            ],
+            hoverOffset: 4
+        }]
+    },
+    options: {
+        responsive: true,
+        plugins: {
+            legend: {
+                position: 'top',
+            },
+            title: {
+                display: true,
+                text: 'Ventas Diarias'
+            }
+        }
+    }
+});
+
+const ctx3 = document.getElementById('chart3').getContext('2d');
+new Chart(ctx3, {
+    type: 'bar',
+    data: {
+        labels: productsNames,
+        datasets: [{
+            label: 'Cantidad Vendida',
+            data: productsSales,
+            backgroundColor: [
+                '#4dc9f6', '#f67019', '#f53794', '#537bc4', '#acc236',
+                '#166a8f', '#00a950', '#58595b', '#8549ba'
+            ],
+            borderWidth: 1
+        }]
+    },
+    options: {
+        indexAxis: 'y', // Barra horizontal
+        scales: {
+            x: {
+                beginAtZero: true
+            }
+        },
+        responsive: true,
+        plugins: {
+            legend: {
+                display: false
+            },
+            title: {
+                display: true,
+                text: 'Productos Más Vendidos'
+            }
+        }
+    }
+});
+
 </script>
 
 {% endblock %}

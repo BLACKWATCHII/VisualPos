@@ -1,0 +1,133 @@
+{% extends "base.html" %}
+
+{% block title %}Facturas{% endblock %}
+
+{% block content %}
+
+<div class="card" style="margin-top: 5rem;"> 
+    <div class="container-fluid my-4 mt-5">
+        <div class="row">
+            <!-- Resumen superior -->
+            <div class="d-flex flex-wrap justify-content-between mb-4">
+                <div class="card p-3 flex-fill m-2 text-center shadow-sm" style="min-width: 200px;">
+                    <h6 class="text-muted">Total Facturas</h6>
+                    <h4>${{ total_pagado }}</h4>
+                    <!-- <small>{{ total_pagado }} facturas</small> -->
+                </div>
+                <div class="card p-3 flex-fill m-2 text-center shadow-sm" style="min-width: 200px;">
+                    <h6 class="text-muted">Pagadas</h6>
+                    <h4>${{ paid_invoices_amount }}</h4>
+                    <small>{{ paid_invoices_count }} facturas</small>
+                </div>
+                <div class="card p-3 flex-fill m-2 text-center shadow-sm" style="min-width: 200px;">
+                    <h6 class="text-muted">Pendientes</h6>
+                    <h4>${{ pending_invoices_amount }}</h4>
+                    <small>{{ pending_invoices_count }} facturas</small>
+                </div>
+                <div class="card p-3 flex-fill m-2 text-center shadow-sm" style="min-width: 200px;">
+                    <h6 class="text-muted">Vencidas</h6>
+                    <h4>${{ overdue_invoices_amount }}</h4>
+                    <small>{{ overdue_invoices_count }} facturas</small>
+                </div>
+            </div>
+
+            <!-- Tabla de Facturas -->
+            <div class="col-md-8">
+                <div class="d-flex justify-content-between align-items-center mb-3">
+                    <h4 class="mb-0">Facturas</h4>
+                    <div>
+                        <button class="btn btn-outline-primary btn-sm me-1" onclick="filterStatus('paid')">Pagadas</button>
+                        <button class="btn btn-outline-warning btn-sm me-1" onclick="filterStatus('pending')">Pendientes</button>
+                        <button class="btn btn-outline-danger btn-sm me-1" onclick="filterStatus('overdue')">Vencidas</button>
+                        <button class="btn btn-outline-secondary btn-sm" onclick="filterStatus('draft')">Borrador</button>
+                    </div>
+                </div>
+
+                <div class="table-responsive shadow-sm rounded">
+                    <table class="table table-hover mb-0" id="invoiceTable">
+                        <thead class="table-light">
+                            <tr>
+                                <th>Fecha</th>
+                                <th>No. Factura</th>
+                                <th>Cliente</th>
+                                <th>Total</th>
+                                <th>Status</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            {% for invoice in invoices %}
+                            <tr onclick="showInvoiceDetails({{ invoice.id }})" data-status="{{ invoice.status }}" style="cursor: pointer;">
+                                <td>{{ invoice.date }}</td>
+                                <td>#{{ invoice.invoice_number }}</td>
+                                <td>{{ invoice.customer_name }}</td>
+                                <td>${{ invoice.total }}</td>
+                                <td>
+                                    {% if invoice.status == 'Pagada' %}
+                                        <span class="badge bg-success">Pagada</span>
+                                    {% elif invoice.status == 'pending' %}
+                                        <span class="badge bg-warning text-dark">Pendiente</span>
+                                    {% elif invoice.status == 'overdue' %}
+                                        <span class="badge bg-danger">Vencida</span>
+                                    {% else %}
+                                        <span class="badge bg-secondary">Borrador</span>
+                                    {% endif %}
+                                </td>
+                            </tr>
+                            {% endfor %}
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+
+            <!-- Panel de Detalles -->
+            <div class="col-md-4">
+                <div class="card shadow-sm" id="invoiceDetails" style="display: none;">
+                    <div class="card-body">
+                        <div class="d-flex align-items-center mb-3">
+                            <div class="flex-grow-1">
+                                <h5 class="card-title" id="detailInvoiceNumber"></h5>
+                            </div>
+                        </div>
+                        <ul class="list-unstyled">
+                            <li><strong>Cliente:</strong> <span id="detailCustomer"></span></li>
+                            <li><strong>Total:</strong> $<span id="detailTotal"></span></li>
+                            <li><strong>Descuento:</strong> <span id="detailDiscount"></span></li>
+                            <li><strong>Método de Pago:</strong> <span id="detailPayment"></span></li>
+                            <li><strong>Status:</strong> <span id="detailStatus"></span></li>
+                            <li><strong>Notas:</strong> <span id="detailNotes"></span></li>
+                        </ul>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+<script>
+const invoices = {{ invoices_json|safe }};
+
+function showInvoiceDetails(id) {
+    const invoice = invoices.find(inv => inv.id === id);
+    if (invoice) {
+        document.getElementById('detailInvoiceNumber').innerText = `Factura #${invoice.invoice_number}`;
+        document.getElementById('detailCustomer').innerText = invoice.customer_name;
+        document.getElementById('detailTotal').innerText = invoice.total;
+        document.getElementById('detailDiscount').innerText = invoice.discount;
+        document.getElementById('detailPayment').innerText = invoice.payment_method;
+        document.getElementById('detailStatus').innerText = invoice.status;
+        document.getElementById('detailNotes').innerText = invoice.notes || 'Sin notas';
+        document.getElementById('invoiceDetails').style.display = 'block';
+    }
+}
+
+function filterStatus(status) {
+    const rows = document.querySelectorAll('#invoiceTable tbody tr');
+    rows.forEach(row => {
+        if (status === '' || row.getAttribute('data-status') === status) {
+            row.style.display = '';
+        } else {
+            row.style.display = 'none';
+        }
+    });
+}
+</script>
+{% endblock %}

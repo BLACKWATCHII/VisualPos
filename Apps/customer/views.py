@@ -17,7 +17,7 @@ def Customer_create_view(request):
         if form.is_valid():
             customer = form.save()
             destinatario = customer.email 
-            asunto = '¡Bienvenido a nuestra plataforma!'
+            asunto = '🐍¡Bienvenido a Berserker!🐍'
             contenido_texto = f'Hola {customer}, ¡gracias por registrarte!'
             
             contenido_html = f"""
@@ -26,7 +26,7 @@ def Customer_create_view(request):
                 <div style="max-width: 600px; margin: auto; background: white; padding: 20px; border-radius: 10px;">
                   <h2 style="color: #333;">¡Hola {customer}!</h2>
                   <p style="color: #555;">
-                    Bienvenido a nuestra plataforma. Estamos felices de tenerte con nosotros.
+                    Bienvenido a berserker. Estamos felices de tenerte con nosotros.
                   </p>
                   <a href="https://berserker.com" 
                      style="display: inline-block; padding: 10px 20px; margin-top: 20px;
@@ -38,8 +38,10 @@ def Customer_create_view(request):
               </body>
             </html>
             """
-            send_email(destinatario, asunto, contenido_texto, contenido_html)
-
+            try:
+                send_email(destinatario, asunto, contenido_texto, contenido_html)
+            except Exception as e: 
+                print(f"error al enviar correo: {e}")
             return JsonResponse({'redirect': reverse('viewClient')})
         else:
             cedula_error = form.errors.get('cedula')

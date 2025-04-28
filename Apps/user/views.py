@@ -9,6 +9,8 @@ from item.models import Item
 import json
 from django.contrib import messages
 from customer.models import Customer
+from Invoice.models import Invoice, InvoiceItem
+from django.db.models import Sum
 
 
 # Login and register
@@ -35,9 +37,11 @@ def signup(request):
 
 
 @login_required
-def Dasboard(request):
+def Dashboard(request):
     customer_count = Customer.objects.count()
     items_count = Item.objects.filter(active=True).count()
+
+    # Clientes nuevos
     new_clients_per_day = (
         Customer.objects
         .filter(record_date__isnull=False)
@@ -46,16 +50,41 @@ def Dasboard(request):
         .order_by('record_date')
     )
 
-    # Asegurar que las listas no contengan valores None
-    print(new_clients_per_day)
-    dates = [entry['record_date'].strftime('%Y-%m-%d') for entry in new_clients_per_day if entry['record_date']]
-    counts = [entry['count'] for entry in new_clients_per_day]
+    # Ventas diarias
+    sales_per_day = (
+        Invoice.objects
+        .filter(date__isnull=False)
+        .values('date')
+        .annotate(total_sales=Sum('total'))
+        .order_by('date')
+    )
+
+    # Productos más vendidos
+    best_selling_products = (
+        InvoiceItem.objects
+        .values('item__Name') 
+        .annotate(total_quantity=Sum('quantity'))
+        .order_by('-total_quantity')[:10] 
+    )
+
+    dates_clients = [entry['record_date'].strftime('%Y-%m-%d') for entry in new_clients_per_day if entry['record_date']]
+    counts_clients = [entry['count'] for entry in new_clients_per_day]
+
+    dates_sales = [entry['date'].strftime('%Y-%m-%d') for entry in sales_per_day if entry['date']]
+    totals_sales = [float(entry['total_sales']) for entry in sales_per_day]
+
+    products_names = [entry['item__Name'] for entry in best_selling_products]
+    products_sales = [entry['total_quantity'] for entry in best_selling_products]
 
     context = {
         'num_Customers': customer_count,
         'num_items': items_count,
-        'dates': json.dumps(dates),  
-        'counts': json.dumps(counts),  
+        'dates_clients': json.dumps(dates_clients),
+        'counts_clients': json.dumps(counts_clients),
+        'dates_sales': json.dumps(dates_sales),
+        'totals_sales': json.dumps(totals_sales),
+        'products_names': json.dumps(products_names),
+        'products_sales': json.dumps(products_sales),
     }
 
     return render(request, 'tasks.html', context)
