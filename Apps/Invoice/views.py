@@ -1,5 +1,3 @@
-# apps/invoice/views.py
-
 from django.shortcuts import render, redirect
 from .models import Invoice
 from Invoice.Form import InvoiceForm, InvoiceItem
@@ -15,7 +13,22 @@ def create_invoice(request):
             items = request.POST.getlist('item_id')
             quantities = request.POST.getlist('quantity')
             prices = request.POST.getlist('price')
+            payment_method = request.POST.get('payment_method')
+            status = request.POST.get('status')
+            quotas = request.POST.get('quotas')
+            notes = request.POST.get('notes')
+            
+            if status is None:
+                status = 'Pagada'
+            if payment_method == 'Credit':
+                status = 'A credito'
+            if quotas is None:
+                quotas = 0
 
+            invoice.quotas = quotas
+            invoice.payment_method = payment_method 
+            invoice.status = status
+            invoice.notes = notes
             total = 0
             for quantity, price in zip(quantities, prices):
                 if quantity and price:

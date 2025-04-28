@@ -6,6 +6,23 @@ class Invoice(models.Model):
     customer = models.ForeignKey(Customer, on_delete=models.CASCADE)
     date = models.DateTimeField(auto_now_add=True)
     total = models.DecimalField(max_digits=10, decimal_places=2)
+    discount = models.DecimalField(max_digits=5, decimal_places=2, default=0) 
+    payment_method = models.CharField(max_length=50, choices=[
+        ('cash', 'Efectivo'),
+        ('credit_card', 'Tarjeta de Crédito'),
+        ('debit_card', 'Tarjeta de Débito'),
+        ('transfer', 'Transferencia'),
+        ('credit', 'Crédito'),
+    ], default='cash')
+    status = models.CharField(max_length=20, choices=[
+        ('paid', 'Pagada'),
+        ('unpaid', 'No Pagada'),
+        ('refunded', 'Reembolsada')
+    ], default='unpaid')
+    invoice_number = models.CharField(max_length=20, unique=True,blank=True, null=True)  
+    notes = models.TextField(blank=True, null=True)  
+    quotas = models.PositiveIntegerField()
+
 
     def __str__(self):
         return f'Factura #{self.id} - {self.customer.name}'

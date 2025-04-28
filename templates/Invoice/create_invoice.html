@@ -32,7 +32,7 @@
         <div class="row">
             <!-- Formulario -->
             <div class="col-md-5">
-                <h5 class="mb-4"><strong>Invoice Details</strong></h5>
+                <h5 class="mb-4"><strong> Detalle de la factura</strong></h5>
                 <form id="invoice-form" method="post">
                     {% csrf_token %}
                     
@@ -61,12 +61,31 @@
                         <label class="form-label">Asunto</label>
                         <input type="text" id="subject" name="subject" class="form-control" placeholder="Subject">
                     </div>
-
+                    
+                    <!-- Payment_method -->
+                    <div class="mb-3">
+                        <label class="form-label" for="payment_method_select">Método de pago</label>
+                        <select name="payment_method" id="payment_method_select" class="form-select" required>
+                            <option value="">Selecciona método de pago</option>
+                            <option value="credit_card">Tarjeta crédito</option>
+                            <option value="debit_card">Tarjeta débito</option>
+                            <option value="transfer">Transferencia bancaria</option>
+                            <option value="cash">Efectivo</option>
+                            <option value="credit">Crédito</option> <!-- este es importante -->
+                            <option value="other">Otro</option>
+                        </select>
+                    </div>
+                    <!-- Number_quotas -->
+                    <div class="mb-3" id="quotas-field" style="display: none;">
+                        <label class="form-label"># Numero de cuota</label>
+                        <input type="text" id="Quotas" name="Quotas" class="form-control" placeholder="1">
+                    </div>
                     <!-- Fecha -->
                     <div class="mb-3">
                         <label class="form-label">Due Date</label>
                         <input type="date" id="due_date" name="due_date" class="form-control">
                     </div>
+
 
                     <!-- Productos -->
                     <h6 class="mt-4"><strong>Products</strong></h6>
@@ -110,7 +129,7 @@
 
             <!-- Preview -->
             <div class="col-md-7">
-                <h5 class="mb-4"><strong>Preview</strong></h5>
+                <h5 class="mb-4"><strong>Previsualizacion</strong></h5>
                 <div class="preview-box">
                     <div class="d-flex justify-content-end mb-3">
                         <button type="button" class="btn btn-outline-secondary btn-sm mx-1">PDF</button>
@@ -156,6 +175,9 @@
 {% block extra_scripts %}
 <script>
 $(document).ready(function(){
+
+    $('#payment_method_select').on('change', toggleQuotasField);
+    toggleQuotasField(); 
 
     function updatePreview() {
         // Update client, subject, due date
@@ -229,6 +251,15 @@ $(document).ready(function(){
     });
 
     updatePreview();
+
+    function toggleQuotasField() {
+    var paymentMethod = $('#payment_method_select').val();
+    if (paymentMethod === 'credit') {
+        $('#quotas-field').slideDown();
+    } else {
+        $('#quotas-field').slideUp();
+    }
+}
 });
 </script>
 {% endblock %}
