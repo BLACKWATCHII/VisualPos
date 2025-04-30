@@ -33,7 +33,7 @@
             <!-- Formulario -->
             <div class="col-md-5">
                 <h5 class="mb-4"><strong> Detalle de la factura</strong></h5>
-                <form id="invoice-form" method="post">
+                <form id="invoice-form" method="post" target="_blank">
                     {% csrf_token %}
                     
                     <!-- Cliente -->
@@ -122,7 +122,7 @@
                         <input type="text" id="discount-description" class="form-control mt-2" placeholder="Discount description">
                         <input type="number" id="discount-percent" class="form-control mt-2" placeholder="Discount %" min="0" max="100">
                     </div>
-
+                    <input type="hidden" name="download" value="pdf">
                     <button type="submit" class="btn btn-primary w-100 mt-4">Processing Invoice</button>
                 </form>
             </div>
@@ -138,7 +138,7 @@
                     </div>
 
                     <div class="border-bottom pb-3 mb-3">
-                        <h6 id="preview-invoice-number">INV-0001</h6>
+                        <h6 id="preview-invoice-number">#{{ invoice.invoice_number }} </h6>
                         <small id="preview-due-date">Due: --</small><br>
                         <small id="preview-customer">Cliente: --</small><br>
                         <small id="preview-subject">Subject: --</small>
@@ -174,92 +174,106 @@
 
 {% block extra_scripts %}
 <script>
-$(document).ready(function(){
-
-    $('#payment_method_select').on('change', toggleQuotasField);
-    toggleQuotasField(); 
-
-    function updatePreview() {
-        // Update client, subject, due date
-        $('#preview-customer').text('Cliente: ' + ($('#customer option:selected').text() || '--'));
-        $('#preview-subject').text('Subject: ' + ($('#subject').val() || '--'));
-        $('#preview-due-date').text('Due: ' + ($('#due_date').val() || '--'));
-
-        // Update products
-        var productsHtml = '';
-        var subtotal = 0;
-        $('.product-line').each(function(){
-            var itemName = $(this).find('.item-id option:selected').text();
-            var qty = parseInt($(this).find('.item-qty').val()) || 0;
-            var price = parseFloat($(this).find('.item-price').val()) || 0;
-            if($(this).find('.item-id').val()){
-                var amount = qty * price;
-                subtotal += amount;
-                productsHtml += '<tr><td>'+itemName+'</td><td>'+qty+'</td><td>$'+price.toFixed(2)+'</td><td>$'+amount.toFixed(2)+'</td></tr>';
+    $(document).ready(function(){
+    
+        // Mostrar/ocultar campo de cuotas según el método de pago
+        $('#payment_method_select').on('change', toggleQuotasField);
+        toggleQuotasField(); 
+    
+        function toggleQuotasField() {
+            var paymentMethod = $('#payment_method_select').val();
+            if (paymentMethod === 'credit') {
+                $('#quotas-field').slideDown();
+            } else {
+                $('#quotas-field').slideUp();
             }
+        }
+        // Redireccionamiento a report invoice, porque desde el view hay una funcion que envia a receipt to pdf, la cual recrea la factura y se agrego una ruta para redireccionar a reporte
+        $('#invoice-form').on('submit', function(){
+            $('<input>').attr({
+                type: 'hidden',
+                name: 'download',
+                value: 'pdf'
+            }).appendTo(this);
+            setTimeout(function() {
+                window.location.href = "{% url 'report_invoice' %}";
+            }, 1000); 
         });
-
-        if(productsHtml == ''){
-            productsHtml = '<tr><td colspan="4" class="text-center">No items</td></tr>';
+    
+        // Actualiza la previsualización
+        function updatePreview() {
+            // Cliente, asunto, fecha
+            $('#preview-customer').text('Cliente: ' + ($('#customer option:selected').text() || '--'));
+            $('#preview-subject').text('Subject: ' + ($('#subject').val() || '--'));
+            $('#preview-due-date').text('Due: ' + ($('#due_date').val() || '--'));
+    
+            // Productos
+            var productsHtml = '';
+            var subtotal = 0;
+            $('.product-line').each(function(){
+                var itemName = $(this).find('.item-id option:selected').text();
+                var qty = parseInt($(this).find('.item-qty').val()) || 0;
+                var price = parseFloat($(this).find('.item-price').val()) || 0;
+                if($(this).find('.item-id').val()){
+                    var amount = qty * price;
+                    subtotal += amount;
+                    productsHtml += '<tr><td>'+itemName+'</td><td>'+qty+'</td><td>$'+price.toFixed(2)+'</td><td>$'+amount.toFixed(2)+'</td></tr>';
+                }
+            });
+    
+            if(productsHtml === ''){
+                productsHtml = '<tr><td colspan="4" class="text-center">No items</td></tr>';
+            }
+    
+            $('#preview-products').html(productsHtml);
+            $('#subtotal').text('$' + subtotal.toFixed(2));
+    
+            // Descuento
+            if($('#add_discount').is(':checked')){
+                var discountPercent = parseFloat($('#discount-percent').val()) || 0;
+                var discountAmount = subtotal * (discountPercent / 100);
+                var total = subtotal - discountAmount;
+                $('#discount-preview').show();
+                $('#discount-amount').text('-$' + discountAmount.toFixed(2));
+                $('#total').text('$' + total.toFixed(2));
+            } else {
+                $('#discount-preview').hide();
+                $('#total').text('$' + subtotal.toFixed(2));
+            }
         }
-
-        $('#preview-products').html(productsHtml);
-        $('#subtotal').text('$' + subtotal.toFixed(2));
-
-        // Discount
-        if($('#add_discount').is(':checked')){
-            var discountPercent = parseFloat($('#discount-percent').val()) || 0;
-            var discountAmount = subtotal * (discountPercent / 100);
-            var total = subtotal - discountAmount;
-            $('#discount-preview').show();
-            $('#discount-amount').text('-$' + discountAmount.toFixed(2));
-            $('#total').text('$' + total.toFixed(2));
-        } else {
-            $('#discount-preview').hide();
-            $('#total').text('$' + subtotal.toFixed(2));
-        }
-    }
-
-    // Update price when selecting item
-    $(document).on('change', '.item-id', function(){
-        var price = $(this).find(':selected').data('price') || 0;
-        $(this).closest('.product-line').find('.item-price').val(price);
-        updatePreview();
+    
+        // Actualizacion de precio automáticamente al seleccionar producto
+        $(document).on('change', '.item-id', function(){
+            var price = $(this).find(':selected').data('price') || 0;
+            $(this).closest('.product-line').find('.item-price').val(price);
+            updatePreview();
+        });
+    
+        // Actualizacion de vista de preview en tiempo real con la funncion updatePreview
+        $('#customer, #subject, #due_date').on('input change', updatePreview);
+        $(document).on('input change', '.item-qty, .item-price', updatePreview);
+        $('#add_discount, #discount-percent').on('input change', updatePreview);
+    
+        // En esta session agrega linea nueva para agregar otro producto
+        $('#add-line').click(function(e){
+            e.preventDefault();
+            var newLine = $('.product-line:first').clone();
+            newLine.find('select, input').val('');
+            $('#products').append(newLine);
+        });
+    
+        // Mostrar/ocultar campos de descuento
+        $('#add_discount').change(function(){
+            if(this.checked){
+                $('#discount-fields').slideDown();
+            } else {
+                $('#discount-fields').slideUp();
+            }
+            updatePreview();
+        });
+    
+        updatePreview(); // Inicializa preview
+        
     });
-
-    // Update on typing
-    $('#customer, #subject, #due_date').on('input change', updatePreview);
-    $(document).on('input change', '.item-qty, .item-price', updatePreview);
-    $('#add_discount, #discount-percent').on('input change', updatePreview);
-
-    // Add new line
-    $('#add-line').click(function(e){
-        e.preventDefault();
-        var newLine = $('.product-line:first').clone();
-        newLine.find('select, input').val('');
-        $('#products').append(newLine);
-    });
-
-    // Show/hide discount fields
-    $('#add_discount').change(function(){
-        if(this.checked){
-            $('#discount-fields').slideDown();
-        } else {
-            $('#discount-fields').slideUp();
-        }
-        updatePreview();
-    });
-
-    updatePreview();
-
-    function toggleQuotasField() {
-    var paymentMethod = $('#payment_method_select').val();
-    if (paymentMethod === 'credit') {
-        $('#quotas-field').slideDown();
-    } else {
-        $('#quotas-field').slideUp();
-    }
-}
-});
-</script>
+    </script>
 {% endblock %}
