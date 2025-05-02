@@ -116,7 +116,7 @@ def invoices_report(request):
     total = Invoice.objects.filter(status='Pagada').aggregate(
         result=Sum('total')
     )
-    total_payment = float(total.get('result', 0))
+    total_payment = float(total.get('result') or 0)
     invoice_list = [{
         'id': invoice.id,
         'date': invoice.date.strftime('%Y-%m-%d %H:%M:%S'),
