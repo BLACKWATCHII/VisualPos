@@ -67,6 +67,9 @@ def Dashboard(request):
         .order_by('-total_quantity')[:10] 
     )
 
+    Total= Invoice.objects.filter(status ='Pagada').aggregate(result =Sum('total'))
+    Total_Payment = float(Total.get('result') or 0)
+
     dates_clients = [entry['record_date'].strftime('%Y-%m-%d') for entry in new_clients_per_day if entry['record_date']]
     counts_clients = [entry['count'] for entry in new_clients_per_day]
 
@@ -79,6 +82,7 @@ def Dashboard(request):
     context = {
         'num_Customers': customer_count,
         'num_items': items_count,
+        'num_total': Total_Payment,
         'dates_clients': json.dumps(dates_clients),
         'counts_clients': json.dumps(counts_clients),
         'dates_sales': json.dumps(dates_sales),

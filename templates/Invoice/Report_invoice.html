@@ -66,8 +66,8 @@
                                         <span class="badge bg-success">Pagada</span>
                                     {% elif invoice.status == 'pending' %}
                                         <span class="badge bg-warning text-dark">Pendiente</span>
-                                    {% elif invoice.status == 'overdue' %}
-                                        <span class="badge bg-danger">Vencida</span>
+                                    {% elif invoice.status == 'A credito' %}
+                                        <span class="badge bg-danger">A credito</span>
                                     {% else %}
                                         <span class="badge bg-secondary">Borrador</span>
                                     {% endif %}
