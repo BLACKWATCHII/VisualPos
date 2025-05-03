@@ -11,7 +11,8 @@ from django.contrib import messages
 from customer.models import Customer
 from Invoice.models import Invoice, InvoiceItem
 from django.db.models import Sum
-
+from .form import UserUpdateForm, CustomPasswordChangeForm
+from django.contrib.auth import update_session_auth_hash
 
 # Login and register
 
@@ -125,9 +126,32 @@ def signin(request):
     return render(request, 'signin.html', {'form': form})
 
 
+# Profile 
+@login_required
+def profile_view(request):
+    user = request.user
+    return render(request, 'Profile.html', {'user': user})
 
 
+@login_required
+def edit_profile_view(request):
+    if request.method == 'POST':
+        user_form = UserUpdateForm(request.POST, instance=request.user)
+        password_form = CustomPasswordChangeForm(user=request.user, data=request.POST)
+        
+        if user_form.is_valid() and password_form.is_valid():
+            user_form.save()
+            password_form.save()
+            update_session_auth_hash(request, password_form.user)  
+            return redirect('profile')  
+    else:
+        user_form = UserUpdateForm(instance=request.user)
+        password_form = CustomPasswordChangeForm(user=request.user)
 
+    return render(request, 'edit_profile.html', {
+        'user_form': user_form,
+        'password_form': password_form
+    })
 
 
 
