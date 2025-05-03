@@ -66,9 +66,6 @@ Get-ChildItem -Recurse -Directory -Filter "__pycache__" | Where-Object { $_.Full
 
 Contributions are welcome! If you want to collaborate, please open an issue or submit a pull request.
 
-# Library
-
-pip install xhtml2pdf
 
 ## 📞 Contact
 
