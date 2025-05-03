@@ -4,8 +4,22 @@ from Invoice.Form import InvoiceForm, InvoiceItem
 from item.models import Item
 from decimal import Decimal
 import json
-from django.db.models import Sum
+from django.db.models import Sum, Max
 from django.contrib.auth.decorators import login_required
+from django.http import HttpResponse
+from django.template.loader import get_template
+from xhtml2pdf import pisa
+from django.http import Http404
+
+
+def render_to_pdf(template_src, context_dict={}):
+    template = get_template(template_src)
+    html  = template.render(context_dict)
+    response = HttpResponse(content_type='application/pdf')
+    pisa_status = pisa.CreatePDF(html, dest=response)
+    if pisa_status.err:
+        return HttpResponse('Error generando PDF')
+    return response
 
 @login_required
 def create_invoice(request):
@@ -13,7 +27,7 @@ def create_invoice(request):
         form = InvoiceForm(request.POST)
         
         if form.is_valid():
-            invoice = form.save(commit=False) 
+            invoice = form.save(commit=False)
 
             items = request.POST.getlist('item_id')
             quantities = request.POST.getlist('quantity')
@@ -23,10 +37,9 @@ def create_invoice(request):
             quotas = request.POST.get('quotas')
             notes = request.POST.get('notes')
             
-            
             if status is None:
                 status = 'Pagada'
-            if payment_method == 'Credit':
+            if payment_method == 'credit':
                 status = 'A credito'
             if quotas is None:
                 quotas = 0
@@ -42,15 +55,32 @@ def create_invoice(request):
                 if quantity and price:
                     total += int(quantity) * float(price)
 
-            # Discount logic
+            # Descuento
             discount_percent = request.POST.get('discount-percent')
             if discount_percent:
                 discount_percent = float(discount_percent)
                 discount_amount = total * (discount_percent / 100)
                 total -= discount_amount
+                invoice.discount = discount_percent
+            else:
+                invoice.discount = 0
 
-            invoice.total = total  
-            invoice.save()  
+            invoice.total = total
+
+            # Generar número de factura automáticamente
+            last_invoice_number = Invoice.objects.aggregate(Max('invoice_number'))['invoice_number__max']
+            if last_invoice_number and last_invoice_number.startswith('FV-'):
+                try:
+                    last_number = int(last_invoice_number.replace('FV-', ''))
+                    new_number = last_number + 1
+                except ValueError:
+                    new_number = 1
+            else:
+                new_number = 1
+
+            invoice.invoice_number = f"FV-{new_number:02d}" 
+            print(invoice)
+            invoice.save()
 
             for item_id, quantity, price in zip(items, quantities, prices):
                 if item_id:
@@ -61,12 +91,13 @@ def create_invoice(request):
                         quantity=int(quantity),
                         price=float(price),
                     )
-
-                    # Descontar inventario
                     item.Stock -= int(quantity)
                     item.save()
-            return redirect('home')    
-            # return redirect('invoice_detail', invoice_id=invoice.id)
+
+            if request.POST.get('download') == 'pdf':
+                return render_to_pdf('invoice/receipt_pdf.html', {'invoice': invoice})
+            else:
+                return redirect('home')
     else:
         form = InvoiceForm()
 
@@ -82,12 +113,10 @@ def create_invoice(request):
 def invoices_report(request):
     invoices = Invoice.objects.all()
     
-    # total pagado
     total = Invoice.objects.filter(status='Pagada').aggregate(
         result=Sum('total')
     )
-    total_payment = float(total.get('result', 0))
-    # Preparar datos para JSON
+    total_payment = float(total.get('result') or 0)
     invoice_list = [{
         'id': invoice.id,
         'date': invoice.date.strftime('%Y-%m-%d %H:%M:%S'),
@@ -106,4 +135,12 @@ def invoices_report(request):
         'invoices_json': json.dumps(invoice_list),
         'total_pagado': total_payment,
     })
+
+@login_required
+def invoice_pdf(request, invoice_id):
+    try:
+        invoice = Invoice.objects.get(pk=invoice_id)
+    except Invoice.DoesNotExist:
+        raise Http404("Invoice not found")
+    return render_to_pdf('invoice/receipt_pdf.html', {'invoice': invoice})
 

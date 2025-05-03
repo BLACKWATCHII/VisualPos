@@ -10,6 +10,8 @@ urlpatterns = [
     path('', views.home, name='home'),
     path('signup/', views.signup, name='signup'),
     path('Dasboard/', views.Dashboard, name='Dasboard'),
+    path('Profile/',views.profile_view,name = 'Profile'),
+    path('editar-perfil/', views.edit_profile_view, name='edit_profile'),
     path('logout/', views.signout, name='logout'),
     path('signin/', views.signin, name='signin'),
     path('invoice/', include('Invoice.urls')),

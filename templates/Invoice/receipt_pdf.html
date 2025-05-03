@@ -1,0 +1,194 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <title>Factura Confirmada</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            background-color: #f7f9fb;
+            padding: 40px;
+        }
+
+        .receipt-container {
+            max-width: 700px;
+            background-color: #fff;
+            padding: 30px;
+            margin: auto;
+            border-radius: 10px;
+            box-shadow: 0 0 12px rgba(0, 0, 0, 0.05);
+        }
+
+        .header {
+            display: flex;
+            justify-content: space-between;
+            align-items: flex-start;
+            margin-bottom: 30px;
+        }
+
+        .company-info {
+            font-size: 14px;
+        }
+
+        .logo img {
+            height: 50px;
+        }
+
+        h2.receipt-title {
+            text-align: right;
+            color: #47A992;
+            font-size: 20px;
+            letter-spacing: 2px;
+            margin-bottom: 10px;
+        }
+
+        .section-title {
+            color: #666;
+            margin-bottom: 5px;
+        }
+
+        .info-table td {
+            padding: 4px 0;
+            font-size: 14px;
+        }
+
+        .item-table {
+            width: 100%;
+            border-collapse: collapse;
+            margin-top: 20px;
+        }
+
+        .item-table th, .item-table td {
+            padding: 10px;
+            text-align: left;
+            border: 1px solid #eee;
+            font-size: 14px;
+        }
+
+        .item-table th {
+            background-color: #305D51;
+            color: white;
+        }
+
+        .totals {
+            margin-top: 20px;
+            float: right;
+            width: 300px;
+        }
+
+        .totals td {
+            padding: 6px 10px;
+            font-size: 14px;
+        }
+
+        .totals .label {
+            text-align: left;
+        }
+
+        .totals .value {
+            text-align: right;
+        }
+
+        .totals .total {
+            font-weight: bold;
+            color: #2D785D;
+            border-top: 2px solid #ccc;
+        }
+
+        .footer {
+            text-align: center;
+            margin-top: 40px;
+            font-size: 13px;
+            color: #777;
+        }
+
+        .highlight {
+            color: #2D785D;
+            font-weight: bold;
+        }
+    </style>
+</head>
+<body>
+<div class="receipt-container">
+
+    <div class="header">
+        <div class="company-info">
+            <strong>Berserker Corporate</strong><br>
+            Carrera 22D #75 C 03<br>
+            Los robles-soledad
+        </div>
+        <div class="logo">
+            <img src="/static/img/BersekerLogoPrime.png" alt="Company Logo">
+        </div>
+    </div>
+
+    <h2 class="receipt-title">RECIBO</h2>
+
+    <div class="section">
+        <table class="info-table">
+            <tr><td class="section-title"><strong>Facturado a:</strong></td></tr>
+            <tr><td>{{ invoice.customer }}</td></tr>
+            <tr><td>{{ invoice.customer_address }}</td></tr>
+        </table>
+        <br>
+        <table class="info-table">
+            <tr><td><strong>Recibo #:</strong></td><td>{{ invoice.invoice_number }}</td></tr>
+            <tr><td><strong>Fecha de recibo:</strong></td><td>{{ invoice.date }}</td></tr>
+            <tr><td><strong>Metodo de pago:</strong></td><td>{{ invoice.payment_method }}</td></tr>
+            {% if invoice.Quotas %}
+            <tr><td><strong>Cuotas:</strong></td><td>{{ invoice.Quotas }}</td></tr>
+            {% endif %}
+        </table>
+    </div>
+
+    <table class="item-table">
+        <thead>
+        <tr>
+            <th>Cant</th>
+            <th>Descripción</th>
+            <th>Precio Unitario</th>
+            <th>Total</th>
+        </tr>
+        </thead>
+        <tbody>
+        {% for item in invoice.items.all %}
+            <tr>
+                <td>{{ item.quantity }}</td>
+                <td>{{ item.item.Name }}</td>
+                <td>${{ item.price }}</td>
+                <td>${{ item.quantity|floatformat:2|add:item.price|floatformat:2 }}</td>
+            </tr>
+        {% endfor %}
+        </tbody>
+    </table>
+
+    <table class="totals">
+        <tr>
+            <td class="label">Subtotal:</td>
+            <td class="value">${{ invoice.subtotal }}</td>
+        </tr>
+        <tr>
+            <td class="label">Sales Tax (5%):</td>
+            <td class="value">${{ invoice.tax }}</td>
+        </tr>
+        {% if invoice.discount %}
+        <tr>
+            <td class="label">Descuento:</td>
+            <td class="value">-{{ invoice.discount }}%</td>
+        </tr>
+        {% endif %}
+        <tr class="total">
+            <td class="label">Total (USD):</td>
+            <td class="value">${{ invoice.total }}</td>
+        </tr>
+    </table>
+
+    <div class="footer">
+        Gracias por tu compra.<br>
+        ¿Tienes dudas? Contáctanos al soporte.
+    </div>
+
+</div>
+</body>
+</html>
+

@@ -1,0 +1,50 @@
+{% extends 'base.html' %}
+{% load static %}
+
+{% block title %}Perfil{% endblock %}
+
+{% block content %}
+<div class="container mt-5">
+  <div class="card p-4 shadow rounded" style="margin-top: 8rem;">
+    <h2 class="mb-4">Bienvenido a tu cuenta, {{ user.first_name|default:user.username|upper }}</h2>
+    
+    <div class="row">
+      <!-- Información del plan -->
+      <div class="col-md-4">
+        <div class="card border-0">
+          <div class="card-body">
+            <h5 class="card-title">+ De 100gb de almacenamiento</h5>
+            <p class="card-text">
+              Disfruta de berserker con las nuevas funcionalidades de importacion y exportacion.Tanto para clientes como para productos
+            </p>
+            <a href="#" class="btn btn-outline-success btn-sm">Administrar plan</a>
+          </div>
+        </div>
+      </div>
+
+      <!-- Seguridad / Login -->
+      <div class="col-md-4">
+        <h5>Seguridad</h5>
+        <p><strong>Contraseña actualizada hace:</strong> (fecha estimada)</p>
+        <a class="btn btn-outline-dark btn-sm">Cambiar contraseña</a>
+        
+        <h5 class="mt-4">Inicio de sesión social</h5>
+        <p class="text-muted">Integraciones con Google, Apple, etc.</p>
+        <a href="#" class="btn btn-outline-dark btn-sm">Administrar sesiones</a>
+      </div>
+
+      <!-- Detalles del usuario -->
+      <div class="col-md-4">
+        <div class="rounded-circle bg-warning text-dark d-flex justify-content-center align-items-center" style="width: 70px; height: 70px;">
+            <strong style="font-size: 30px;">{{ user.username|first|upper }}</strong>
+        </div>
+        <h5>Información del usuario</h5>
+        <p><strong>Nombre:</strong> {{ user.username }}</p>
+        <p><strong>Correo:</strong> {{ user.email }}</p>
+        <p><strong>Último acceso:</strong> {{ user.last_login|date:"d M Y, H:i" }}</p>
+        <a href="{% url 'edit_profile' %}" class="btn btn-outline-primary btn-sm">Editar perfil</a>
+      </div>
+    </div>
+  </div>
+</div>
+{% endblock %}

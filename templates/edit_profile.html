@@ -1,0 +1,45 @@
+{% extends 'base.html' %}
+{% load static %}
+
+{% block title %}Editar Perfil{% endblock %}
+
+{% block content %}
+<div class="container mt-5">
+  <div class="card p-4 shadow">
+    <h2>Editar Perfil</h2>
+    <form method="post">
+      {% csrf_token %}
+
+      <div class="mb-3">
+        <label for="id_username" class="form-label">Nombre de usuario</label>
+        {{ user_form.username }}
+      </div>
+
+      <div class="mb-3">
+        <label for="id_email" class="form-label">Correo electrónico</label>
+        {{ user_form.email }}
+      </div>
+
+      <hr>
+      <h4>Cambiar contraseña</h4>
+
+      <div class="mb-3">
+        <label for="id_old_password" class="form-label">Contraseña actual</label>
+        {{ password_form.old_password }}
+      </div>
+
+      <div class="mb-3">
+        <label for="id_new_password1" class="form-label">Nueva contraseña</label>
+        {{ password_form.new_password1 }}
+      </div>
+
+      <div class="mb-3">
+        <label for="id_new_password2" class="form-label">Confirmar nueva contraseña</label>
+        {{ password_form.new_password2 }}
+      </div>
+
+      <button type="submit" class="btn btn-primary">Guardar cambios</button>
+    </form>
+  </div>
+</div>
+{% endblock %}

@@ -11,7 +11,8 @@ from django.contrib import messages
 from customer.models import Customer
 from Invoice.models import Invoice, InvoiceItem
 from django.db.models import Sum
-
+from .form import UserUpdateForm, CustomPasswordChangeForm
+from django.contrib.auth import update_session_auth_hash
 
 # Login and register
 
@@ -67,6 +68,9 @@ def Dashboard(request):
         .order_by('-total_quantity')[:10] 
     )
 
+    Total= Invoice.objects.filter(status ='Pagada').aggregate(result =Sum('total'))
+    Total_Payment = float(Total.get('result') or 0)
+
     dates_clients = [entry['record_date'].strftime('%Y-%m-%d') for entry in new_clients_per_day if entry['record_date']]
     counts_clients = [entry['count'] for entry in new_clients_per_day]
 
@@ -79,6 +83,7 @@ def Dashboard(request):
     context = {
         'num_Customers': customer_count,
         'num_items': items_count,
+        'num_total': Total_Payment,
         'dates_clients': json.dumps(dates_clients),
         'counts_clients': json.dumps(counts_clients),
         'dates_sales': json.dumps(dates_sales),
@@ -121,9 +126,32 @@ def signin(request):
     return render(request, 'signin.html', {'form': form})
 
 
+# Profile 
+@login_required
+def profile_view(request):
+    user = request.user
+    return render(request, 'Profile.html', {'user': user})
 
 
+@login_required
+def edit_profile_view(request):
+    if request.method == 'POST':
+        user_form = UserUpdateForm(request.POST, instance=request.user)
+        password_form = CustomPasswordChangeForm(user=request.user, data=request.POST)
+        
+        if user_form.is_valid() and password_form.is_valid():
+            user_form.save()
+            password_form.save()
+            update_session_auth_hash(request, password_form.user)  
+            return redirect('profile')  
+    else:
+        user_form = UserUpdateForm(instance=request.user)
+        password_form = CustomPasswordChangeForm(user=request.user)
 
+    return render(request, 'edit_profile.html', {
+        'user_form': user_form,
+        'password_form': password_form
+    })
 
 
 
