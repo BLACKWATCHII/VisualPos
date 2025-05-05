@@ -34,6 +34,7 @@ CSRF_TRUSTED_ORIGINS = ['https://cb0e-2800-484-6c7a-11b0-3c48-9da8-ec0f-92ca.ngr
 INSTALLED_APPS = [
     'django.contrib.admin',
     'django.contrib.auth',
+    'django.contrib.humanize',
     'django.contrib.contenttypes',
     'django.contrib.sessions',
     'django.contrib.messages',

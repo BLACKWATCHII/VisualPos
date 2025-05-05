@@ -1,6 +1,9 @@
 {% extends "base.html" %}
+
 {% block title %}Facturas{% endblock %}
+{% load humanize %}
 {% block content %}
+
 <style>
     .icon-box {
         width: 48px;
@@ -26,7 +29,7 @@
                             <small class="text-muted">Total Facturas</small>
                             <span class="badge bg-success ms-2">+12.2%</span>
                         </div>
-                        <h4 class="mb-0">${{ total_pagado }}</h4>
+                        <h4 class="mb-0">${{ total_pagado|intcomma }}</h4>
                         <small class="text-muted">Últimos 30 días</small>
                     </div>
                 </div>
@@ -43,7 +46,7 @@
                             <small class="text-muted">Pagadas</small>
                             <span class="badge bg-success ms-2">+10.1%</span>
                         </div>
-                        <h4 class="mb-0">${{ paid_invoices_amount }}</h4>
+                        <h4 class="mb-0">${{ total_pagado|intcomma }}</h4>
                         <small class="text-muted">{{ paid_invoices_count }} facturas</small>
                     </div>
                 </div>
@@ -106,7 +109,8 @@
                                     <th>No. Factura</th>
                                     <th>Cliente</th>
                                     <th>Total</th>
-                                    <th>Status</th>
+                                    <th>Estado</th>
+                                    <th>Descargar Factura</th>
                                 </tr>
                             </thead>
                             <tbody>
@@ -121,7 +125,7 @@
                                     <td>{{ invoice.date }}</td>
                                     <td>#{{ invoice.invoice_number }}</td>
                                     <td>{{ invoice.customer.name }} {{ invoice.customer.lastname }}</td>
-                                    <td>${{ invoice.total }}</td>
+                                    <td>${{ invoice.total|intcomma }}</td>
                                     <td>
                                         {% if invoice.status == 'Pagada' %}
                                             <span class="badge bg-success">Pagada</span>
@@ -133,6 +137,9 @@
                                             <span class="badge bg-secondary">Borrador</span>
                                         {% endif %}
                                     </td>
+                                    <td><a href="{% url 'invoice_pdf' invoice.id %}" class="btn btn-outline-danger" download>
+                                        Descargar
+                                    </a></td>
                                 </tr>
                                 {% endfor %}
                             </tbody>
@@ -175,11 +182,21 @@
     <script>
         $(document).ready(function () {
             $('#invoiceTable').DataTable({
+                paging: true,
+                searching: true,
+                ordering: true,
+                lengthChange: true,
+                pageLength: 10,
+                deferRender: true,
                 language: {
-                    url: '//cdn.datatables.net/plug-ins/1.10.25/i18n/Spanish.json'
-                },
-                order: [[0, 'desc']],
-                responsive: true
+                    search: "Buscar:",
+                    lengthMenu: "Mostrar _MENU_ registros",
+                    info: "Mostrando _START_ a _END_ de _TOTAL_ registros",
+                    paginate: {
+                        previous: "Anterior",
+                        next: "Siguiente"
+                    }
+                }
             });
 
             $('#invoiceTable tbody').on('click', 'tr', function () {
