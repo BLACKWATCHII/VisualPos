@@ -11,6 +11,8 @@ from django.http import HttpResponse
 from django.template.loader import get_template
 from xhtml2pdf import pisa
 from django.http import Http404
+from datetime import timedelta, date
+from .models import PaymentQuota 
 
 
 def render_to_pdf(template_src, context_dict={}):
@@ -37,13 +39,11 @@ def create_invoice(request):
             status = request.POST.get('status')
             quotas = request.POST.get('quotas')
             notes = request.POST.get('notes')
-            
+
             if status is None:
                 status = 'Pagada'
             if payment_method == 'credit':
-                status = 'A credito'
-            if quotas is None:
-                quotas = 0
+                status = 'credit'
 
             invoice.quotas = quotas
             invoice.payment_method = payment_method 
@@ -82,6 +82,25 @@ def create_invoice(request):
             invoice.invoice_number = f"FV-{new_number:02d}" 
             print(invoice)
             invoice.save()
+
+            # payment_quota
+            try:
+                quotas_int = int(quotas)
+            except (ValueError, TypeError):
+                quotas_int = 0
+            
+            if payment_method == 'credit' and quotas_int > 1:
+                Quota_amount = invoice.total / quotas_int
+                Start_date = invoice.date or date.today()
+
+                for i in range(quotas_int):
+                    PaymentQuota.objects.create(    
+                        invoice = invoice,
+                        number = i+1,
+                        amount = Quota_amount,
+                        payment_date = Start_date + timedelta(days=30 * i),
+                        is_paid = False
+                    )
 
             for item_id, quantity, price in zip(items, quantities, prices):
                 if item_id:

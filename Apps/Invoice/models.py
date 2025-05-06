@@ -22,7 +22,7 @@ class Invoice(models.Model):
     ], default='unpaid')
     invoice_number = models.CharField(max_length=20, unique=True,blank=True, null=True)  
     notes = models.TextField(blank=True, null=True)  
-    quotas = models.PositiveIntegerField()
+    quotas = models.PositiveIntegerField(null=True, blank=True)
     user = models.ForeignKey(User, on_delete=models.CASCADE, related_name='Invoice')
 
     def __str__(self):
@@ -36,3 +36,13 @@ class InvoiceItem(models.Model):
 
     def subtotal(self):
         return self.quantity * self.price
+    
+class PaymentQuota(models.Model):
+    invoice = models.ForeignKey(Invoice, on_delete=models.CASCADE, related_name='payment_quotas')
+    number = models.IntegerField(help_text="Número de la cuota")
+    amount = models.DecimalField(max_digits=10, decimal_places=2)
+    payment_date = models.DateField()
+    is_paid = models.BooleanField(default=True)
+
+    class Meta:
+        unique_together = ('invoice', 'number')  
