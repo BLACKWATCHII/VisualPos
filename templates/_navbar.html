@@ -2,7 +2,7 @@
 <link rel="stylesheet" href="{% static 'css/homePages/navbar.css' %}">
 <link href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.10.5/font/bootstrap-icons.css" rel="stylesheet">
 
-<nav class="navbar navbar-expand-lg navbar-dark fixed-top shadow-sm">
+<nav class="navbar navbar-expand-lg navbar-dark fixed-top shadow-lg">
   <div class="container-fluid px-4">
     <a class="navbar-brand d-flex align-items-center" href="{% url 'home' %}">
       <img src="{% static 'img/LogoComplete.svg' %}" alt="Logo" width="40" class="me-2">
@@ -76,8 +76,8 @@
           </a>
           <ul class="dropdown-menu dropdown-menu-end shadow" aria-labelledby="userDropdown" style="min-width: 250px;">
             <li class="text-center py-2">
-              <img src="{% static 'img/LogoPrime.png' %}" alt="Avatar" class="rounded-circle mb-2" width="10" height="10">
-              <div><strong>{{ user.get_full_name|default:user.username }}</strong></div>
+              <img src="{% static 'img/LogoPrime.png' %}" alt="Avatar" class="rounded-circle mb-2" width="85" height="85">
+              <div><strong>{{ user.get_full_name|default:user.username }}</strong></div>        
               <small class="text-muted">{{ user.email }}</small>
             </li>
             <li><hr class="dropdown-divider"></li>
