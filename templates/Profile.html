@@ -39,7 +39,7 @@
             <strong style="font-size: 30px;">{{ user.username|first|upper }}</strong>
         </div>
         <h5>Información del usuario</h5>
-        <p><strong>Nombre:</strong> {{ user.username }}</p>
+        <p><strong>Nombre:</strong> {{ user.first_name }} {{ user.last_name }}</p>
         <p><strong>Correo:</strong> {{ user.email }}</p>
         <p><strong>Último acceso:</strong> {{ user.last_login|date:"d M Y, H:i" }}</p>
         <a href="{% url 'edit_profile' %}" class="btn btn-outline-primary btn-sm">Editar perfil</a>

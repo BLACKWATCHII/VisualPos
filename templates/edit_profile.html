@@ -11,14 +11,27 @@
     <h2>Editar Perfil</h2>
     <form method="post" action="{% url 'edit_profile' %}" enctype="multipart/form-data">
       {% csrf_token %}
-      <div class="mb-3">
-        <label for="id_username" class="form-label">Nombre de usuario</label>
-        {{ user_form.username }}
-      </div>
+      <div class="row">
+        <div class="col-md">
+          <label for="floatingInputGrid">Nombre de usuario</label>
+          {{ user_form.username }}
+        </div>
 
-      <div class="mb-3">
-        <label for="id_email" class="form-label">Correo electrónico</label>
-        {{ user_form.email }}
+        <div class="col-md">
+          <label for="floatingInputGrid">Correo electrónico</label>
+          {{ user_form.email }}
+        </div>
+      </div>
+      <div class="row mt-3">
+          <div class="col-md">
+            <label for="floatingInputGrid">Nombre</label>
+            {{ user_form.first_name }}
+          </div>
+
+          <div class="col-md">
+            <label for="floatingInputGrid">Apellido</label>
+            {{ user_form.last_name }}
+          </div>
       </div>
 
       <hr>
