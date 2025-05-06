@@ -4,12 +4,13 @@
 {% block title %}Editar Perfil{% endblock %}
 
 {% block content %}
-<div class="container mt-5">
-  <div class="card p-4 shadow">
-    <h2>Editar Perfil</h2>
-    <form method="post">
-      {% csrf_token %}
+<script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
 
+<div class="container mt-5" >
+  <div class="card p-4 shadow" style="margin-top: 6rem;">
+    <h2>Editar Perfil</h2>
+    <form method="post" action="{% url 'edit_profile' %}" enctype="multipart/form-data">
+      {% csrf_token %}
       <div class="mb-3">
         <label for="id_username" class="form-label">Nombre de usuario</label>
         {{ user_form.username }}
@@ -42,4 +43,20 @@
     </form>
   </div>
 </div>
+
+{% if messages %}
+  <script>
+    document.addEventListener('DOMContentLoaded', function() {
+      {% for message in messages %}
+        Swal.fire({
+          icon: '{% if message.tags == "success" %}success{% else %}error{% endif %}',
+          title: '{{ message|escapejs }}',
+          showConfirmButton: true
+        });
+      {% endfor %}
+    });
+  </script>
+{% endif %}
+
+
 {% endblock %}
