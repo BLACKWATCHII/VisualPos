@@ -114,10 +114,20 @@ def create_invoice(request):
 def invoices_report(request):
 
     invoices = Invoice.objects.select_related('customer').all()
+    total_credit = Invoice.objects.filter(status='A credito').aggregate(
+        result_credit=Sum('total')
+    )
+    
     total = Invoice.objects.filter(status='Pagada').aggregate(
         result=Sum('total')
     )
-    total_payment = float(total.get('result') or 0)
+    #conteo de facturas pagdas y a credito
+    cont_credit = Invoice.objects.filter(status='A credito').count()
+    cont_pay = Invoice.objects.filter(status='Pagada').count()
+
+    # Total de facturas pagadas y a credito
+    total_credit = float(total_credit.get('result_credit') or 0)
+    total_payment = float(total.get('result') or 0) 
 
     invoice_list = []
     for invoice in invoices:
@@ -143,6 +153,9 @@ def invoices_report(request):
         'invoices': invoices,
         'invoices_json': json.dumps(invoice_list),
         'total_pagado': total_payment,
+        'total_credito': total_credit,
+        'cont_pay': cont_pay,
+        'cont_credit': cont_credit,
     })
 
 @login_required

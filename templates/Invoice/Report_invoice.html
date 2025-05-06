@@ -47,7 +47,7 @@
                             <span class="badge bg-success ms-2">+10.1%</span>
                         </div>
                         <h4 class="mb-0">${{ total_pagado|intcomma }}</h4>
-                        <small class="text-muted">{{ paid_invoices_count }} facturas</small>
+                        <small class="text-muted">{{ cont_pay }} facturas</small>
                     </div>
                 </div>
             </div>
@@ -63,8 +63,8 @@
                             <small class="text-muted">Pendientes</small>
                             <span class="badge bg-warning text-dark ms-2">+2.6%</span>
                         </div>
-                        <h4 class="mb-0">${{ pending_invoices_amount }}</h4>
-                        <small class="text-muted">{{ pending_invoices_count }} facturas</small>
+                        <h4 class="mb-0">${{ total_credito|intcomma }}</h4>
+                        <small class="text-muted">{{ cont_credit }} facturas</small>
                     </div>
                 </div>
             </div>
