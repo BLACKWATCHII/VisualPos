@@ -138,12 +138,22 @@ def edit_profile_view(request):
     if request.method == 'POST':
         user_form = UserUpdateForm(request.POST, instance=request.user)
         password_form = CustomPasswordChangeForm(user=request.user, data=request.POST)
-        
+
         if user_form.is_valid() and password_form.is_valid():
             user_form.save()
             password_form.save()
-            update_session_auth_hash(request, password_form.user)  
-            return redirect('profile')  
+            update_session_auth_hash(request, password_form.user)
+            messages.success(request, 'Usuario actualizado exitosamente')
+            return redirect('edit_profile')
+        else:
+            if password_form.errors:
+                for field, errors in password_form.errors.items():
+                    for error in errors:
+                        messages.error(request, 'Ultilize otra contraseña')
+            if user_form.errors:
+                for field, errors in user_form.errors.items():
+                    for error in errors:
+                        messages.error(request, 'Ultilize otro nombre de usuario')
     else:
         user_form = UserUpdateForm(instance=request.user)
         password_form = CustomPasswordChangeForm(user=request.user)
@@ -152,7 +162,5 @@ def edit_profile_view(request):
         'user_form': user_form,
         'password_form': password_form
     })
-
-
 
 

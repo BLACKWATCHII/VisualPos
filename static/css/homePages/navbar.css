@@ -1,3 +1,4 @@
+
 .btn-custom {
   background-color: #2f855a;
   border-color: #19a637;
@@ -7,18 +8,116 @@
   background-color: #19a637;
   border-color: #19a637;
 }
+
+
 .navbar {
   height: 70px;
   box-shadow: 0px 6px 10px rgba(0, 0, 0, 0.19);
+  background-color: white !important;
+  padding-top: 0;
+  padding-bottom: 0;
 }
-.navbar img {
-  width: 180px;
-  height: auto;
+
+.navbar .container-fluid {
+  display: flex;
+  align-items: center;
+}
+
+
+.navbar-brand img {
+  height: 150px;
   max-height: 100%;
+  width: auto;
+  display: block;
+  margin: 0;       
+  padding: 0;
+  object-fit: contain;
 }
+
+
 .nav-link {
   color: black;
 }
 .nav-link:hover {
   color: #2f855a;
 }
+
+.navbar .rounded-circle {
+  font-size: 16px;
+}
+
+
+.navbar-collapse {
+  background-color: #f8f9fa; 
+  padding: 10px;
+  border-radius: 0 0 8px 8px;
+}
+.navbar-collapse.show {
+  box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+}
+
+.navbar-nav .nav-link {
+  padding: 10px 15px;
+  border-radius: 5px;
+}
+.navbar-nav .nav-link:hover {
+  background-color: #e2e6ea;
+  color: #2f855a;
+}
+
+.navbar-nav .dropdown-menu {
+  background-color: #f8f9fa;
+  border: none;
+  box-shadow: none;
+}
+.navbar-nav .dropdown-item {
+  color: #212529;
+}
+.navbar-nav .dropdown-item:hover {
+  background-color: #dee2e6;
+  color: #2f855a;
+}
+
+/* Botón hamburguesa */
+.navbar-toggler {
+  border: none;
+}
+.navbar-toggler-icon {
+  background-image: url("data:image/svg+xml;charset=utf8,%3Csvg viewBox='0 0 30 30' xmlns='http://www.w3.org/2000/svg'%3E%3Cpath stroke='rgba%280, 0, 0, 0.8%29' stroke-width='2' d='M4 7h22M4 15h22M4 23h22'/%3E%3C/svg%3E");
+}
+
+@media (max-width: 991px) {
+  .navbar-brand img {
+    height: 40px;
+  }
+
+  .navbar-nav .nav-item {
+    margin: 5px 0;
+  }
+
+  .navbar-collapse {
+    background-color: #f8f9fa;
+    padding: 10px;
+    border-radius: 8px;
+  }
+
+  .navbar-nav .dropdown-menu {
+    position: static !important;
+    float: none;
+    width: 100%;
+    box-shadow: none;
+    background-color: #f8f9fa;
+  }
+
+  #userDropdown {
+    width: 100%;
+    display: flex;
+    justify-content: center;
+    margin-top: 10px;
+  }
+
+  .dropdown-menu li {
+    text-align: center;
+  }
+}
+

@@ -4,20 +4,34 @@
 {% block title %}Editar Perfil{% endblock %}
 
 {% block content %}
-<div class="container mt-5">
-  <div class="card p-4 shadow">
+<script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
+
+<div class="container mt-5" >
+  <div class="card p-4 shadow" style="margin-top: 6rem;">
     <h2>Editar Perfil</h2>
-    <form method="post">
+    <form method="post" action="{% url 'edit_profile' %}" enctype="multipart/form-data">
       {% csrf_token %}
+      <div class="row">
+        <div class="col-md">
+          <label for="floatingInputGrid">Nombre de usuario</label>
+          {{ user_form.username }}
+        </div>
 
-      <div class="mb-3">
-        <label for="id_username" class="form-label">Nombre de usuario</label>
-        {{ user_form.username }}
+        <div class="col-md">
+          <label for="floatingInputGrid">Correo electrónico</label>
+          {{ user_form.email }}
+        </div>
       </div>
+      <div class="row mt-3">
+          <div class="col-md">
+            <label for="floatingInputGrid">Nombre</label>
+            {{ user_form.first_name }}
+          </div>
 
-      <div class="mb-3">
-        <label for="id_email" class="form-label">Correo electrónico</label>
-        {{ user_form.email }}
+          <div class="col-md">
+            <label for="floatingInputGrid">Apellido</label>
+            {{ user_form.last_name }}
+          </div>
       </div>
 
       <hr>
@@ -42,4 +56,20 @@
     </form>
   </div>
 </div>
+
+{% if messages %}
+  <script>
+    document.addEventListener('DOMContentLoaded', function() {
+      {% for message in messages %}
+        Swal.fire({
+          icon: '{% if message.tags == "success" %}success{% else %}error{% endif %}',
+          title: '{{ message|escapejs }}',
+          showConfirmButton: true
+        });
+      {% endfor %}
+    });
+  </script>
+{% endif %}
+
+
 {% endblock %}

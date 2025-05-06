@@ -1,93 +1,163 @@
 {% extends "base.html" %}
 
 {% block title %}Facturas{% endblock %}
-
+{% load humanize %}
 {% block content %}
 
+<style>
+    .icon-box {
+        width: 48px;
+        height: 48px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        font-size: 1.25rem;
+    }
+</style>
 <div class="card" style="margin-top: 5rem;"> 
     <div class="container-fluid my-4 mt-5">
-        <div class="row">
-            <!-- Resumen superior -->
-            <div class="d-flex flex-wrap justify-content-between mb-4">
-                <div class="card p-3 flex-fill m-2 text-center shadow-sm" style="min-width: 200px;">
-                    <h6 class="text-muted">Total Facturas</h6>
-                    <h4>${{ total_pagado }}</h4>
-                    <!-- <small>{{ total_pagado }} facturas</small> -->
-                </div>
-                <div class="card p-3 flex-fill m-2 text-center shadow-sm" style="min-width: 200px;">
-                    <h6 class="text-muted">Pagadas</h6>
-                    <h4>${{ paid_invoices_amount }}</h4>
-                    <small>{{ paid_invoices_count }} facturas</small>
-                </div>
-                <div class="card p-3 flex-fill m-2 text-center shadow-sm" style="min-width: 200px;">
-                    <h6 class="text-muted">Pendientes</h6>
-                    <h4>${{ pending_invoices_amount }}</h4>
-                    <small>{{ pending_invoices_count }} facturas</small>
-                </div>
-                <div class="card p-3 flex-fill m-2 text-center shadow-sm" style="min-width: 200px;">
-                    <h6 class="text-muted">Vencidas</h6>
-                    <h4>${{ overdue_invoices_amount }}</h4>
-                    <small>{{ overdue_invoices_count }} facturas</small>
-                </div>
-            </div>
-
-            <!-- Tabla de Facturas -->
-            <div class="col-md-8">
-                <div class="d-flex justify-content-between align-items-center mb-3">
-                    <h4 class="mb-0">Facturas</h4>
+        <!-- Cards resumen -->
+        <div class="d-flex flex-wrap justify-content-start mb-4">
+            <!-- Total Facturas -->
+            <div class="card flex-fill m-2 p-3 shadow-sm border-0" style="min-width: 250px; background: #f0f8ff;">
+                <div class="d-flex align-items-center">
+                    <div class="icon-box bg-primary text-white rounded-circle me-3">
+                        <i class="bi bi-receipt-cutoff fs-4"></i>
+                    </div>
                     <div>
-                        <button class="btn btn-outline-primary btn-sm me-1" onclick="filterStatus('paid')">Pagadas</button>
-                        <button class="btn btn-outline-warning btn-sm me-1" onclick="filterStatus('pending')">Pendientes</button>
-                        <button class="btn btn-outline-danger btn-sm me-1" onclick="filterStatus('overdue')">Vencidas</button>
-                        <button class="btn btn-outline-secondary btn-sm" onclick="filterStatus('draft')">Borrador</button>
+                        <div class="d-flex justify-content-between align-items-center">
+                            <small class="text-muted">Total Facturas</small>
+                            <span class="badge bg-success ms-2">+12.2%</span>
+                        </div>
+                        <h4 class="mb-0">${{ total_pagado|intcomma }}</h4>
+                        <small class="text-muted">Últimos 30 días</small>
                     </div>
                 </div>
+            </div>
 
-                <div class="table-responsive shadow-sm rounded">
-                    <table class="table table-hover mb-0" id="invoiceTable">
-                        <thead class="table-light">
-                            <tr>
-                                <th>Fecha</th>
-                                <th>No. Factura</th>
-                                <th>Cliente</th>
-                                <th>Total</th>
-                                <th>Status</th>
-                            </tr>
-                        </thead>
-                        <tbody>
-                            {% for invoice in invoices %}
-                            <tr onclick="showInvoiceDetails({{ invoice.id }})" data-status="{{ invoice.status }}" style="cursor: pointer;">
-                                <td>{{ invoice.date }}</td>
-                                <td>#{{ invoice.invoice_number }}</td>
-                                <td>{{ invoice.customer_name }}</td>
-                                <td>${{ invoice.total }}</td>
-                                <td>
-                                    {% if invoice.status == 'Pagada' %}
-                                        <span class="badge bg-success">Pagada</span>
-                                    {% elif invoice.status == 'pending' %}
-                                        <span class="badge bg-warning text-dark">Pendiente</span>
-                                    {% elif invoice.status == 'A credito' %}
-                                        <span class="badge bg-danger">A credito</span>
-                                    {% else %}
-                                        <span class="badge bg-secondary">Borrador</span>
-                                    {% endif %}
-                                </td>
-                            </tr>
-                            {% endfor %}
-                        </tbody>
-                    </table>
+            <!-- Pagadas -->
+            <div class="card flex-fill m-2 p-3 shadow-sm border-0" style="min-width: 250px; background: #fffbea;">
+                <div class="d-flex align-items-center">
+                    <div class="icon-box bg-success text-white rounded-circle me-3">
+                        <i class="bi bi-check2-square fs-4"></i>
+                    </div>
+                    <div>
+                        <div class="d-flex justify-content-between align-items-center">
+                            <small class="text-muted">Pagadas</small>
+                            <span class="badge bg-success ms-2">+10.1%</span>
+                        </div>
+                        <h4 class="mb-0">${{ total_pagado|intcomma }}</h4>
+                        <small class="text-muted">{{ cont_pay }} facturas</small>
+                    </div>
                 </div>
             </div>
 
-            <!-- Panel de Detalles -->
-            <div class="col-md-4">
-                <div class="card shadow-sm" id="invoiceDetails" style="display: none;">
-                    <div class="card-body">
-                        <div class="d-flex align-items-center mb-3">
-                            <div class="flex-grow-1">
-                                <h5 class="card-title" id="detailInvoiceNumber"></h5>
-                            </div>
+            <!-- Pendientes -->
+            <div class="card flex-fill m-2 p-3 shadow-sm border-0" style="min-width: 250px; background: #fff8e1;">
+                <div class="d-flex align-items-center">
+                    <div class="icon-box bg-warning text-white rounded-circle me-3">
+                        <i class="bi bi-hourglass-split fs-4"></i>
+                    </div>
+                    <div>
+                        <div class="d-flex justify-content-between align-items-center">
+                            <small class="text-muted">Pendientes</small>
+                            <span class="badge bg-warning text-dark ms-2">+2.6%</span>
                         </div>
+                        <h4 class="mb-0">${{ total_credito|intcomma }}</h4>
+                        <small class="text-muted">{{ cont_credit }} facturas</small>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Vencidas -->
+            <div class="card flex-fill m-2 p-3 shadow-sm border-0" style="min-width: 250px; background: #ffecec;">
+                <div class="d-flex align-items-center">
+                    <div class="icon-box bg-danger text-white rounded-circle me-3">
+                        <i class="bi bi-exclamation-triangle-fill fs-4"></i>
+                    </div>
+                    <div>
+                        <div class="d-flex justify-content-between align-items-center">
+                            <small class="text-muted">Vencidas</small>
+                            <span class="badge bg-danger ms-2">+1.5%</span>
+                        </div>
+                        <h4 class="mb-0">${{ overdue_invoices_amount }}</h4>
+                        <small class="text-muted">{{ overdue_invoices_count }} facturas</small>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Tabla -->
+        <div class="card flex-fill m-2 p-3 shadow-sm">
+            <div class="row">
+                <div class="col-12">
+                    <div class="d-flex justify-content-between align-items-center mb-3">
+                        <h4 class="mb-0">Facturas</h4>
+                        <div>
+                            <button class="btn btn-outline-primary btn-sm me-1" onclick="filterStatus('Pagada')">Pagadas</button>
+                            <button class="btn btn-outline-warning btn-sm me-1" onclick="filterStatus('pending')">Pendientes</button>
+                            <button class="btn btn-outline-danger btn-sm me-1" onclick="filterStatus('A credito')">Vencidas</button>
+                            <button class="btn btn-outline-secondary btn-sm" onclick="filterStatus('draft')">Borrador</button>
+                        </div>
+                    </div>
+
+                    <div class="table-responsive shadow-sm rounded">
+                        <table class="table table-hover mb-0" id="invoiceTable">
+                            <thead class="table-light">
+                                <tr>
+                                    <th>Fecha</th>
+                                    <th>No. Factura</th>
+                                    <th>Cliente</th>
+                                    <th>Total</th>
+                                    <th>Estado</th>
+                                    <th>Descargar Factura</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                {% for invoice in invoices %}
+                                <tr 
+                                    data-id="{{ invoice.id }}" 
+                                    data-invoice='{{ invoice|safe }}'
+                                    data-status="{{ invoice.status }}" 
+                                    style="cursor: pointer;" 
+                                    data-bs-toggle="modal" 
+                                    data-bs-target="#invoiceModal">
+                                    <td>{{ invoice.date }}</td>
+                                    <td>#{{ invoice.invoice_number }}</td>
+                                    <td>{{ invoice.customer.name }} {{ invoice.customer.lastname }}</td>
+                                    <td>${{ invoice.total|intcomma }}</td>
+                                    <td>
+                                        {% if invoice.status == 'Pagada' %}
+                                            <span class="badge bg-success">Pagada</span>
+                                        {% elif invoice.status == 'pending' %}
+                                            <span class="badge bg-warning text-dark">Pendiente</span>
+                                        {% elif invoice.status == 'A credito' %}
+                                            <span class="badge bg-danger">A crédito</span>
+                                        {% else %}
+                                            <span class="badge bg-secondary">Borrador</span>
+                                        {% endif %}
+                                    </td>
+                                    <td><a href="{% url 'invoice_pdf' invoice.id %}" class="btn btn-outline-danger" download>
+                                        Descargar
+                                    </a></td>
+                                </tr>
+                                {% endfor %}
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+            </div>
+        </div> 
+
+        <!-- Modal -->
+        <div class="modal fade" id="invoiceModal" tabindex="-1" aria-labelledby="invoiceModalLabel" aria-hidden="true">
+            <div class="modal-dialog">
+                <div class="modal-content shadow">
+                    <div class="modal-header">
+                        <h5 class="modal-title" id="detailInvoiceNumber">Factura</h5>
+                        <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Cerrar"></button>
+                    </div>
+                    <div class="modal-body">
                         <ul class="list-unstyled">
                             <li><strong>Cliente:</strong> <span id="detailCustomer"></span></li>
                             <li><strong>Total:</strong> $<span id="detailTotal"></span></li>
@@ -102,32 +172,58 @@
         </div>
     </div>
 </div>
-<script>
-const invoices = {{ invoices_json|safe }};
+{% endblock %}
 
-function showInvoiceDetails(id) {
-    const invoice = invoices.find(inv => inv.id === id);
-    if (invoice) {
-        document.getElementById('detailInvoiceNumber').innerText = `Factura #${invoice.invoice_number}`;
-        document.getElementById('detailCustomer').innerText = invoice.customer_name;
-        document.getElementById('detailTotal').innerText = invoice.total;
-        document.getElementById('detailDiscount').innerText = invoice.discount;
-        document.getElementById('detailPayment').innerText = invoice.payment_method;
-        document.getElementById('detailStatus').innerText = invoice.status;
-        document.getElementById('detailNotes').innerText = invoice.notes || 'Sin notas';
-        document.getElementById('invoiceDetails').style.display = 'block';
-    }
-}
+{% block extra_scripts %}
+    <link rel="stylesheet" href="https://cdn.datatables.net/1.10.25/css/dataTables.bootstrap5.min.css">
+    <script src="https://cdn.datatables.net/1.10.25/js/jquery.dataTables.min.js"></script>
+    <script src="https://cdn.datatables.net/1.10.25/js/dataTables.bootstrap5.min.js"></script>
 
-function filterStatus(status) {
-    const rows = document.querySelectorAll('#invoiceTable tbody tr');
-    rows.forEach(row => {
-        if (status === '' || row.getAttribute('data-status') === status) {
-            row.style.display = '';
-        } else {
-            row.style.display = 'none';
+    <script>
+        $(document).ready(function () {
+            $('#invoiceTable').DataTable({
+                paging: true,
+                searching: true,
+                ordering: true,
+                lengthChange: true,
+                pageLength: 10,
+                deferRender: true,
+                language: {
+                    search: "Buscar:",
+                    lengthMenu: "Mostrar _MENU_ registros",
+                    info: "Mostrando _START_ a _END_ de _TOTAL_ registros",
+                    paginate: {
+                        previous: "Anterior",
+                        next: "Siguiente"
+                    }
+                }
+            });
+
+            $('#invoiceTable tbody').on('click', 'tr', function () {
+                const invoiceData = $(this).data('invoice');
+                if (!invoiceData) return;
+
+                document.getElementById('detailInvoiceNumber').innerText = `Factura #${invoiceData.invoice_number}`;
+                document.getElementById('detailCustomer').innerText = invoiceData.customer_name;
+                document.getElementById('detailTotal').innerText = invoiceData.total;
+                document.getElementById('detailDiscount').innerText = invoiceData.discount || '0';
+                document.getElementById('detailPayment').innerText = invoiceData.payment_method || 'N/A';
+                document.getElementById('detailStatus').innerText = invoiceData.status;
+                document.getElementById('detailNotes').innerText = invoiceData.notes || 'Sin notas';
+            });
+        });
+
+        function filterStatus(status) {
+            const table = $('#invoiceTable').DataTable();
+            table.rows().every(function () {
+                const rowData = $(this.node());
+                const rowStatus = rowData.attr('data-status');
+                if (!status || rowStatus === status) {
+                    rowData.show();
+                } else {
+                    rowData.hide();
+                }
+            });
         }
-    });
-}
-</script>
+    </script>
 {% endblock %}

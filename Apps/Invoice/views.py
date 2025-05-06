@@ -2,6 +2,7 @@ from django.shortcuts import render, redirect
 from .models import Invoice
 from Invoice.Form import InvoiceForm, InvoiceItem
 from item.models import Item
+from customer.models import Customer
 from decimal import Decimal
 import json
 from django.db.models import Sum, Max
@@ -111,29 +112,50 @@ def create_invoice(request):
 
 @login_required
 def invoices_report(request):
-    invoices = Invoice.objects.all()
+
+    invoices = Invoice.objects.select_related('customer').all()
+    total_credit = Invoice.objects.filter(status='A credito').aggregate(
+        result_credit=Sum('total')
+    )
     
     total = Invoice.objects.filter(status='Pagada').aggregate(
         result=Sum('total')
     )
-    total_payment = float(total.get('result') or 0)
-    invoice_list = [{
-        'id': invoice.id,
-        'date': invoice.date.strftime('%Y-%m-%d %H:%M:%S'),
-        'invoice_number': invoice.invoice_number,
-        'customer_id': invoice.customer_id,
-        'total': float(invoice.total) if isinstance(invoice.total, Decimal) else invoice.total,
-        'payment_method': invoice.payment_method,
-        'status': invoice.status,
-        'discount': float(invoice.discount) if isinstance(invoice.discount, Decimal) else invoice.discount,
-        'notes': invoice.notes,
-        'quotas': invoice.quotas,
-    } for invoice in invoices]
+    #conteo de facturas pagdas y a credito
+    cont_credit = Invoice.objects.filter(status='A credito').count()
+    cont_pay = Invoice.objects.filter(status='Pagada').count()
+
+    # Total de facturas pagadas y a credito
+    total_credit = float(total_credit.get('result_credit') or 0)
+    total_payment = float(total.get('result') or 0) 
+
+    invoice_list = []
+    for invoice in invoices:
+        customer = invoice.customer 
+        full_name = f"{customer.name} {customer.lastname}" if customer else ''
+
+        invoice_list.append({
+            'id': invoice.id,
+            'date': invoice.date.strftime('%Y-%m-%d %H:%M:%S'),
+            'invoice_number': invoice.invoice_number,
+            'customer_name': customer.name if customer else '',
+            'customer_last_name': customer.lastname if customer else '',
+            'customer_full_name': full_name,
+            'total': float(invoice.total) if isinstance(invoice.total, Decimal) else invoice.total,
+            'payment_method': invoice.payment_method,
+            'status': invoice.status,
+            'discount': float(invoice.discount) if isinstance(invoice.discount, Decimal) else invoice.discount,
+            'notes': invoice.notes,
+            'quotas': invoice.quotas,
+        })
 
     return render(request, 'Invoice/Report_invoice.html', {
         'invoices': invoices,
         'invoices_json': json.dumps(invoice_list),
         'total_pagado': total_payment,
+        'total_credito': total_credit,
+        'cont_pay': cont_pay,
+        'cont_credit': cont_credit,
     })
 
 @login_required
@@ -143,4 +165,3 @@ def invoice_pdf(request, invoice_id):
     except Invoice.DoesNotExist:
         raise Http404("Invoice not found")
     return render_to_pdf('invoice/receipt_pdf.html', {'invoice': invoice})
-

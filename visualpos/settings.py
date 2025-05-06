@@ -26,14 +26,15 @@ SECRET_KEY = 'django-insecure-)w3(vn+@d#&ig&vt)edxpbjgwp&fcq@fla-)^)me)=)8)&&cbp
 # SECURITY WARNING: don't run with debug turned on in production!
 DEBUG = True
 
-ALLOWED_HOSTS = ['localhost', '127.0.0.1', 'a6b8-2800-484-6c7a-11b0-2000-5cfc-ca4b-94c5.ngrok-free.app'] # This is the ngrok URL and localhost (Tunnel)
-CSRF_TRUSTED_ORIGINS = [' https://a6b8-2800-484-6c7a-11b0-2000-5cfc-ca4b-94c5.ngrok-free.app']
+ALLOWED_HOSTS = ['localhost', '127.0.0.1', 'cb0e-2800-484-6c7a-11b0-3c48-9da8-ec0f-92ca.ngrok-free.app'] # This is the ngrok URL and localhost (Tunnel)
+CSRF_TRUSTED_ORIGINS = ['https://cb0e-2800-484-6c7a-11b0-3c48-9da8-ec0f-92ca.ngrok-free.app']
 
 # Application definition
 
 INSTALLED_APPS = [
     'django.contrib.admin',
     'django.contrib.auth',
+    'django.contrib.humanize',
     'django.contrib.contenttypes',
     'django.contrib.sessions',
     'django.contrib.messages',
@@ -94,18 +95,27 @@ DATABASES = {
 
 AUTH_PASSWORD_VALIDATORS = [
     {
-        'NAME': 'django.contrib.auth.password_validation.UserAttributeSimilarityValidator',
-    },
-    {
         'NAME': 'django.contrib.auth.password_validation.MinimumLengthValidator',
+        'OPTIONS': {
+            'min_length': 4,  
+        }
     },
-    {
-        'NAME': 'django.contrib.auth.password_validation.CommonPasswordValidator',
-    },
-    {
-        'NAME': 'django.contrib.auth.password_validation.NumericPasswordValidator',
-    },
+
 ]
+# AUTH_PASSWORD_VALIDATORS = [
+#     {
+#         'NAME': 'django.contrib.auth.password_validation.UserAttributeSimilarityValidator',
+#     },
+#     {
+#         'NAME': 'django.contrib.auth.password_validation.MinimumLengthValidator',
+#     },
+#     {
+#         'NAME': 'django.contrib.auth.password_validation.CommonPasswordValidator',
+#     },
+#     {
+#         'NAME': 'django.contrib.auth.password_validation.NumericPasswordValidator',
+#     },
+# ]
 
 
 # Internationalization

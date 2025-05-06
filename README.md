@@ -34,7 +34,7 @@ Berserker is a sales software designed to optimize and streamline the commercial
    ```
 3. Install Virtual environment
    ```sh
-   pyton -m venv env
+   python -m venv env
    ```
 4. Install dependencies:
    ```sh
