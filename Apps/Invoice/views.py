@@ -184,3 +184,23 @@ def invoice_pdf(request, invoice_id):
     except Invoice.DoesNotExist:
         raise Http404("Invoice not found")
     return render_to_pdf('invoice/receipt_pdf.html', {'invoice': invoice})
+
+def View_quota(request):
+    customer_id = request.GET.get('customer')
+    estado = request.GET.get('estado')  
+    customer = Customer.objects.all()
+    quotas = PaymentQuota.objects.select_related('invoice', 'invoice__customer')
+
+    if customer_id:
+        quotas = quotas.filter(invoice__customer__id=customer_id)
+
+    if estado == "Pagadas":
+        quotas = quotas.filter(is_paid=True)
+    elif estado == "Pendientes":
+        quotas = quotas.filter(is_paid=False)
+
+    context = {
+        'customer': customer,
+        'credits': quotas,
+    }
+    return render(request, 'PaymentQuota/Payment_quota.html', context)
