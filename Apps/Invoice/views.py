@@ -13,6 +13,7 @@ from xhtml2pdf import pisa
 from django.http import Http404
 from datetime import timedelta, date
 from .models import PaymentQuota 
+from .models import TransactionType
 
 
 def render_to_pdf(template_src, context_dict={}):
@@ -23,6 +24,27 @@ def render_to_pdf(template_src, context_dict={}):
     if pisa_status.err:
         return HttpResponse('Error generando PDF')
     return response
+
+def create_type_transaction(request):
+    if request.method == 'POST':
+        traType = request.POST.get('name')  
+        Consecutive = request.POST.get('consecutive') 
+        TransactionType.objects.create(
+            traType=traType,
+            Consecutive=Consecutive,
+            user=request.user
+        )
+        Trans = TransactionType.objects.all()
+        context = {
+            'transaction': Trans
+        }
+        return redirect('home')
+    else:
+        Trans = TransactionType.objects.all()
+        context = {
+            'transaction': Trans
+        }
+        return render(request, 'Invoice/create_transaction.html', context)
 
 @login_required
 def create_invoice(request):

@@ -46,3 +46,11 @@ class PaymentQuota(models.Model):
 
     class Meta:
         unique_together = ('invoice', 'number')  
+
+class TransactionType(models.Model):
+    consecutive = models.IntegerField('Consecutive of the transaction') 
+    tra_type = models.CharField('Type Transaction', max_length=50)  
+    user = models.ForeignKey(User, on_delete=models.CASCADE, related_name='transaction_types')
+
+    def __str__(self):
+        return f"{self.tra_type} - {self.consecutive}" 

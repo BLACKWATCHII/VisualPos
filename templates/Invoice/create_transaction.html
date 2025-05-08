@@ -1,0 +1,85 @@
+{% extends 'base.html' %}
+{% load static %}
+
+{% block title %}Crear Transacciones{% endblock %}
+
+{% block content %}
+<style>
+    .custom-red-border {
+      border: 2px solid #268f2d !important; /* Rojo de Bootstrap (danger) */
+      border-radius: 0.375rem; /* Equivalente a rounded de Bootstrap */
+    }
+  </style>
+<div class="container mt-5">
+  <div class="card shadow rounded-4" style="margin-top: 7rem;">
+    <div class="card-body">
+        <div class="accordion border border-success" id="accordionExample">
+            <div class="accordion-item">
+              <h2 class="accordion-header">
+                <button class="accordion-button" type="button" data-bs-toggle="collapse" data-bs-target="#collapseOne" aria-expanded="true" aria-controls="collapseOne">
+                  Recomendaciones al crear y editar el tipo de transaccion
+                </button>
+              </h2>
+              <div id="collapseOne" class="accordion-collapse collapse show" data-bs-parent="#accordionExample">
+                <div class="accordion-body">
+                    <p>
+                      <strong>Al crear una transacción:</strong> 
+                      Recuerda que esta operación está vinculada con la creación de facturas y el procesamiento de pagos de cuotas a crédito. 
+                      <strong>El consecutivo de la factura se incrementa automáticamente</strong> al generarla.
+                    </p>
+                    <p>
+                      <code>Importante:</code> 
+                      El número consecutivo <strong>no se puede retroceder</strong>, ya que esto causaría duplicados y afectaría la integridad de los datos.
+                    </p>
+                  </div>
+              </div>
+            </div>
+          </div>
+    </div>
+    <div class="card-body">
+      <div class="row">
+        <!-- Lado izquierdo: Formulario -->
+        <div class="col-md-6 border-end">
+          <h4 class="mb-4">Crear Transacción</h4>
+          <form method="POST" id="transactionForm" action="{% url 'create_transaction' %}">
+            {% csrf_token %} 
+            <div class="mb-3">
+              <label for="nombre" class="form-label">Nombre de la Transacción</label>
+              <input type="text" class="form-control" id="name" name="name">
+            </div>
+            <div class="mb-3">
+              <label for="consecutivo" class="form-label">Consecutivo</label>
+              <input type="number" class="form-control" id="consecutive" name="consecutive">
+            </div>
+            <button type="submit" class="btn btn-primary">Guardar</button>
+          </form>
+        </div>
+
+        <!-- Lado derecho: Vista previa -->
+        <div class="col-md-6">
+          <h4 class="mb-4">Vista previa</h4>
+          <p><strong>Nombre de la Transacción:</strong> <span id="preview-nombre">--</span></p>
+          <p><strong>Consecutivo:</strong> <span id="preview-consecutivo">--</span></p>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- Script para vista previa -->
+<script>
+  const nombreInput = document.getElementById('name');
+  const consecutivoInput = document.getElementById('consecutive');
+
+  function updatePreview() {
+    document.getElementById('preview-nombre').textContent = nombreInput.value || '--';
+    document.getElementById('preview-consecutivo').textContent = consecutivoInput.value || '--';
+  }
+
+  nombreInput.addEventListener('input', updatePreview);
+  consecutivoInput.addEventListener('input', updatePreview);
+
+  // Mostrar valores iniciales si ya hay POST
+  document.addEventListener('DOMContentLoaded', updatePreview);
+</script>
+{% endblock %}
