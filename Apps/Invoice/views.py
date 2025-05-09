@@ -16,7 +16,7 @@ from .models import PaymentQuota
 from .models import TransactionType
 from django.contrib import messages
 
-@login_required
+
 def render_to_pdf(template_src, context_dict={}):
     template = get_template(template_src)
     html  = template.render(context_dict)
@@ -207,7 +207,7 @@ def invoices_report(request):
     total = Invoice.objects.filter(status='Pagada').aggregate(
         result=Sum('total')
     )
-    #conteo de facturas pagdas y a credito
+    #conteo de facturas pagadas y a credito
     cont_credit = Invoice.objects.filter(status='A credito').count()
     cont_pay = Invoice.objects.filter(status='Pagada').count()
 
@@ -244,6 +244,8 @@ def invoices_report(request):
         'cont_credit': cont_credit,
     })
 
+
+
 @login_required
 def invoice_pdf(request, invoice_id):
     try:
@@ -252,10 +254,17 @@ def invoice_pdf(request, invoice_id):
         raise Http404("Invoice not found")
     return render_to_pdf('invoice/receipt_pdf.html', {'invoice': invoice})
 
+
+
+#method to view quotas
+@login_required
 def View_quota(request):
     customer_id = request.GET.get('customer')
     estado = request.GET.get('estado')  
     customer = Customer.objects.all()
+    count_quota_paid = PaymentQuota.objects.filter(is_paid=1).count()
+    count_quota_unpaid = PaymentQuota.objects.filter(is_paid=0).count()
+    count_quota_expired = PaymentQuota.objects.filter(payment_date__lt=date.today(), is_paid=False).count()
     quotas = PaymentQuota.objects.select_related('invoice', 'invoice__customer')
 
     if customer_id:
@@ -269,5 +278,8 @@ def View_quota(request):
     context = {
         'customer': customer,
         'credits': quotas,
+        'count_quota_paid': count_quota_paid,
+        'count_quota_unpaid': count_quota_unpaid,
+        'count_quota_expired': count_quota_expired,
     }
     return render(request, 'PaymentQuota/Payment_quota.html', context)

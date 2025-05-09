@@ -113,7 +113,6 @@ def signin(request):
             user = authenticate(username=username, password=password)
             if user is not None:
                 login(request, user)
-                messages.success(request, "Login successful")
                 return redirect('Dasboard')
             else:
                 messages.error(request, "Incorrect username or password.")
