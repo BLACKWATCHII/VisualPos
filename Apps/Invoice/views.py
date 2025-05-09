@@ -1,4 +1,4 @@
-from django.shortcuts import render, redirect
+from django.shortcuts import render, redirect, get_object_or_404
 from .models import Invoice
 from Invoice.Form import InvoiceForm, InvoiceItem
 from item.models import Item
@@ -14,8 +14,9 @@ from django.http import Http404
 from datetime import timedelta, date
 from .models import PaymentQuota 
 from .models import TransactionType
+from django.contrib import messages
 
-
+@login_required
 def render_to_pdf(template_src, context_dict={}):
     template = get_template(template_src)
     html  = template.render(context_dict)
@@ -25,26 +26,70 @@ def render_to_pdf(template_src, context_dict={}):
         return HttpResponse('Error generando PDF')
     return response
 
+@login_required
 def create_type_transaction(request):
     if request.method == 'POST':
-        traType = request.POST.get('name')  
-        Consecutive = request.POST.get('consecutive') 
+        tra_type = request.POST.get('name')  
+        consecutive = request.POST.get('consecutive') 
+        iniType = request.POST.get('iniType')
+
+        # Validar que iniType no se repita
+        if TransactionType.objects.filter(iniType=iniType).exists():
+            Trans = TransactionType.objects.all()
+            # Mostrar mensaje de error y volver a cargar la página
+            message = messages.error(request, f"El valor '{iniType}' ya está en uso. Por favor, elija otro.")
+            context = {
+                'transactions': Trans,
+                'error': message
+            }
+            return render(request, 'Invoice/create_transaction.html', context)
+
         TransactionType.objects.create(
-            traType=traType,
-            Consecutive=Consecutive,
+            tra_type=tra_type,
+            consecutive=consecutive,
+            iniType=iniType,
             user=request.user
         )
-        Trans = TransactionType.objects.all()
-        context = {
-            'transaction': Trans
-        }
-        return redirect('home')
+        messages.success(request, "Transacción creada correctamente.")
+        return redirect('create_transaction')
     else:
         Trans = TransactionType.objects.all()
         context = {
-            'transaction': Trans
+            'transactions': Trans
         }
         return render(request, 'Invoice/create_transaction.html', context)
+
+from django.shortcuts import redirect
+
+@login_required
+def edit_type_transaction(request, transaction_id):
+    transaction = TransactionType.objects.get(id=transaction_id)
+    if request.method == 'POST':
+        tra_type = request.POST.get('name')  
+        consecutive = request.POST.get('consecutive') 
+        iniType = request.POST.get('iniType')
+
+        if TransactionType.objects.filter(iniType=iniType).exclude(id=transaction_id).exists():
+            messages.error(request, f"La inicial que intenta editar ya está en uso. Por favor, elija otra.")
+            return redirect('create_transaction')
+
+        transaction.tra_type = tra_type
+        transaction.consecutive = consecutive
+        transaction.iniType = iniType
+        transaction.save()
+        messages.success(request, "Transacción actualizada correctamente.")
+        return redirect('create_transaction')
+
+    return redirect('create_transaction')
+
+
+@login_required
+def delete_type_transaction(request, transaction_id):
+    transaction = get_object_or_404(TransactionType, id=transaction_id)
+    transaction.delete()
+    messages.success(request, "Transacción eliminada correctamente.")
+    return redirect('create_transaction')
+
 
 @login_required
 def create_invoice(request):

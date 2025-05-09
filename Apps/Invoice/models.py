@@ -49,7 +49,8 @@ class PaymentQuota(models.Model):
 
 class TransactionType(models.Model):
     consecutive = models.IntegerField('Consecutive of the transaction') 
-    tra_type = models.CharField('Type Transaction', max_length=50)  
+    tra_type = models.CharField('Type Transaction', max_length=50)
+    iniType = models.CharField('Initial Type', max_length=50, blank=True, null=True)  
     user = models.ForeignKey(User, on_delete=models.CASCADE, related_name='transaction_types')
 
     def __str__(self):
