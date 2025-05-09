@@ -33,10 +33,8 @@ def create_type_transaction(request):
         consecutive = request.POST.get('consecutive') 
         iniType = request.POST.get('iniType')
 
-        # Validar que iniType no se repita
         if TransactionType.objects.filter(iniType=iniType).exists():
             Trans = TransactionType.objects.all()
-            # Mostrar mensaje de error y volver a cargar la página
             message = messages.error(request, f"El valor '{iniType}' ya está en uso. Por favor, elija otro.")
             context = {
                 'transactions': Trans,
@@ -91,109 +89,114 @@ def delete_type_transaction(request, transaction_id):
     return redirect('create_transaction')
 
 
+from django.db import transaction
+from django.contrib import messages
+from datetime import timedelta, date
+
 @login_required
 def create_invoice(request):
     if request.method == 'POST':
         form = InvoiceForm(request.POST)
-        
+
         if form.is_valid():
-            invoice = form.save(commit=False)
-
-            items = request.POST.getlist('item_id')
-            quantities = request.POST.getlist('quantity')
-            prices = request.POST.getlist('price')
-            payment_method = request.POST.get('payment_method')
-            status = request.POST.get('status')
-            quotas = request.POST.get('quotas')
-            notes = request.POST.get('notes')
-
-            if status is None:
-                status = 'Pagada'
-            if payment_method == 'credit':
-                status = 'credit'
-
-            invoice.quotas = quotas
-            invoice.payment_method = payment_method 
-            invoice.status = status
-            invoice.notes = notes
-            invoice.user = request.user
-
-            total = 0
-            for quantity, price in zip(quantities, prices):
-                if quantity and price:
-                    total += int(quantity) * float(price)
-
-            # Descuento
-            discount_percent = request.POST.get('discount-percent')
-            if discount_percent:
-                discount_percent = float(discount_percent)
-                discount_amount = total * (discount_percent / 100)
-                total -= discount_amount
-                invoice.discount = discount_percent
-            else:
-                invoice.discount = 0
-
-            invoice.total = total
-
-            # Generar número de factura automáticamente
-            last_invoice_number = Invoice.objects.aggregate(Max('invoice_number'))['invoice_number__max']
-            if last_invoice_number and last_invoice_number.startswith('FV-'):
-                try:
-                    last_number = int(last_invoice_number.replace('FV-', ''))
-                    new_number = last_number + 1
-                except ValueError:
-                    new_number = 1
-            else:
-                new_number = 1
-
-            invoice.invoice_number = f"FV-{new_number:02d}" 
-            print(invoice)
-            invoice.save()
-
-            # payment_quota
             try:
-                quotas_int = int(quotas)
-            except (ValueError, TypeError):
-                quotas_int = 0
-            
-            if payment_method == 'credit' and quotas_int > 1:
-                Quota_amount = invoice.total / quotas_int
-                Start_date = invoice.date or date.today()
+                with transaction.atomic():
+                    invoice = form.save(commit=False)
 
-                for i in range(quotas_int):
-                    PaymentQuota.objects.create(    
-                        invoice = invoice,
-                        number = i+1,
-                        amount = Quota_amount,
-                        payment_date = Start_date + timedelta(days=30 * i),
-                        is_paid = False
-                    )
+                    # Datos del POST
+                    items = request.POST.getlist('item_id')
+                    quantities = request.POST.getlist('quantity')
+                    prices = request.POST.getlist('price')
 
-            for item_id, quantity, price in zip(items, quantities, prices):
-                if item_id:
-                    item = Item.objects.get(id=item_id)
-                    InvoiceItem.objects.create(
-                        invoice=invoice,
-                        item=item,
-                        quantity=int(quantity),
-                        price=float(price),
-                    )
-                    item.Stock -= int(quantity)
-                    item.save()
+                    payment_method = request.POST.get('payment_method')
+                    status = request.POST.get('status') or 'Pagada'
+                    quotas = request.POST.get('quotas')
+                    notes = request.POST.get('notes')
+                    discount_percent = request.POST.get('discount-percent')
+                    transaction_type_id = request.POST.get('transaction_type')
 
-            if request.POST.get('download') == 'pdf':
-                return render_to_pdf('invoice/receipt_pdf.html', {'invoice': invoice})
-            else:
-                return redirect('home')
+                    # Ajustar estado
+                    if payment_method == 'credit':
+                        status = 'credit'
+
+                    invoice.payment_method = payment_method
+                    invoice.status = status
+                    invoice.notes = notes
+                    invoice.user = request.user
+                    invoice.quotas = int(quotas) if quotas else 0
+
+                    # Calcular total
+                    total = 0
+                    for qty, price in zip(quantities, prices):
+                        if qty and price:
+                            total += int(qty) * float(price)
+
+                    if discount_percent:
+                        discount_percent = float(discount_percent)
+                        total -= total * (discount_percent / 100)
+                        invoice.discount = discount_percent
+                    else:
+                        invoice.discount = 0
+
+                    invoice.total = total
+
+                    # Transacción y consecutivo
+                    transaction_type = get_object_or_404(TransactionType, id=transaction_type_id)
+                    invoice.invoice_number = transaction_type.consecutive
+                    invoice.transaction_type = transaction_type
+                    transaction_type.consecutive += 1
+                    transaction_type.save()
+
+                    invoice.save()
+
+                    # Crear cuotas
+                    if payment_method == 'credit' and invoice.quotas > 1:
+                        quota_amount = invoice.total / invoice.quotas
+                        start_date = invoice.date or date.today()
+                        for i in range(invoice.quotas):
+                            PaymentQuota.objects.create(
+                                invoice=invoice,
+                                number=i + 1,
+                                amount=quota_amount,
+                                payment_date=start_date + timedelta(days=30 * i),
+                                is_paid=False
+                            )
+
+                    # Crear items de factura
+                    for item_id, qty, price in zip(items, quantities, prices):
+                        if item_id and qty and price:
+                            item = Item.objects.get(id=item_id)
+                            InvoiceItem.objects.create(
+                                invoice=invoice,
+                                item=item,
+                                quantity=int(qty),
+                                price=float(price),
+                            )
+                            item.Stock -= int(qty)
+                            item.save()
+
+                    if request.POST.get('download') == 'pdf':
+                        return render_to_pdf('invoice/receipt_pdf.html', {'invoice': invoice})
+
+                    return redirect('home')
+
+            except Exception as e:
+                messages.error(request, f'Error al crear la factura: {str(e)}')
+        else:
+            messages.error(request, 'Formulario inválido.')
+
     else:
         form = InvoiceForm()
 
     items = Item.objects.all()
+    transaction_types = TransactionType.objects.all()
 
     return render(request, 'invoice/create_invoice.html', {
         'form': form,
         'items': items,
+        'transaction_types': transaction_types,
     })
+
 
 
 @login_required

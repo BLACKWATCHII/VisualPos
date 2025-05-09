@@ -3,6 +3,18 @@ from customer.models import Customer
 from item.models import Item
 from django.contrib.auth.models import User
 
+
+
+class TransactionType(models.Model):
+    consecutive = models.IntegerField('Consecutive of the transaction') 
+    tra_type = models.CharField('Type Transaction', max_length=50)
+    iniType = models.CharField('Initial Type', max_length=50, blank=True, null=True)  
+    user = models.ForeignKey(User, on_delete=models.CASCADE, related_name='transaction_types')
+
+    def __str__(self):
+        return f"{self.tra_type} - {self.consecutive}" 
+
+
 class Invoice(models.Model):
     customer = models.ForeignKey(Customer, on_delete=models.CASCADE)
     date = models.DateTimeField(auto_now_add=True)
@@ -20,7 +32,8 @@ class Invoice(models.Model):
         ('unpaid', 'No Pagada'),
         ('refunded', 'Reembolsada')
     ], default='unpaid')
-    invoice_number = models.CharField(max_length=20, unique=True,blank=True, null=True)  
+    transaction_type = models.ForeignKey(TransactionType, on_delete=models.CASCADE, related_name='invoices')
+    invoice_number = models.IntegerField()  
     notes = models.TextField(blank=True, null=True)  
     quotas = models.PositiveIntegerField(null=True, blank=True)
     user = models.ForeignKey(User, on_delete=models.CASCADE, related_name='Invoice')
@@ -47,11 +60,3 @@ class PaymentQuota(models.Model):
     class Meta:
         unique_together = ('invoice', 'number')  
 
-class TransactionType(models.Model):
-    consecutive = models.IntegerField('Consecutive of the transaction') 
-    tra_type = models.CharField('Type Transaction', max_length=50)
-    iniType = models.CharField('Initial Type', max_length=50, blank=True, null=True)  
-    user = models.ForeignKey(User, on_delete=models.CASCADE, related_name='transaction_types')
-
-    def __str__(self):
-        return f"{self.tra_type} - {self.consecutive}" 

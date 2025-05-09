@@ -29,140 +29,154 @@
 {% block content %}
 <div class="card" style="margin-top: 4rem;">
     <div class="container my-5">
-        <div class="row">
-            <!-- Formulario -->
-            <div class="col-md-5">
-                <h5 class="mb-4"><strong> Detalle de la factura</strong></h5>
-                <form id="invoice-form" method="post" target="_blank">
-                    {% csrf_token %}
-                    <!-- Cliente -->
-                    <div class="mb-3">
-                        <label class="form-label">Cliente</label>
-                        <select 
-                            id="customer" 
-                            name="{{ form.customer.name }}" 
-                            class="form-select"
-                        >
-                            <option value="">Selecciona cliente</option>
-                            {% for customer in form.customer.field.queryset %}
-                            <option 
-                                value="{{ customer.pk }}" 
-                                {% if form.customer.value == customer.pk %}selected{% endif %}
+        <h2 class="text mb-4">Crear Factura</h2>
+        <div class="card" style="padding: 2rem; background: #f8f9fa; border-radius: 12px; box-shadow: 0px 4px 10px rgba(0, 0, 0, 0.05);">
+            <div class="row">
+                <!-- Formulario -->
+                <div class="col-md-5">
+                    <h5 class="mb-4"><strong> Detalle de la factura</strong></h5>
+                    <form id="invoice-form" method="post" target="_blank">
+                        {% csrf_token %}
+                        <!-- Cliente -->
+                        <div class="mb-3">
+                            <label class="form-label">Tipo de transaccion</label>
+                            <select name="transaction_type" required class="form-control w-25" id="transactionId" aria-label="Default select example">
+                                {% for trans in transaction_types %}
+                                    <option value="{{ trans.id }}">{{ trans.iniType }}-{{ trans.consecutive }}</option>
+                                {% endfor %}
+                            </select>
+                        </div>
+
+                        <div class="mb-3">
+                            <label class="form-label">Cliente</label>
+                            <select 
+                                id="customer" 
+                                name="{{ form.customer.name }}" 
+                                class="form-select"
                             >
-                                {{ customer.name }} {{ customer.lastname }}
-                            </option>
-                            {% endfor %}
-                        </select>
-                    </div>
+                                <option value="">Selecciona cliente</option>
+                                {% for customer in form.customer.field.queryset %}
+                                <option 
+                                    value="{{ customer.pk }}" 
+                                    {% if form.customer.value == customer.pk %}selected{% endif %}
+                                >
+                                    {{ customer.name }} {{ customer.lastname }}
+                                </option>
+                                {% endfor %}
+                            </select>
+                        </div>
 
-                    <!-- Asunto -->
-                    <div class="mb-3">
-                        <label class="form-label">Asunto</label>
-                        <input type="text" id="subject" name="subject" class="form-control" placeholder="Subject">
-                    </div>
-                    
-                    <!-- Payment_method -->
-                    <div class="mb-3">
-                        <label class="form-label" for="payment_method_select">Método de pago</label>
-                        <select name="payment_method" id="payment_method_select" class="form-select" required>
-                            <option value="">Selecciona método de pago</option>
-                            <option value="credit_card">Tarjeta crédito</option>
-                            <option value="debit_card">Tarjeta débito</option>
-                            <option value="transfer">Transferencia bancaria</option>
-                            <option value="cash">Efectivo</option>
-                            <option value="credit">Crédito</option>
-                            <option value="other">Otro</option>
-                        </select>
-                    </div>
-                    <!-- Number_quotas -->
-                    <div class="mb-3" id="quotas-field" style="display: none;">
-                        <label class="form-label"># Numero de cuota</label>
-                        <input type="text" id="Quotas" name="quotas" class="form-control" placeholder="1">
-                    </div>
-                    <!-- Fecha -->
-                    <div class="mb-3">
-                        <label class="form-label">Due Date</label>
-                        <input type="date" id="due_date" name="due_date" class="form-control">
-                    </div>
+                        <!-- Asunto -->
+                        <div class="mb-3">
+                            <label class="form-label">Asunto</label>
+                            <input type="text" id="subject" name="subject" class="form-control" placeholder="Subject">
+                        </div>
+                        
+                        <!-- Payment_method -->
+                        <div class="mb-3">
+                            <label class="form-label" for="payment_method_select">Método de pago</label>
+                            <select name="payment_method" id="payment_method_select" class="form-select" required>
+                                <option value="">Selecciona método de pago</option>
+                                <option value="credit_card">Tarjeta crédito</option>
+                                <option value="debit_card">Tarjeta débito</option>
+                                <option value="transfer">Transferencia bancaria</option>
+                                <option value="cash">Efectivo</option>
+                                <option value="credit">Crédito</option>
+                                <option value="other">Otro</option>
+                            </select>
+                        </div>
+                        <!-- Number_quotas -->
+                        <div class="mb-3" id="quotas-field" style="display: none;">
+                            <label class="form-label"># Numero de cuota</label>
+                            <input type="text" id="Quotas" name="quotas" class="form-control" placeholder="1">
+                        </div>
+                        <!-- Fecha -->
+                        <div class="mb-3">
+                            <label class="form-label">Due Date</label>
+                            <input type="date" id="due_date" name="due_date" class="form-control">
+                        </div>
 
 
-                    <!-- Productos -->
-                    <h6 class="mt-4"><strong>Products</strong></h6>
-                    <div id="products">
-                        <div class="row g-2 mb-2 product-line">
-                            <div class="col-6">
-                                <select class="form-select item-id" name="item_id">
-                                    <option value="">Select item</option>
-                                    {% for item in items %}
-                                    <option value="{{ item.id }}" data-price="{{ item.Price }}">
-                                        {{ item.Name }}
-                                    </option>
-                                    {% endfor %}
-                                </select>
-                            </div>
-                            <div class="col-3">
-                                <input type="number" min="1" class="form-control item-qty" name="quantity" placeholder="Qty" value="1">
-                            </div>
-                            <div class="col-3">
-                                <input type="number" min="0" class="form-control item-price" name="price" placeholder="Price" value="0">
+                        <!-- Productos -->
+                        <h6 class="mt-4"><strong>Products</strong></h6>
+                        <div id="products">
+                            <div class="row g-2 mb-2 product-line">
+                                <div class="col-6">
+                                    <select class="form-select item-id" name="item_id">
+                                        <option value="">Select item</option> 
+                                        {% for item in items %}
+                                            {% if item.active == 1 %}
+                                            <option value="{{ item.id }}" data-price="{{ item.Price }}">
+                                                {{ item.Name }}
+                                            </option>
+                                            {% endif %}
+                                        {% endfor %}
+                                    </select>
+                                </div>
+                                <div class="col-3">
+                                    <input type="number" min="1" class="form-control item-qty" name="quantity" placeholder="Qty" value="1">
+                                </div>
+                                <div class="col-3">
+                                    <input type="number" min="0" class="form-control item-price" name="price" placeholder="Price" value="0">
+                                </div>
                             </div>
                         </div>
-                    </div>
-                    <a href="#" id="add-line" class="d-block my-2">+ Add New Line</a>
+                        <a href="#" id="add-line" class="d-block my-2">+ Add New Line</a>
 
-                    <!-- Descuento -->
-                    <div class="form-check mt-3">
-                        <input class="form-check-input" type="checkbox" id="add_discount">
-                        <label class="form-check-label" for="add_discount">
-                            Add Discount
-                        </label>
-                    </div>
-                    <div id="discount-fields" style="display:none;">
-                        <input type="text" id="discount-description" class="form-control mt-2" placeholder="Discount description">
-                        <input type="number" id="discount-percent" class="form-control mt-2" placeholder="Discount %" min="0" max="100">
-                    </div>
-                    <input type="hidden" name="download" value="pdf">
-                    <button type="submit" class="btn btn-primary w-100 mt-4">Processing Invoice</button>
-                </form>
-            </div>
+                        <!-- Descuento -->
+                        <div class="form-check mt-3">
+                            <input class="form-check-input" type="checkbox" id="add_discount">
+                            <label class="form-check-label" for="add_discount">
+                                Add Discount
+                            </label>
+                        </div>
+                        <div id="discount-fields" style="display:none;">
+                            <input type="text" id="discount-description" class="form-control mt-2" placeholder="Discount description">
+                            <input type="number" id="discount-percent" class="form-control mt-2" placeholder="Discount %" min="0" max="100">
+                        </div>
+                        <input type="hidden" name="download" value="pdf">
+                        <button type="submit" class="btn btn-primary w-100 mt-4">Processing Invoice</button>
+                    </form>
+                </div>
 
-            <!-- Preview -->
-            <div class="col-md-7">
-                <h5 class="mb-4"><strong>Previsualizacion</strong></h5>
-                <div class="preview-box">
-                    <div class="d-flex justify-content-end mb-3">
-                        <button type="button" class="btn btn-outline-secondary btn-sm mx-1">PDF</button>
-                        <button type="button" class="btn btn-outline-secondary btn-sm mx-1">Email</button>
-                        <button type="button" class="btn btn-outline-secondary btn-sm mx-1">Payment Page</button>
-                    </div>
+                <!-- Preview -->
+                <div class="col-md-7">
+                    <h5 class="mb-4"><strong>Previsualizacion</strong></h5>
+                    <div class="preview-box">
+                        <div class="d-flex justify-content-end mb-3">
+                            <button type="button" class="btn btn-outline-secondary btn-sm mx-1">PDF</button>
+                            <button type="button" class="btn btn-outline-secondary btn-sm mx-1">Email</button>
+                            <button type="button" class="btn btn-outline-secondary btn-sm mx-1">Payment Page</button>
+                        </div>
 
-                    <div class="border-bottom pb-3 mb-3">
-                        <h6 id="preview-invoice-number">#{{ invoice.invoice_number }} </h6>
-                        <small id="preview-due-date">Due: --</small><br>
-                        <small id="preview-customer">Cliente: --</small><br>
-                        <small id="preview-subject">Subject: --</small>
-                    </div>
+                        <div class="border-bottom pb-3 mb-3">
+                            <h6 id="preview-invoice-number">#</h6>
+                            <small id="preview-due-date">Due: --</small><br>
+                            <small id="preview-customer">Cliente: --</small><br>
+                            <small id="preview-subject">Subject: --</small>
+                        </div>
 
-                    <table class="table table-bordered mb-3">
-                        <thead>
-                            <tr>
-                                <th>Description</th>
-                                <th>Qty</th>
-                                <th>Unit Price</th>
-                                <th>Amount</th>
-                            </tr>
-                        </thead>
-                        <tbody id="preview-products">
-                            <tr>
-                                <td colspan="4" class="text-center">No items</td>
-                            </tr>
-                        </tbody>
-                    </table>
+                        <table class="table table-bordered mb-3" style="border-color: green;">
+                            <thead>
+                                <tr>
+                                    <th>Description</th>
+                                    <th>Qty</th>
+                                    <th>Unit Price</th>
+                                    <th>Amount</th>
+                                </tr>
+                            </thead>
+                            <tbody id="preview-products">
+                                <tr>
+                                    <td colspan="4" class="text-center">No items</td>
+                                </tr>
+                            </tbody>
+                        </table>
 
-                    <div class="text-end">
-                        <p><strong>Subtotal:</strong> <span id="subtotal">$0.00</span></p>
-                        <p id="discount-preview" style="display: none;"><strong>Discount:</strong> <span id="discount-amount">$0.00</span></p>
-                        <h5><strong>Total:</strong> <span id="total">$0.00</span></h5>
+                        <div class="text-end">
+                            <p><strong>Subtotal:</strong> <span id="subtotal">$0.00</span></p>
+                            <p id="discount-preview" style="display: none;"><strong>Discount:</strong> <span id="discount-amount">$0.00</span></p>
+                            <h5><strong>Total:</strong> <span id="total">$0.00</span></h5>
+                        </div>
                     </div>
                 </div>
             </div>
@@ -201,7 +215,8 @@
     
         // Actualiza la previsualización
         function updatePreview() {
-            // Cliente, asunto, fecha
+            // Cliente, asunto, fecha, numero de factura
+            $('#preview-invoice-number').text('Factura # ' + ($('#transactionId').val() || '--'));
             $('#preview-customer').text('Cliente: ' + ($('#customer option:selected').text() || '--'));
             $('#preview-subject').text('Subject: ' + ($('#subject').val() || '--'));
             $('#preview-due-date').text('Due: ' + ($('#due_date').val() || '--'));
@@ -226,6 +241,7 @@
     
             $('#preview-products').html(productsHtml);
             $('#subtotal').text('$' + subtotal.toFixed(2));
+
     
             // Descuento
             if($('#add_discount').is(':checked')){
@@ -252,8 +268,9 @@
         $('#customer, #subject, #due_date').on('input change', updatePreview);
         $(document).on('input change', '.item-qty, .item-price', updatePreview);
         $('#add_discount, #discount-percent').on('input change', updatePreview);
+
     
-        // En esta session agrega linea nueva para agregar otro producto
+        // En esta session se agrega linea nueva para agregar otro producto
         $('#add-line').click(function(e){
             e.preventDefault();
             var newLine = $('.product-line:first').clone();

@@ -21,6 +21,6 @@ def createTax(request):
             rate=percentajeInt,
             user=request.user
         )
-        messages.success(request, 'Tax creado correctamente.')
+        # messages.success(request, 'Tax creado correctamente.')
         return redirect('viewItem')
     return render(request,'tax/createTax.html')
