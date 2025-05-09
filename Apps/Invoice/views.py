@@ -200,7 +200,7 @@ def create_invoice(request):
 def invoices_report(request):
 
     invoices = Invoice.objects.select_related('customer').all()
-    total_credit = Invoice.objects.filter(status='A credito').aggregate(
+    total_credit = Invoice.objects.filter(status='credit').aggregate(
         result_credit=Sum('total')
     )
     
@@ -208,7 +208,7 @@ def invoices_report(request):
         result=Sum('total')
     )
     #conteo de facturas pagadas y a credito
-    cont_credit = Invoice.objects.filter(status='A credito').count()
+    cont_credit = Invoice.objects.filter(status='credit').count()
     cont_pay = Invoice.objects.filter(status='Pagada').count()
 
     # Total de facturas pagadas y a credito
