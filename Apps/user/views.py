@@ -71,6 +71,9 @@ def Dashboard(request):
     Total= Invoice.objects.filter(status ='Pagada').aggregate(result =Sum('total'))
     Total_Payment = float(Total.get('result') or 0)
 
+    Total_credit = Invoice.objects.filter(status ='credit').aggregate(result =Sum('total'))
+    Total_Payment_credit = float(Total_credit.get('result') or 0)
+
     dates_clients = [entry['record_date'].strftime('%Y-%m-%d') for entry in new_clients_per_day if entry['record_date']]
     counts_clients = [entry['count'] for entry in new_clients_per_day]
 
@@ -90,6 +93,7 @@ def Dashboard(request):
         'totals_sales': json.dumps(totals_sales),
         'products_names': json.dumps(products_names),
         'products_sales': json.dumps(products_sales),
+        'num_total_credit': Total_Payment_credit,
     }
 
     return render(request, 'tasks.html', context)
@@ -113,7 +117,6 @@ def signin(request):
             user = authenticate(username=username, password=password)
             if user is not None:
                 login(request, user)
-                messages.success(request, "Login successful")
                 return redirect('Dasboard')
             else:
                 messages.error(request, "Incorrect username or password.")

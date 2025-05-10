@@ -60,15 +60,16 @@
             </div>
           </div>
           <div class="col-6">
-            <div class="card bg-danger text-white text-center hover-card p-2">
-              <h5>Pedidos Pendientes</h5>
-              <p>20</p>
-            </div>
+            <a href="{% url 'payment_quota' %}" class="text-decoration-none">
+              <div class="card bg-danger text-white text-center hover-card p-2">
+                <h5>Ventas a crédito</h5>
+                <p>{{ num_total_credit|intcomma }}</p>
+              </div>
+            </a>
           </div>
         </div>
       </div>
     </div>
-
   </div>
 </div>
 

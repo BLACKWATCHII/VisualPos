@@ -72,7 +72,6 @@ def CreateItem(request):
                 active=active,
                 user=request.user
             )
-            messages.success(request, 'Ítem creado correctamente.')
             return redirect('viewItem')
         except IntegrityError as e:
             print(f"Error de integridad: {e}")

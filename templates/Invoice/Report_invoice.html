@@ -94,9 +94,9 @@
                     <div class="d-flex justify-content-between align-items-center mb-3">
                         <h4 class="mb-0">Facturas</h4>
                         <div>
-                            <button class="btn btn-outline-primary btn-sm me-1" onclick="filterStatus('Pagada')">Pagadas</button>
-                            <button class="btn btn-outline-warning btn-sm me-1" onclick="filterStatus('pending')">Pendientes</button>
-                            <button class="btn btn-outline-danger btn-sm me-1" onclick="filterStatus('A credito')">Vencidas</button>
+                            <button class="btn btn-outline-primary btn-sm me-1 " onclick="filterStatus('Pagada')">Pagadas</button>
+                            <button class="btn btn-outline-warning btn-sm me-1" onclick="filterStatus('credit')">Credito</button>
+                            <button class="btn btn-outline-danger btn-sm me-1" onclick="filterStatus('vencidas')">Vencidas</button>
                             <button class="btn btn-outline-secondary btn-sm" onclick="filterStatus('draft')">Borrador</button>
                         </div>
                     </div>
@@ -133,7 +133,7 @@
                                             <span class="badge bg-danger text-dark">Pendiente</span>
                                         {% elif invoice.status == 'credit' %}
                                             <span class="badge bg-warning">Crédito</span>
-                                        {% else %}
+                                        {% else %} 
                                             <span class="badge bg-secondary">Borrador</span>
                                         {% endif %}
                                     </td>

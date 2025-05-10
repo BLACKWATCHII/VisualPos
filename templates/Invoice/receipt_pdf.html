@@ -171,21 +171,19 @@
             <td class="label">Sales Tax (5%):</td>
             <td class="value">${{ invoice.tax }}</td>
         </tr>
-        {% if invoice.discount %}
         <tr>
             <td class="label">Descuento:</td>
             <td class="value">-{{ invoice.discount }}%</td>
         </tr>
-        {% endif %}
         <tr class="total">
-            <td class="label">Total (USD):</td>
+            <td class="label">Total (Cop):</td>
             <td class="value">${{ invoice.total }}</td>
         </tr>
     </table>
 
     <div class="footer">
         Gracias por tu compra.<br>
-        ¿Tienes dudas? Contáctanos al soporte.
+        ¿Tienes dudas? Contáctanos al <soporte class=":">+57 3013916533</soporte>
     </div>
 
 </div>

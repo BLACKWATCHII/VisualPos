@@ -1,0 +1,128 @@
+  {% extends 'base.html' %}
+  {% load static %}
+
+  {% block title %}Crear Transacciones{% endblock %}
+
+  {% block content %}
+  <style>
+      .custom-red-border {
+        border: 2px solid #268f2d !important; 
+        border-radius: 0.375rem; 
+      }
+    </style>
+  <div class="container mt-5">
+    <div class="card shadow rounded-4" style="margin-top: 7rem;">
+      <div class="card-body">
+          <div class="accordion border border-success" id="accordionExample">
+              <div class="accordion-item">
+                <h2 class="accordion-header">
+                  <button class="accordion-button" type="button" data-bs-toggle="collapse" data-bs-target="#collapseOne" aria-expanded="true" aria-controls="collapseOne">
+                    Recomendaciones al crear y editar el tipo de transaccion
+                  </button>
+                </h2>
+                <div id="collapseOne" class="accordion-collapse collapse show" data-bs-parent="#accordionExample">
+                  <div class="accordion-body">
+                      <p>
+                        <strong>Al crear una transacción:</strong> 
+                        Recuerda que esta operación está vinculada con la creación de facturas y el procesamiento de pagos de cuotas a crédito. 
+                        <strong>El consecutivo de la factura se incrementa automáticamente</strong> al generarla.
+                      </p>
+                      <p>
+                        <code>Importante:</code> 
+                        El número consecutivo <strong>no se puede retroceder</strong>, ya que esto causaría duplicados y afectaría la integridad de los datos.
+                      </p>
+                    </div>
+                </div>
+              </div>
+            </div>
+      </div>
+      <div class="card-body">
+        <div class="row">
+        <div class="col-md-6 border-end">
+          <h4 class="mb-4" id="formTitle">Crear Transacción</h4>
+          <form method="POST" id="transactionForm" action="{% url 'create_transaction' %}">
+          {% csrf_token %} 
+          <input type="hidden" id="transactionId" name="transactionId" value="">
+          <div class="mb-3">
+            <label for="nombre" class="form-label">Nombre de la Transacción</label>
+            <input type="text" class="form-control" id="name" name="name" required>
+          </div>
+          <div class="mb-3">
+            <label for="consecutivo" class="form-label">Consecutivo</label>
+            <input type="number" class="form-control" id="consecutive" name="consecutive" required>
+          </div>
+          <div class="mb-3 w-50">
+            <label for="initial" class="form-label">Iniciales</label>
+            <input type="text" class="form-control" id="iniType" name="iniType" oninput="convertToUppercase(this)" required>
+          </div>
+          <button type="submit" class="btn btn-success" id="submitButton">Guardar</button>
+          </form>
+        </div>
+
+        <div class="col-md-6">
+          <h4 class="mb-4">Transacciones Creadas</h4>
+          <table class="table table-bordered">
+          <thead>
+            <tr>
+            <th>Nombre</th>
+            <th>Consecutivo</th>
+            <th>Iniciales</th>
+            <th>Acciones</th>
+            </tr>
+          </thead>
+          <tbody>
+            {% for transaction in transactions %}
+            <tr>
+            <td>{{ transaction.tra_type }}</td>
+            <td>{{ transaction.consecutive }}</td>
+            <td>{{ transaction.iniType }}</td>
+            <td>
+              <button class="btn btn-success btn-sm" onclick="editTransaction({{ transaction.id }}, &quot;{{ transaction.tra_type }}&quot;, {{ transaction.consecutive }}, &quot;{{ transaction.iniType }}&quot;)">Editar</button>
+              <a href="{% url 'delete_transaction' transaction.id %}" class="btn btn-danger btn-sm delete-btn" data-url="{% url 'delete_transaction' transaction.id %}">Eliminar</a>
+            </td>
+            </tr>
+            {% empty %}
+            <tr>
+            <td colspan="4" class="text-center">No hay transacciones creadas</td>
+            </tr>
+            {% endfor %}
+          </tbody>
+          </table>
+        </div>
+        </div>
+      </div>
+      </div>
+    </div>
+
+  <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
+  <script>
+    function convertToUppercase(inputElement) {
+      inputElement.value = inputElement.value.toUpperCase();
+    }
+
+    function editTransaction(id, name, consecutive, iniType) {
+      document.getElementById('transactionId').value = id;
+      document.getElementById('name').value = name;
+      document.getElementById('consecutive').value = consecutive;
+      document.getElementById('iniType').value = iniType;
+
+      document.getElementById('formTitle').textContent = 'Editar Transacción';
+      document.getElementById('submitButton').textContent = 'Actualizar';
+      document.getElementById('transactionForm').action = `{% url 'edit_transaction' 0 %}`.replace('0', id);
+    }
+    
+  </script>
+  {% if messages %}
+  {% for message in messages %}
+    <script>
+      Swal.fire({
+        icon: '{% if message.tags == "error" %}error{% else %}success{% endif %}',
+        title: '{{ message.tags|capfirst }}',
+        text: '{{ message }}',
+        confirmButtonColor: '{% if message.tags == "error" %}#d33{% else %}#3085d6{% endif %}'
+      });
+    </script>
+  {% endfor %}
+{% endif %}
+
+{% endblock %}
