@@ -1,0 +1,39 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <title>Recibo de pago</title>
+    <style>
+        body {
+            font-family: 'Courier New', monospace;
+            width: 300px;
+            margin: auto;
+            padding: 20px;
+            border: 1px dashed black;
+        }
+        h2 {
+            text-align: center;
+        }
+        .line {
+            border-bottom: 1px dashed #000;
+            margin: 10px 0;
+        }
+        .total {
+            font-weight: bold;
+            font-size: 18px;
+        }
+    </style>
+</head>
+<body>
+    <h2>💳 Pago recibido</h2>
+    <div class="line"></div>
+
+    <p><strong>Factura:</strong> #{{ invoice.invoice_number }}</p>
+    <p><strong>Cliente:</strong> {{ invoice.customer.name }} {{ invoice.customer.lastname }}</p>
+    <p><strong>Fecha del pago:</strong> {{ quota.payment_date }}</p>
+    <p><strong>Monto pagado:</strong> ${{ quota.amount }}</p>
+    <div class="line"></div>
+    <p class="total">Estado: PAGADA ✅</p>
+    <p style="text-align:center; margin-top:20px;">¡Gracias por su pago!</p>
+</body>
+</html>

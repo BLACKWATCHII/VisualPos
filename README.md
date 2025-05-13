@@ -62,6 +62,7 @@ Get-ChildItem -Recurse -Directory -Filter "__pycache__" | Where-Object { $_.Full
   ```sh mac
   find . -type d \( -name "migrations" -o -name "__pycache__" \) -not -path "*env*" -exec rm -rf {} +
    ```
+pip install xhtml2pdf
 ## 📢 Contributions
 
 Contributions are welcome! If you want to collaborate, please open an issue or submit a pull request.

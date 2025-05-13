@@ -7,7 +7,7 @@ from decimal import Decimal
 import json
 from django.db.models import Sum, Max
 from django.contrib.auth.decorators import login_required
-from django.http import HttpResponse
+from django.http import HttpResponse, HttpResponseNotAllowed, JsonResponse
 from django.template.loader import get_template
 from xhtml2pdf import pisa
 from django.http import Http404
@@ -286,3 +286,31 @@ def View_quota(request):
         'count_quota_expired': count_quota_expired,
     }
     return render(request, 'PaymentQuota/Payment_quota.html', context)
+
+
+# pay quota method
+@login_required
+def pay_quota(request, quota_id):
+    if request.method == 'POST':
+        quota = PaymentQuota.objects.get(id=quota_id)
+        quota.is_paid = True
+        quota.save()
+
+        all_paid = quota.invoice.payment_quotas.filter(is_paid=False).count() == 0
+        if all_paid:
+            quota.invoice.status = 'paid'
+            quota.invoice.save()
+
+        template = get_template('paymentQuota/receipt_ticket.html')
+        html = template.render({'invoice': quota.invoice})
+
+        response = HttpResponse(content_type='application/pdf')
+        response['Content-Disposition'] = f'inline; filename=tirilla_factura_{quota.invoice.invoice_number}.pdf'
+
+        pisa_status = pisa.CreatePDF(html, dest=response)
+
+        if pisa_status.err:
+            return HttpResponse('Hubo un error al generar el PDF', status=500)
+
+        return response
+    return HttpResponse(status=405)  

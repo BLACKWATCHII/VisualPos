@@ -19,7 +19,7 @@
         <!-- Cards resumen -->
         <div class="d-flex flex-wrap justify-content-start mb-4">
             <!-- Total Facturas -->
-            <div class="card flex-fill m-2 p-3 shadow-sm border-0" style="min-width: 250px; background: #f0f8ff;">
+            <div class="card flex-fill m-2 p-3 shadow-sm border-0" style="min-width: 250px; background: #deeffe;">
                 <div class="d-flex align-items-center">
                     <div class="icon-box bg-primary text-white rounded-circle me-3">
                         <i class="bi bi-receipt-cutoff fs-4"></i>
@@ -36,7 +36,7 @@
             </div>
 
             <!-- Pagadas -->
-            <div class="card flex-fill m-2 p-3 shadow-sm border-0" style="min-width: 250px; background: #fffbea;">
+            <div class="card flex-fill m-2 p-3 shadow-sm border-0" style="min-width: 250px; background: #f8f1d4;">
                 <div class="d-flex align-items-center">
                     <div class="icon-box bg-success text-white rounded-circle me-3">
                         <i class="bi bi-check2-square fs-4"></i>
@@ -53,7 +53,7 @@
             </div>
 
             <!-- Pendientes -->
-            <div class="card flex-fill m-2 p-3 shadow-sm border-0" style="min-width: 250px; background: #fff8e1;">
+            <div class="card flex-fill m-2 p-3 shadow-sm border-0" style="min-width: 250px; background: #dfffdd;">
                 <div class="d-flex align-items-center">
                     <div class="icon-box bg-warning text-white rounded-circle me-3">
                         <i class="bi bi-hourglass-split fs-4"></i>
@@ -70,7 +70,7 @@
             </div>
 
             <!-- Vencidas -->
-            <div class="card flex-fill m-2 p-3 shadow-sm border-0" style="min-width: 250px; background: #ffecec;">
+            <div class="card flex-fill m-2 p-3 shadow-sm border-0" style="min-width: 250px; background: #ffe2e2;">
                 <div class="d-flex align-items-center">
                     <div class="icon-box bg-danger text-white rounded-circle me-3">
                         <i class="bi bi-exclamation-triangle-fill fs-4"></i>
@@ -93,11 +93,16 @@
                 <div class="col-12">
                     <div class="d-flex justify-content-between align-items-center mb-3">
                         <h4 class="mb-0">Facturas</h4>
-                        <div>
-                            <button class="btn btn-outline-primary btn-sm me-1 " onclick="filterStatus('Pagada')">Pagadas</button>
-                            <button class="btn btn-outline-warning btn-sm me-1" onclick="filterStatus('credit')">Credito</button>
-                            <button class="btn btn-outline-danger btn-sm me-1" onclick="filterStatus('vencidas')">Vencidas</button>
-                            <button class="btn btn-outline-secondary btn-sm" onclick="filterStatus('draft')">Borrador</button>
+                        <div class="dropdown"></div>
+                            <button class="btn btn-outline-success btn-sm dropdown-toggle" type="button" id="filterDropdown" data-bs-toggle="dropdown" aria-expanded="false">
+                                Filtrar por estado
+                            </button>
+                            <ul class="dropdown-menu" aria-labelledby="filterDropdown">
+                                <li><a class="dropdown-item" href="#" onclick="filterStatus('Pagada')">Pagadas</a></li>
+                                <li><a class="dropdown-item" href="#" onclick="filterStatus('credit')">Credito</a></li>
+                                <li><a class="dropdown-item" href="#" onclick="filterStatus('vencidas')">Vencidas</a></li>
+                                <li><a class="dropdown-item" href="#" onclick="filterStatus('draft')">Borrador</a></li>
+                            </ul>
                         </div>
                     </div>
 

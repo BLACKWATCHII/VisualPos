@@ -109,14 +109,24 @@
                     {% endif %}
                   </td>
                   <td>
+                    <!-- Si la cuota está pendiente -->
                     {% if credit.is_paid == 0 %}
-                    <a href="#" class="btn btn-sm btn-success">
+                      <button
+                        type="button"
+                        class="btn btn-sm btn-success"
+                        data-bs-toggle="modal"
+                        data-bs-target="#payModal"
+                        data-id="{{ credit.id }}"
+                        data-amount="{{ credit.amount }}"
+                        data-date="{{ credit.payment_date }}"
+                        data-invoice="{{ credit.invoice.invoice_number }}"
+                        data-url="{% url 'pay_quota' credit.id %}">
                         <i class="bi-check2-square"></i>
-                    </a>
+                      </button>
                     {% else %}
-                    <a href="#" class="btn btn-sm btn-danger">
-                      <i class="fa-solid fa-file-pdf"></i>
-                    </a>
+                      <a href="{% url 'pay_quota' credit.id %}" class="btn btn-sm btn-danger">
+                        <i class="fa-solid fa-file-pdf"></i>
+                      </a>
                     {% endif %}
                 </td>
               </tr>
@@ -130,5 +140,92 @@
       </table>
     </div>
   </div>
+
+        <div class="modal fade" id="payModal" tabindex="-1" aria-labelledby="payModalLabel" aria-hidden="true">
+          <div class="modal-dialog">
+            <div class="modal-content border-success">
+              <div class="modal-header">
+                <h5 class="modal-title" id="payModalLabel">Confirmar Pago</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Cerrar"></button>
+              </div>
+              <div class="modal-body">
+                <p><strong>Factura:</strong> <span id="modalInvoice"></span></p>
+                <p><strong>Fecha de vencimiento:</strong> <span id="modalDate"></span></p>
+                <p><strong>Cantidad a pagar:</strong> $<span id="modalAmount"></span></p>
+              </div>
+              <div class="modal-footer">
+                <form id="confirmPayForm" method="post" target="_blank">
+                  {% csrf_token %}
+                  <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancelar</button>
+                  <button id="confirmPayButton" type="button" class="btn btn-success">Confirmar Pago</button>
+                </form>
+              </div>
+            </div>
+          </div>
+        </div>
+        <form id="confirmPayForm">
+          <input type="hidden" name="csrfmiddlewaretoken" value="{{ csrf_token }}">
+        </form>
+
 </div>
+
+<script>
+document.addEventListener('DOMContentLoaded', function () {
+  const payModal = document.getElementById('payModal');
+  const confirmPayButton = document.getElementById('confirmPayButton');
+  let currentActionUrl = '';
+
+  payModal.addEventListener('show.bs.modal', function (event) {
+    const button = event.relatedTarget;
+    const id = button.getAttribute('data-id');
+    const amount = button.getAttribute('data-amount');
+    const date = button.getAttribute('data-date');
+    const invoice = button.getAttribute('data-invoice');
+
+    document.getElementById('modalInvoice').textContent = '#' + invoice;
+    document.getElementById('modalDate').textContent = date;
+    document.getElementById('modalAmount').textContent = amount;
+
+    currentActionUrl = `/invoice/quota/pay/${id}/`;
+  });
+
+  confirmPayButton.addEventListener('click', function () {
+    fetch(currentActionUrl, {
+      method: 'POST',
+      headers: {
+        'X-CSRFToken': getCSRFToken(),
+      }
+    })
+    .then(response => {
+      if (response.ok) {
+        return response.blob();
+      } else {
+        throw new Error('Error al procesar el pago');
+      }
+    })
+    .then(blob => {
+      const url = URL.createObjectURL(blob);
+      window.open(url, '_blank');  
+
+      const modalInstance = bootstrap.Modal.getInstance(payModal);
+      modalInstance.hide();
+
+      setTimeout(() => {
+        location.reload();
+      }, 1000);  
+    })
+    .catch(error => {
+      alert('Hubo un error al procesar el pago');
+      console.error(error);
+    });
+  });
+
+  function getCSRFToken() {
+    return document.querySelector('[name=csrfmiddlewaretoken]').value;
+  }
+});
+</script>
+
+
 {% endblock %}
+
