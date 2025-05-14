@@ -2,7 +2,7 @@
 
 {% extends 'base.html' %}
 {% load static %}
-
+{% load humanize %}
 
 {% block title %}Inventario{% endblock %}
 
@@ -48,7 +48,7 @@
                                     <td>{{ item.Name }}</td>
                                     <td>{{ item.Referents }}</td>
                                     <td>{{ item.Description }}</td>
-                                    <td>{{ item.Price}}</td>
+                                    <td>{{ item.Price|intcomma }}</td>
                                     <td>{{ item.Stock }}</td>
                                     <td>
                                         {% if item.active == 1 %}
