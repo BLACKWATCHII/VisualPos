@@ -94,75 +94,84 @@
             <th>Acciones</th>
           </tr>
         </thead>
-        <tbody> 
-          {% if credits %}
-          {% for credit in credits %}
-              <tr>
-                  <td>#{{ credit.invoice.invoice_number }}</td>
-                  <td>{{ credit.payment_date }}</td>
-                  <td>{{ credit.amount }}</td>
-                  <td>
-                    {% if credit.is_paid == 0 %}
-                    <span class="badge bg-warning" style="color: black;">Pendientes</span>
-                    {% else %}
-                    <span class="badge bg-success">Pagada</span>
-                    {% endif %}
-                  </td>
-                  <td>
-                    <!-- Si la cuota está pendiente -->
-                    {% if credit.is_paid == 0 %}
-                      <button
-                        type="button"
-                        class="btn btn-sm btn-success"
-                        data-bs-toggle="modal"
-                        data-bs-target="#payModal"
-                        data-id="{{ credit.id }}"
-                        data-amount="{{ credit.amount }}"
-                        data-date="{{ credit.payment_date }}"
-                        data-invoice="{{ credit.invoice.invoice_number }}"
-                        data-url="{% url 'pay_quota' credit.id %}">
-                        <i class="bi-check2-square"></i>
-                      </button>
-                    {% else %}
-                      <a href="{% url 'pay_quota' credit.id %}" class="btn btn-sm btn-danger">
-                        <i class="fa-solid fa-file-pdf"></i>
-                      </a>
-                    {% endif %}
-                </td>
-              </tr>
-          {% endfor %}
-      {% else %}
-          <tr>
-              <td colspan="8" class="text-center">No hay facturas pendientes</td>
-          </tr>
-      {% endif %}
-        </tbody>
+            <tbody> 
+              {% if credits %}
+                {% for credit in credits %}
+                  <tr>
+                    <td>#{{ credit.invoice.invoice_number }}</td>
+                    <td>{{ credit.payment_date }}</td>
+                    <td>{{ credit.amount }}</td>
+                    <td>
+                      {% if not credit.is_paid %}
+                        <span class="badge bg-warning text-dark">Pendiente</span>
+                      {% else %}
+                        <span class="badge bg-success">Pagada</span>
+                      {% endif %}
+                    </td>
+                    <td>
+                      {% if not credit.is_paid %}
+                        <button
+                          type="button"
+                          class="btn btn-sm btn-success"
+                          data-bs-toggle="modal"
+                          data-bs-target="#payModal"
+                          data-id="{{ credit.id }}"
+                          data-balance="{{ credit.amount }}"
+                          data-date="{{ credit.payment_date }}"
+                          data-invoice="{{ credit.invoice.invoice_number }}"
+                          data-url="{% url 'pay_quota' credit.id %}"
+                        >
+                          <i class="bi-check2-square"></i>
+                        </button>
+                      {% else %}
+                        <a href="{% url 'pay_quota' credit.id %}" class="btn btn-sm btn-danger">
+                          <i class="fa-solid fa-file-pdf"></i>
+                        </a>
+                      {% endif %}
+                    </td>
+                  </tr>
+                {% endfor %}
+              {% else %}
+                <tr><td colspan="5" class="text-center">No hay cuotas</td></tr>
+              {% endif %}
+            </tbody>
       </table>
     </div>
   </div>
 
-        <div class="modal fade" id="payModal" tabindex="-1" aria-labelledby="payModalLabel" aria-hidden="true">
-          <div class="modal-dialog">
-            <div class="modal-content border-success">
-              <div class="modal-header">
-                <h5 class="modal-title" id="payModalLabel">Confirmar Pago</h5>
-                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Cerrar"></button>
+      <div class="modal fade" id="payModal" tabindex="-1" aria-labelledby="payModalLabel" aria-hidden="true">
+        <div class="modal-dialog">
+          <div class="modal-content border-success">
+            <div class="modal-header">
+              <h5 class="modal-title" id="payModalLabel">Confirmar Pago de Cuota</h5>
+              <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Cerrar"></button>
+            </div>
+            <div class="modal-body">
+              <p><strong>Factura:</strong> <span id="modalInvoice"></span></p>
+              <p><strong>Fecha de vencimiento:</strong> <span id="modalDate"></span></p>
+              <div class="mb-3">
+                <label for="modalPayAmount" class="form-label">Importe a pagar</label>
+                <input
+                  type="number"
+                  step="0.01"
+                  min="0.01"
+                  id="modalPayAmount"
+                  name="amount"
+                  class="form-control"
+                >
+                <small class="form-text text-muted">Saldo restante: $<span id="modalBalance"></span></small>
               </div>
-              <div class="modal-body">
-                <p><strong>Factura:</strong> <span id="modalInvoice"></span></p>
-                <p><strong>Fecha de vencimiento:</strong> <span id="modalDate"></span></p>
-                <p><strong>Cantidad a pagar:</strong> $<span id="modalAmount"></span></p>
-              </div>
-              <div class="modal-footer">
-                <form id="confirmPayForm" method="post" target="_blank">
-                  {% csrf_token %}
-                  <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancelar</button>
-                  <button id="confirmPayButton" type="button" class="btn btn-success">Confirmar Pago</button>
-                </form>
-              </div>
+            </div>
+            <div class="modal-footer">
+              <form id="confirmPayForm" method="post" target="_blank">
+                {% csrf_token %}
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancelar</button>
+                <button id="confirmPayButton" type="button" class="btn btn-success">Confirmar Pago</button>
+              </form>
             </div>
           </div>
         </div>
+      </div>
         <form id="confirmPayForm">
           <input type="hidden" name="csrfmiddlewaretoken" value="{{ csrf_token }}">
         </form>
@@ -173,50 +182,58 @@
 document.addEventListener('DOMContentLoaded', function () {
   const payModal = document.getElementById('payModal');
   const confirmPayButton = document.getElementById('confirmPayButton');
+  const confirmForm = document.getElementById('confirmPayForm');
+  const inputAmount = document.getElementById('modalPayAmount');
   let currentActionUrl = '';
 
   payModal.addEventListener('show.bs.modal', function (event) {
     const button = event.relatedTarget;
-    const id = button.getAttribute('data-id');
-    const amount = button.getAttribute('data-amount');
-    const date = button.getAttribute('data-date');
     const invoice = button.getAttribute('data-invoice');
+    const date = button.getAttribute('data-date');
+    const balance = parseFloat(button.getAttribute('data-balance'));
+    currentActionUrl = button.getAttribute('data-url');
+
 
     document.getElementById('modalInvoice').textContent = '#' + invoice;
     document.getElementById('modalDate').textContent = date;
-    document.getElementById('modalAmount').textContent = amount;
+    document.getElementById('modalBalance').textContent = balance.toFixed(2);
 
-    currentActionUrl = `/invoice/quota/pay/${id}/`;
+  
+    inputAmount.max = balance.toFixed(2);
+    inputAmount.value = balance.toFixed(2);
+
+ 
+    confirmForm.action = currentActionUrl;
   });
 
   confirmPayButton.addEventListener('click', function () {
+    const payValue = parseFloat(inputAmount.value);
+    if (isNaN(payValue) || payValue <= 0 || payValue > parseFloat(inputAmount.max)) {
+      return alert('Ingrese un importe válido dentro del saldo restante');
+    }
+
+  
     fetch(currentActionUrl, {
       method: 'POST',
       headers: {
+        'Content-Type': 'application/x-www-form-urlencoded',
         'X-CSRFToken': getCSRFToken(),
-      }
+      },
+      body: new URLSearchParams({ amount: payValue })
     })
     .then(response => {
-      if (response.ok) {
-        return response.blob();
-      } else {
-        throw new Error('Error al procesar el pago');
-      }
+      if (!response.ok) throw new Error('Error al procesar el pago');
+      return response.blob();
     })
     .then(blob => {
       const url = URL.createObjectURL(blob);
-      window.open(url, '_blank');  
-
-      const modalInstance = bootstrap.Modal.getInstance(payModal);
-      modalInstance.hide();
-
-      setTimeout(() => {
-        location.reload();
-      }, 1000);  
+      window.open(url, '_blank');
+      bootstrap.Modal.getInstance(payModal).hide();
+      setTimeout(() => location.reload(), 800);
     })
-    .catch(error => {
+    .catch(err => {
+      console.error(err);
       alert('Hubo un error al procesar el pago');
-      console.error(error);
     });
   });
 

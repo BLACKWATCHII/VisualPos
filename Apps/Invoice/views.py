@@ -12,9 +12,10 @@ from django.template.loader import get_template
 from xhtml2pdf import pisa
 from django.http import Http404
 from datetime import timedelta, date
-from .models import PaymentQuota 
+from .models import PaymentQuota,Early_Payment
 from .models import TransactionType
 from django.contrib import messages
+
 
 
 def render_to_pdf(template_src, context_dict={}):
@@ -99,7 +100,6 @@ def create_invoice(request):
         form = InvoiceForm(request.POST)
 
         if form.is_valid():
-            try:
                 with transaction.atomic():
                     invoice = form.save(commit=False)
 
@@ -179,9 +179,6 @@ def create_invoice(request):
                         return render_to_pdf('invoice/receipt_pdf.html', {'invoice': invoice})
 
                     return redirect('home')
-
-            except Exception as e:
-                messages.error(request, f'Error al crear la factura: {str(e)}')
         else:
             messages.error(request, 'Formulario inválido.')
 
@@ -291,26 +288,33 @@ def View_quota(request):
 # pay quota method
 @login_required
 def pay_quota(request, quota_id):
-    if request.method == 'POST':
-        quota = PaymentQuota.objects.get(id=quota_id)
-        quota.is_paid = True
-        quota.save()
+    quota = get_object_or_404(PaymentQuota, id=quota_id)
 
-        all_paid = quota.invoice.payment_quotas.filter(is_paid=False).count() == 0
-        if all_paid:
-            quota.invoice.status = 'paid'
-            quota.invoice.save()
+    if request.method == 'POST':
+        pay_amount = Decimal(request.POST.get('amount'))
+        if pay_amount <= 0 or pay_amount > quota.balance:
+            messages.error(request, "Importe inválido")
+            return redirect('view_quota')
+
+        Early_Payment.objects.create(quota=quota, amount=pay_amount)
+
+        if quota.balance - pay_amount <= 0:
+            quota.is_paid = True
+            quota.save()
 
         template = get_template('paymentQuota/receipt_ticket.html')
-        html = template.render({'invoice': quota.invoice})
-
+        html = template.render({'quota': quota, 'payment': pay_amount})
         response = HttpResponse(content_type='application/pdf')
-        response['Content-Disposition'] = f'inline; filename=tirilla_factura_{quota.invoice.invoice_number}.pdf'
-
         pisa_status = pisa.CreatePDF(html, dest=response)
-
         if pisa_status.err:
-            return HttpResponse('Hubo un error al generar el PDF', status=500)
-
+            return HttpResponse('Error generando PDF', status=500)
         return response
-    return HttpResponse(status=405)  
+    
+    return HttpResponseNotAllowed(['POST'])
+
+@login_required
+def payment_history(request, customer_id=None):
+    qs = Early_Payment.objects.select_related('quota__invoice__customer')
+    if customer_id:
+        qs = qs.filter(quota__invoice__customer__id=customer_id)
+    return render(request, 'PaymentQuota/History.html', {'payments': qs})
