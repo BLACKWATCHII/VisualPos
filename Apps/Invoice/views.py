@@ -293,7 +293,6 @@ def pay_quota(request, quota_id):
     if request.method == 'POST':
         pay_amount = Decimal(request.POST.get('amount'))
         if pay_amount <= 0 or pay_amount > quota.balance:
-            messages.error(request, "Importe inválido")
             return redirect('view_quota')
 
         Early_Payment.objects.create(quota=quota, amount=pay_amount)
