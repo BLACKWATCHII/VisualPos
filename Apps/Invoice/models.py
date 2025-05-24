@@ -88,6 +88,7 @@ class PaymentQuota(models.Model):
         return self.amount - self.paid_amount
 
 
+
 class Early_Payment(models.Model):
     quota = models.ForeignKey(
         PaymentQuota,
@@ -96,6 +97,20 @@ class Early_Payment(models.Model):
     )
     amount = models.DecimalField(max_digits=10, decimal_places=2)
     date = models.DateTimeField(auto_now_add=True)
-
+    invoice_number = models.IntegerField(null=True, blank=True)
+    customer = models.ForeignKey(
+        Customer,
+        on_delete=models.CASCADE,
+        null=True,
+        blank=True,
+        related_name='early_payments'
+    )
     class Meta:
         ordering = ['-date']
+
+    def save(self, *args, **kwargs):
+        # Antes de guardar, llenare invoice_number y customer (esto es mas que todo para guardar el nombre de cliente y saber el numero de factura)
+        if self.quota and (self.invoice_number is None or self.customer_id is None):
+            self.invoice_number = self.quota.invoice.invoice_number
+            self.customer = self.quota.invoice.customer
+        super().save(*args, **kwargs)

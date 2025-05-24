@@ -31,7 +31,7 @@
     <p><strong>Factura:</strong> #{{ invoice.invoice_number }}</p>
     <p><strong>Cliente:</strong> {{ invoice.customer.name }} {{ invoice.customer.lastname }}</p>
     <p><strong>Fecha del pago:</strong> {{ quota.payment_date }}</p>
-    <p><strong>Monto pagado:</strong> ${{ quota.amount }}</p>
+    <p><strong>Monto pagado:</strong> ${{ amount_paid|floatformat:2 }}</p>
     <div class="line"></div>
     <p class="total">Estado: PAGADA ✅</p>
     <p style="text-align:center; margin-top:20px;">¡Gracias por su pago!</p>

@@ -7,7 +7,7 @@ from decimal import Decimal
 import json
 from django.db.models import Sum, Max
 from django.contrib.auth.decorators import login_required
-from django.http import HttpResponse, HttpResponseNotAllowed, JsonResponse
+from django.http import HttpResponse, HttpResponseBadRequest, HttpResponseNotAllowed, JsonResponse
 from django.template.loader import get_template
 from xhtml2pdf import pisa
 from django.http import Http404
@@ -291,24 +291,29 @@ def pay_quota(request, quota_id):
     quota = get_object_or_404(PaymentQuota, id=quota_id)
 
     if request.method == 'POST':
-        pay_amount = Decimal(request.POST.get('amount'))
+        try:
+            pay_amount = Decimal(request.POST.get('amount'))
+        except:
+            return HttpResponseBadRequest("Importe inválido")
+
         if pay_amount <= 0 or pay_amount > quota.balance:
-            return redirect('view_quota')
+            return HttpResponseBadRequest("Importe fuera del rango válido")
 
-        Early_Payment.objects.create(quota=quota, amount=pay_amount)
+        payment = Early_Payment.objects.create(quota=quota, amount=pay_amount)
 
-        if quota.balance - pay_amount <= 0:
+        if quota.balance <= 0:
             quota.is_paid = True
             quota.save()
+            quota.refresh_from_db()
 
-        template = get_template('paymentQuota/receipt_ticket.html')
-        html = template.render({'quota': quota, 'payment': pay_amount})
-        response = HttpResponse(content_type='application/pdf')
-        pisa_status = pisa.CreatePDF(html, dest=response)
-        if pisa_status.err:
-            return HttpResponse('Error generando PDF', status=500)
-        return response
-    
+        context = {
+            'payment': payment,
+            'quota': quota,
+            'invoice': quota.invoice,
+            'amount_paid': pay_amount
+        }
+        return render_to_pdf('PaymentQuota/Receipt_ticket.html', context)
+
     return HttpResponseNotAllowed(['POST'])
 
 @login_required

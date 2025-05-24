@@ -11,4 +11,6 @@ urlpatterns = [
     path('delete-transaction/<int:transaction_id>/', views.delete_type_transaction, name ='delete_transaction'),
     path('quota/pay/<int:quota_id>/', views.pay_quota, name='pay_quota'),
     path('payment/history/<int:customer_id>/', views.payment_history, name='payment_history'),
+    path('invoice/quota/',views.View_quota, name='view_quota'),
+
 ]
