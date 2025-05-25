@@ -1,7 +1,30 @@
 .card {
     height: 100%;
-}
-.hover-card:hover {
-    transform: scale(1.02);
+    border-radius: 0.75rem;
     transition: transform 0.3s ease;
+    border: none;
+}
+
+.card:hover {
+    transform: scale(1.02);
+}
+
+.info-card {
+    border-left: 4px solid rgba(95, 93, 93, 0.6);
+}
+
+.card-title {
+    font-size: 1rem;
+    letter-spacing: 0.5px;
+    text-transform: uppercase;
+    font-weight: 600;
+    margin-bottom: 0.5rem;
+}
+
+
+@media (min-width: 1400px) {
+    .container-fluid {
+        max-width: 1320px;
+        margin: 0 auto;
+    }
 }
