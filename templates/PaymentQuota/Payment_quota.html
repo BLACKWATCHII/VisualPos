@@ -88,6 +88,7 @@
         <thead class="table-light" style="border-color: green;">
           <tr>
             <th>Factura</th>
+            <th>Cliente</th>
             <th>Fecha de vencimiento</th>
             <th>Cantidad</th>
             <th>Estado</th>
@@ -99,6 +100,7 @@
                 {% for credit in credits %}
                   <tr>
                     <td>#{{ credit.invoice.invoice_number }}</td>
+                    <td>{{ credit.invoice.customer.name }} {{ credit.invoice.customer.lastname }}</td>
                     <td>{{ credit.payment_date }}</td>
                     <td>{{ credit.balance|floatformat:2 }}</td>
                     <td>

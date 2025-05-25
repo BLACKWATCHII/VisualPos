@@ -5,7 +5,7 @@ from item.models import Item
 from customer.models import Customer
 from decimal import Decimal
 import json
-from django.db.models import Sum, Max
+from django.db.models import Sum
 from django.contrib.auth.decorators import login_required
 from django.http import HttpResponse, HttpResponseBadRequest, HttpResponseNotAllowed, JsonResponse
 from django.template.loader import get_template
@@ -15,6 +15,9 @@ from datetime import timedelta, date
 from .models import PaymentQuota,Early_Payment
 from .models import TransactionType
 from django.contrib import messages
+from django.db import transaction
+from django.contrib import messages
+from datetime import timedelta, date
 
 
 
@@ -58,8 +61,6 @@ def create_type_transaction(request):
         }
         return render(request, 'Invoice/create_transaction.html', context)
 
-from django.shortcuts import redirect
-
 @login_required
 def edit_type_transaction(request, transaction_id):
     transaction = TransactionType.objects.get(id=transaction_id)
@@ -90,9 +91,7 @@ def delete_type_transaction(request, transaction_id):
     return redirect('create_transaction')
 
 
-from django.db import transaction
-from django.contrib import messages
-from datetime import timedelta, date
+
 
 @login_required
 def create_invoice(request):
