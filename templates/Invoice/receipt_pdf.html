@@ -2,7 +2,7 @@
 <html lang="es">
 <head>
     <meta charset="UTF-8">
-    <title>Factura Confirmada</title>
+    <title>Factura Confirmada-{{ invoice.customer }}</title>
     <style>
         body {
             font-family: Arial, sans-serif;
@@ -156,7 +156,7 @@
                 <td>{{ item.quantity }}</td>
                 <td>{{ item.item.Name }}</td>
                 <td>${{ item.price }}</td>
-                <td>${{ item.quantity|floatformat:2|add:item.price|floatformat:2 }}</td>
+                <td>${{ item.subtotal }}</td>
             </tr>
         {% endfor %}
         </tbody>

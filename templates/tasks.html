@@ -1,72 +1,105 @@
 {% extends 'base.html' %}
 {% load static %}
 {% load humanize %}
-{% block content %}
 
+{% block content %}
 <link rel="stylesheet" href="{% static 'css/homePages/tasks.css' %}">
 
-<div class="container" style="padding-top: 6rem;">
-  <div class="d-flex flex-wrap justify-content-between gap-4">
-    
-    <!-- Gráfico Ventas Diarias -->
-    <div class="card shadow flex-fill" style="min-width: 320px; max-width: 48%;">
-      <div class="card-header bg-success text-white">Ventas diarias</div>
-      <div class="card-body">
-        <canvas id="chart1" width="200" height="200"></canvas>
-      </div>
-    </div>
+<div class="container-fluid px-4 py-4" style="margin-top: 6rem;">
+  <div class="dashboard-header d-flex flex-column flex-md-row align-items-start align-items-md-center justify-content-between gap-3">
+    <a href="#" class="dashboard-btn">
+      Panel de control
+      <span class="icon">
+        <i class="bi bi-arrow-clockwise"></i>
+      </span>
+    </a>
+    <h2 class="mb-0">
+      Bienvenido, <span style="color: green;">{{ user.get_full_name|default:user.username }}</span>
+    </h2>
+  </div>
+</div>
 
-    <!-- Gráfico Clientes Nuevos -->
-    <div class="card shadow flex-fill" style="min-width: 320px; max-width: 48%;">
-      <div class="card-header bg-success text-white">Clientes nuevos</div>
-      <div class="card-body">
-        <canvas id="chart2" width="400" height="165"></canvas>
+<div class="dashboard-cards">
+  <!-- Clientes Registrados -->
+  <div class="card-style hover-gradient">
+    <a href="{% url 'viewClient' %}" class="card-link">
+      <div class="card-header">
+        <h6>Clientes Registrados</h6>
+        <i class="bi bi-arrow-up-right"></i>
       </div>
-    </div>
-
-    <!-- Productos más vendidos -->
-    <div class="card shadow flex-fill" style="min-width: 320px; max-width: 48%;">
-      <div class="card-header bg-dark text-white">Productos más vendidos</div>
       <div class="card-body">
-        <canvas id="chart3" width="400" height="165"></canvas>
+        <p class="main-number">{{ num_Customers }}</p>
+        <p class="card-subtext text-success">⬆ Aumentó desde el mes pasado</p>
       </div>
-    </div>
+    </a>
+  </div>
 
-    <!-- Información general -->
-    <div class="card shadow flex-fill" style="min-width: 320px; max-width: 48%;">
-      <div class="card-header bg-dark text-white">Información general</div>
+  <!-- Productos Disponibles -->
+  <div class="card-style hover-gradient">
+    <div class="card-header shadow-sm">
+      <h6>Productos Disponibles</h6>
+      <i class="bi bi-box-seam"></i>
+    </div>
+    <div class="card-body">
+      <p class="main-number">{{ num_items }}</p>
+      <p class="card-subtext text-success">⬆ Aumentó desde el mes pasado</p>
+    </div>
+  </div>
+
+  <!-- Ventas -->
+  <div class="card-style hover-gradient">
+    <a href="{% url 'report_invoice' %}" class="card-link">
+      <div class="card-header">
+        <h6>Ventas</h6>
+        <i class="bi bi-cash-coin"></i>
+      </div>
       <div class="card-body">
-        <div class="row g-3">
-          <div class="col-6">
-            <a href="{% url 'viewClient' %}" class="text-decoration-none">
-              <div class="card bg-info text-white text-center hover-card p-2">
-                <h5>Clientes Registrados</h5>
-                <p>{{ num_Customers }}</p>
-              </div>
-            </a>
-          </div>
-          <div class="col-6">
-            <a href="{% url 'viewItem' %}" class="text-decoration-none">
-              <div class="card bg-success text-white text-center hover-card p-2">
-                <h5>Productos Disponibles</h5>
-                <p>{{ num_items }}</p>
-              </div>
-            </a>
-          </div>
-          <div class="col-6">
-            <div class="card bg-warning text-white text-center hover-card p-2">
-              <h5>Ventas</h5>
-              <p>{{ num_total|intcomma }}</p>
-            </div>
-          </div>
-          <div class="col-6">
-            <a href="{% url 'payment_quota' %}" class="text-decoration-none">
-              <div class="card bg-danger text-white text-center hover-card p-2">
-                <h5>Ventas a crédito</h5>
-                <p>{{ num_total_credit|intcomma }}</p>
-              </div>
-            </a>
-          </div>
+        <p class="main-number">${{ num_total|intcomma }}</p>
+        <p class="card-subtext text-success">⬆ Aumentó desde el mes pasado</p>
+      </div>
+    </a>
+  </div>
+
+  <!-- Ventas a Crédito -->
+  <div class="card-style hover-gradient">
+    <a href="{% url 'payment_quota' %}" class="card-link">
+      <div class="card-header">
+        <h6>Ventas a Crédito</h6>
+        <i class="bi bi-credit-card-2-front-fill"></i>
+      </div>
+      <div class="card-body">
+        <p class="main-number">${{ num_total_credit|intcomma }}</p>
+        <p class="card-subtext text-muted">Sin cambios este mes</p>
+      </div>
+    </a>
+  </div>
+</div>
+
+<hr>
+<div class="charts-container">
+    <div class="charts-grid">
+      <div class="chart-card">
+        <div class="card-header">Ventas Diarias</div>
+        <div class="card-body">
+          <canvas id="chart1"></canvas>
+        </div>
+      </div>
+      <div class="chart-card">
+        <div class="card-header">Clientes Nuevos</div>
+        <div class="card-body">
+          <canvas id="chart2"></canvas>
+        </div>
+      </div>
+      <div class="chart-card">
+        <div class="card-header">Productos Más Vendidos</div>
+        <div class="card-body">
+          <canvas id="chart3"></canvas>
+        </div>
+      </div>
+      <div class="chart-card">
+        <div class="card-header">Sales Over Time</div>
+        <div class="card-body">
+          <canvas id="chart4"></canvas>
         </div>
       </div>
     </div>
@@ -75,97 +108,36 @@
 
 <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
 <script>
-const datesClients = JSON.parse('{{ dates_clients|escapejs }}');
-const countsClients = JSON.parse('{{ counts_clients|escapejs }}');
-const datesSales = JSON.parse('{{ dates_sales|escapejs }}');
-const totalsSales = JSON.parse('{{ totals_sales|escapejs }}');
-const productsNames = JSON.parse('{{ products_names|escapejs }}');
-const productsSales = JSON.parse('{{ products_sales|escapejs }}');
+  // Parse data from Django context
+  const datesClients = JSON.parse('{{ dates_clients|escapejs }}');
+  const countsClients = JSON.parse('{{ counts_clients|escapejs }}');
+  const datesSales = JSON.parse('{{ dates_sales|escapejs }}');
+  const totalsSales = JSON.parse('{{ totals_sales|escapejs }}');
+  const productsNames = JSON.parse('{{ products_names|escapejs }}');
+  const productsSales = JSON.parse('{{ products_sales|escapejs }}');
 
-const ctx2 = document.getElementById('chart2').getContext('2d');
-new Chart(ctx2, {
-    type: 'bar',
-    data: {
-        labels: datesClients,
-        datasets: [{
-            label: 'Clientes Nuevos',
-            data: countsClients,
-            backgroundColor: '#2f855a',
-            borderColor: 'rgba(0, 0, 0)',
-            borderWidth: 1
-        }]
-    },
-    options: {
-        scales: {
-            y: { beginAtZero: true }
-        }
-    }
-});
+  // Chart: Clientes Nuevos
+  new Chart(document.getElementById('chart2').getContext('2d'), {
+    type: 'bar', data: { labels: datesClients, datasets: [{ label: 'Clientes Nuevos', data: countsClients }] },
+    options: { responsive: true, plugins: { legend: { display: false } }, scales: { y: { beginAtZero: true } } }
+  });
 
-// Gráfico de Ventas Diarias (tipo Donut)
-const ctx1 = document.getElementById('chart1').getContext('2d');
-new Chart(ctx1, {
-    type: 'doughnut',
-    data: {
-        labels: datesSales,
-        datasets: [{
-            label: 'Ventas Diarias',
-            data: totalsSales,
-            backgroundColor: [
-                '#2f855a', '#00000', '#FFCE56', '#4BC0C0', '#9966FF', '#FF9F40'
-            ],
-            hoverOffset: 4
-        }]
-    },
-    options: {
-        responsive: true,
-        plugins: {
-            legend: {
-                position: 'top',
-            },
-            title: {
-                display: true,
-                text: 'Ventas Diarias'
-            }
-        }
-    }
-});
+  // Chart: Ventas Diarias (doughnut)
+  new Chart(document.getElementById('chart1').getContext('2d'), {
+    type: 'doughnut', data: { labels: datesSales, datasets: [{ label: 'Ventas Diarias', data: totalsSales, hoverOffset: 4 }] },
+    options: { responsive: true, plugins: { legend: { position: 'top' }, title: { display: true, text: 'Ventas Diarias' } } }
+  });
 
-const ctx3 = document.getElementById('chart3').getContext('2d');
-new Chart(ctx3, {
-    type: 'bar',
-    data: {
-        labels: productsNames,
-        datasets: [{
-            label: 'Cantidad Vendida',
-            data: productsSales,
-            backgroundColor: [
-                '#4dc9f6', '#f67019', '#f53794', '#537bc4', '#acc236',
-                '#166a8f', '#00a950', '#58595b', '#8549ba'
-            ],
-            borderWidth: 1
-        }]
-    },
-    options: {
-        indexAxis: 'y', 
-        scales: {
-            x: {
-                beginAtZero: true
-            }
-        },
-        responsive: true,
-        plugins: {
-            legend: {
-                display: false
-            },
-            title: {
-                display: true,
-                text: 'Productos Más Vendidos'
-            }
-        }
-    }
-});
+  // Chart: Productos Más Vendidos (horizontal bar)
+  new Chart(document.getElementById('chart3').getContext('2d'), {
+    type: 'bar', data: { labels: productsNames, datasets: [{ label: 'Cantidad Vendida', data: productsSales }] },
+    options: { indexAxis: 'y', responsive: true, plugins: { legend: { display: false }, title: { display: true, text: 'Productos Más Vendidos' } }, scales: { x: { beginAtZero: true } } }
+  });
 
+  // Chart: Sales Over Time (line)
+  new Chart(document.getElementById('chart4').getContext('2d'), {
+    type: 'line', data: { labels: datesSales, datasets: [{ label: 'Sales Over Time', data: totalsSales }] },
+    options: { responsive: true, plugins: { legend: { display: false } }, scales: { y: { beginAtZero: true } } }
+  });
 </script>
-
 {% endblock %}

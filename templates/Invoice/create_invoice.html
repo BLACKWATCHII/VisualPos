@@ -53,6 +53,7 @@
                                 id="customer" 
                                 name="{{ form.customer.name }}" 
                                 class="form-select"
+                                required
                             >
                                 <option value="">Selecciona cliente</option>
                                 {% for customer in form.customer.field.queryset %}
@@ -69,7 +70,7 @@
                         <!-- Asunto -->
                         <div class="mb-3">
                             <label class="form-label">Asunto</label>
-                            <input type="text" id="subject" name="subject" class="form-control" placeholder="Subject">
+                            <input type="text" id="subject" name="subject" class="form-control" placeholder="Subject" required>
                         </div>
                         
                         <!-- Payment_method -->
@@ -88,12 +89,12 @@
                         <!-- Number_quotas -->
                         <div class="mb-3" id="quotas-field" style="display: none;">
                             <label class="form-label"># Numero de cuota</label>
-                            <input type="text" id="Quotas" name="quotas" class="form-control" placeholder="1">
+                            <input type="number" id="Quotas" name="quotas" class="form-control" placeholder="1" >
                         </div>
                         <!-- Fecha -->
                         <div class="mb-3">
-                            <label class="form-label">Due Date</label>
-                            <input type="date" id="due_date" name="due_date" class="form-control">
+                            <label class="form-label">Fecha</label>
+                            <input type="date" id="due_date" name="due_date" class="form-control" required>
                         </div>
 
 
@@ -102,7 +103,7 @@
                         <div id="products">
                             <div class="row g-2 mb-2 product-line">
                                 <div class="col-6">
-                                    <select class="form-select item-id" name="item_id">
+                                    <select class="form-select item-id" name="item_id" required>
                                         <option value="">Select item</option> 
                                         {% for item in items %}
                                             {% if item.active == 1 %}
@@ -114,20 +115,20 @@
                                     </select>
                                 </div>
                                 <div class="col-3">
-                                    <input type="number" min="1" class="form-control item-qty" name="quantity" placeholder="Qty" value="1">
+                                    <input type="number" min="1" class="form-control item-qty" name="quantity" placeholder="Qty" value="1" >
                                 </div>
                                 <div class="col-3">
-                                    <input type="number" min="0" class="form-control item-price" name="price" placeholder="Price" value="0">
+                                    <input type="number" min="0" class="form-control item-price" name="price" placeholder="Price" value="0" >
                                 </div>
                             </div>
                         </div>
-                        <a href="#" id="add-line" class="d-block my-2">+ Add New Line</a>
+                        <a href="#" id="add-line" class="d-block my-2">+ Agregar productos</a>
 
                         <!-- Descuento -->
                         <div class="form-check mt-3">
                             <input class="form-check-input" type="checkbox" id="add_discount">
                             <label class="form-check-label" for="add_discount">
-                                Add Discount
+                                Agregar descuento
                             </label>
                         </div>
                         <div id="discount-fields" style="display:none;">
@@ -135,7 +136,7 @@
                             <input type="number" id="discount-percent" class="form-control mt-2" placeholder="Discount %" min="0" max="100">
                         </div>
                         <input type="hidden" name="download" value="pdf">
-                        <button type="submit" class="btn btn-primary w-100 mt-4">Processing Invoice</button>
+                        <button type="submit" class="btn btn-primary w-100 mt-4">Procesar factura</button>
                     </form>
                 </div>
 

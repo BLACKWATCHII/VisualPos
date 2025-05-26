@@ -13,9 +13,9 @@ def createTax(request):
         if Tax.objects.filter(name=Name).exists():
                     messages.error(request, 'Ya existe un nombre .')
                     return render(request, 'items/createItem.html')
-        if percentajeInt < 0:
+        if percentajeInt <= 0:
             messages.error(request,'El porcentaje es mejor a 0')
-            return render(request,'tax/createTax')
+            return render(request,'tax/createTax.html')
         Tax.objects.create(
             name=Name,
             rate=percentajeInt,

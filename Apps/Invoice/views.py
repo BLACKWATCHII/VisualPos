@@ -5,16 +5,20 @@ from item.models import Item
 from customer.models import Customer
 from decimal import Decimal
 import json
-from django.db.models import Sum, Max
+from django.db.models import Sum
 from django.contrib.auth.decorators import login_required
-from django.http import HttpResponse
+from django.http import HttpResponse, HttpResponseBadRequest, HttpResponseNotAllowed, JsonResponse
 from django.template.loader import get_template
 from xhtml2pdf import pisa
 from django.http import Http404
 from datetime import timedelta, date
-from .models import PaymentQuota 
+from .models import PaymentQuota,Early_Payment
 from .models import TransactionType
 from django.contrib import messages
+from django.db import transaction
+from django.contrib import messages
+from datetime import timedelta, date
+
 
 
 def render_to_pdf(template_src, context_dict={}):
@@ -57,8 +61,6 @@ def create_type_transaction(request):
         }
         return render(request, 'Invoice/create_transaction.html', context)
 
-from django.shortcuts import redirect
-
 @login_required
 def edit_type_transaction(request, transaction_id):
     transaction = TransactionType.objects.get(id=transaction_id)
@@ -89,9 +91,7 @@ def delete_type_transaction(request, transaction_id):
     return redirect('create_transaction')
 
 
-from django.db import transaction
-from django.contrib import messages
-from datetime import timedelta, date
+
 
 @login_required
 def create_invoice(request):
@@ -99,7 +99,6 @@ def create_invoice(request):
         form = InvoiceForm(request.POST)
 
         if form.is_valid():
-            try:
                 with transaction.atomic():
                     invoice = form.save(commit=False)
 
@@ -179,12 +178,8 @@ def create_invoice(request):
                         return render_to_pdf('invoice/receipt_pdf.html', {'invoice': invoice})
 
                     return redirect('home')
-
-            except Exception as e:
-                messages.error(request, f'Error al crear la factura: {str(e)}')
         else:
-            messages.error(request, 'Formulario inválido.')
-
+            pass
     else:
         form = InvoiceForm()
 
@@ -286,3 +281,42 @@ def View_quota(request):
         'count_quota_expired': count_quota_expired,
     }
     return render(request, 'PaymentQuota/Payment_quota.html', context)
+
+
+# pay quota method
+@login_required
+def pay_quota(request, quota_id):
+    quota = get_object_or_404(PaymentQuota, id=quota_id)
+
+    if request.method == 'POST':
+        try:
+            pay_amount = Decimal(request.POST.get('amount'))
+        except:
+            return HttpResponseBadRequest("Importe inválido")
+
+        if pay_amount <= 0 or pay_amount > quota.balance:
+            return HttpResponseBadRequest("Importe fuera del rango válido")
+
+        payment = Early_Payment.objects.create(quota=quota, amount=pay_amount)
+
+        if quota.balance <= 0:
+            quota.is_paid = True
+            quota.save()
+            quota.refresh_from_db()
+
+        context = {
+            'payment': payment,
+            'quota': quota,
+            'invoice': quota.invoice,
+            'amount_paid': pay_amount
+        }
+        return render_to_pdf('PaymentQuota/Receipt_ticket.html', context)
+
+    return HttpResponseNotAllowed(['POST'])
+
+@login_required
+def payment_history(request, customer_id=None):
+    qs = Early_Payment.objects.select_related('quota__invoice__customer')
+    if customer_id:
+        qs = qs.filter(quota__invoice__customer__id=customer_id)
+    return render(request, 'PaymentQuota/History.html', {'payments': qs})

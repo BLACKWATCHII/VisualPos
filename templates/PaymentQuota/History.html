@@ -1,0 +1,33 @@
+{% extends 'base.html' %}
+{% block content %}
+<hr>
+<hr>
+<hr>
+<hr>
+
+<h2>Historial de Pagos</h2>
+<table class="table">
+  <thead>
+    <tr>
+      <th>Cliente</th>
+      <th>Factura</th>
+      <th>Cuota</th>
+      <th>Importe</th>
+      <th>Fecha</th>
+    </tr>
+  </thead>
+  <tbody>
+    {% for p in payments %}
+    <tr>
+      <td>{{ p.quota.invoice.customer.name }} {{ p.quota.invoice.customer.lastname }}</td>
+      <td>#{{ p.quota.invoice.invoice_number }}</td>
+      <td>{{ p.quota.number }}</td>
+      <td>{{ p.amount }}</td>
+      <td>{{ p.date }}</td>
+    </tr>
+    {% empty %}
+    <tr><td colspan="5">No hay pagos registrados</td></tr>
+    {% endfor %}
+  </tbody>
+</table>
+{% endblock %}
