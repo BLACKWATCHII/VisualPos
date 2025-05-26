@@ -12,13 +12,15 @@
    <!-- Tarjetas de Información General con íconos -->
 <div class="col-sm-6 col-lg-3">
   <div class="card info-card bg-info text-white shadow-sm">
-    <div class="card-body text-center">
-      <div class="mb-2">
-        <i class="bi bi-people-fill fs-2"></i>
-      </div>
-      <h6 class="card-title mb-2">Clientes Registrados</h6>
-      <p class="fs-4 fw-bold">{{ num_Customers }}</p>
-    </div>
+    <a href="{% url 'viewClient' %}" style="display: block; text-decoration: none; color: inherit;">
+        <div class="card-body text-center">
+          <div class="mb-2">
+            <i class="bi bi-people-fill fs-2"></i>
+          </div>
+          <h6 class="card-title mb-2">Clientes Registrados</h6>
+          <p class="fs-4 fw-bold">{{ num_Customers }}</p>
+        </div>
+    </a>
   </div>
 </div>
 
@@ -36,25 +38,29 @@
 
 <div class="col-sm-6 col-lg-3">
   <div class="card info-card bg-warning text-white shadow-sm">
-    <div class="card-body text-center">
-      <div class="mb-2">
-        <i class="bi bi-cash-coin fs-2"></i>
+    <a href="{% url 'report_invoice' %}" style="display: block; text-decoration: none; color: inherit;">
+      <div class="card-body text-center">
+        <div class="mb-2">
+          <i class="bi bi-cash-coin fs-2"></i>
+        </div>
+        <h6 class="card-title mb-2">Ventas</h6>
+        <p class="fs-4 fw-bold">{{ num_total|intcomma }}</p>
       </div>
-      <h6 class="card-title mb-2">Ventas</h6>
-      <p class="fs-4 fw-bold">{{ num_total|intcomma }}</p>
-    </div>
+    </a>
   </div>
 </div>
 
 <div class="col-sm-6 col-lg-3">
   <div class="card info-card bg-danger text-white shadow-sm">
-    <div class="card-body text-center">
-      <div class="mb-2">
-        <i class="bi bi-credit-card-2-front-fill fs-2"></i>
+    <a href="{% url 'payment_quota' %}" style="display: block; text-decoration: none; color: inherit;">
+        <div class="card-body text-center">
+          <div class="mb-2">
+            <i class="bi bi-credit-card-2-front-fill fs-2"></i>
+          </div>
+          <h6 class="card-title mb-2">Ventas a Crédito</h6>
+          <p class="fs-4 fw-bold">{{ num_total_credit|intcomma }}</p>
       </div>
-      <h6 class="card-title mb-2">Ventas a Crédito</h6>
-      <p class="fs-4 fw-bold">{{ num_total_credit|intcomma }}</p>
-    </div>
+    </a>
   </div>
 </div>
 

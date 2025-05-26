@@ -179,8 +179,7 @@ def create_invoice(request):
 
                     return redirect('home')
         else:
-            messages.error(request, 'Formulario inválido.')
-
+            pass
     else:
         form = InvoiceForm()
 
