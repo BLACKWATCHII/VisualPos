@@ -1,179 +1,144 @@
 {% extends 'base.html' %}
 {% load static %}
 {% load humanize %}
-{% block content %}
 
+{% block content %}
 <link rel="stylesheet" href="{% static 'css/homePages/tasks.css' %}">
 
-<div class="container-fluid px-4 py-4 mt-5" style="margin-top: 2rem !important;" >
-  <div class="row g-4 mt-5">
+<div class="container-fluid px-4 py-4" style="margin-top: 6rem;">
+  <div class="dashboard-header d-flex flex-column flex-md-row align-items-start align-items-md-center justify-content-between gap-3">
+    <a href="#" class="dashboard-btn">
+      Panel de control
+      <span class="icon">
+        <i class="bi bi-arrow-clockwise"></i>
+      </span>
+    </a>
 
-    <h2>Dashboard</h2>
-   <!-- Tarjetas de Información General con íconos -->
-<div class="col-sm-6 col-lg-3">
-  <div class="card info-card bg-info text-white shadow-sm">
-    <a href="{% url 'viewClient' %}" style="display: block; text-decoration: none; color: inherit;">
-        <div class="card-body text-center">
-          <div class="mb-2">
-            <i class="bi bi-people-fill fs-2"></i>
-          </div>
-          <h6 class="card-title mb-2">Clientes Registrados</h6>
-          <p class="fs-4 fw-bold">{{ num_Customers }}</p>
-        </div>
+    <h2 class="mb-0">
+      Bienvenido, <span>{{ user.get_full_name|default:user.username }}</span>
+    </h2>
+  </div>
+</div>
+
+<div class="dashboard-cards">
+  <!-- Clientes Registrados -->
+  <div class="card-style hover-gradient">
+    <a href="{% url 'viewClient' %}" class="card-link">
+      <div class="card-header">
+        <h6>Clientes Registrados</h6>
+        <i class="bi bi-arrow-up-right"></i>
+      </div>
+      <div class="card-body">
+        <p class="main-number">{{ num_Customers }}</p>
+        <p class="card-subtext text-success">⬆ Aumentó desde el mes pasado</p>
+      </div>
+    </a>
+  </div>
+
+  <!-- Productos Disponibles -->
+  <div class="card-style hover-gradient">
+    <div class="card-header shadow-sm">
+      <h6>Productos Disponibles</h6>
+      <i class="bi bi-box-seam"></i>
+    </div>
+    <div class="card-body">
+      <p class="main-number">{{ num_items }}</p>
+      <p class="card-subtext text-success">⬆ Aumentó desde el mes pasado</p>
+    </div>
+  </div>
+
+  <!-- Ventas -->
+  <div class="card-style hover-gradient">
+    <a href="{% url 'report_invoice' %}" class="card-link">
+      <div class="card-header">
+        <h6>Ventas</h6>
+        <i class="bi bi-cash-coin"></i>
+      </div>
+      <div class="card-body">
+        <p class="main-number">${{ num_total|intcomma }}</p>
+        <p class="card-subtext text-success">⬆ Aumentó desde el mes pasado</p>
+      </div>
+    </a>
+  </div>
+
+  <!-- Ventas a Crédito -->
+  <div class="card-style hover-gradient">
+    <a href="{% url 'payment_quota' %}" class="card-link">
+      <div class="card-header">
+        <h6>Ventas a Crédito</h6>
+        <i class="bi bi-credit-card-2-front-fill"></i>
+      </div>
+      <div class="card-body">
+        <p class="main-number">${{ num_total_credit|intcomma }}</p>
+        <p class="card-subtext text-muted">Sin cambios este mes</p>
+      </div>
     </a>
   </div>
 </div>
 
-<div class="col-sm-6 col-lg-3">
-  <div class="card info-card bg-success text-white shadow-sm">
-    <div class="card-body text-center">
-      <div class="mb-2">
-        <i class="bi bi-box-seam fs-2"></i>
-      </div>
-      <h6 class="card-title mb-2">Productos Disponibles</h6>
-      <p class="fs-4 fw-bold">{{ num_items }}</p>
-    </div>
-  </div>
-</div>
-
-<div class="col-sm-6 col-lg-3">
-  <div class="card info-card bg-warning text-white shadow-sm">
-    <a href="{% url 'report_invoice' %}" style="display: block; text-decoration: none; color: inherit;">
-      <div class="card-body text-center">
-        <div class="mb-2">
-          <i class="bi bi-cash-coin fs-2"></i>
-        </div>
-        <h6 class="card-title mb-2">Ventas</h6>
-        <p class="fs-4 fw-bold">{{ num_total|intcomma }}</p>
-      </div>
-    </a>
-  </div>
-</div>
-
-<div class="col-sm-6 col-lg-3">
-  <div class="card info-card bg-danger text-white shadow-sm">
-    <a href="{% url 'payment_quota' %}" style="display: block; text-decoration: none; color: inherit;">
-        <div class="card-body text-center">
-          <div class="mb-2">
-            <i class="bi bi-credit-card-2-front-fill fs-2"></i>
-          </div>
-          <h6 class="card-title mb-2">Ventas a Crédito</h6>
-          <p class="fs-4 fw-bold">{{ num_total_credit|intcomma }}</p>
-      </div>
-    </a>
-  </div>
-</div>
-
-    <!-- Gráfico de Ventas Diarias -->
-    <div class="col-lg-6">
-      <div class="card shadow-sm h-100">
-        <div class="card-header bg-white fw-bold text-secondary">Ventas Diarias</div>
+<hr>
+<div class="charts-container">
+    <div class="charts-grid">
+      <div class="chart-card">
+        <div class="card-header">Ventas Diarias</div>
         <div class="card-body">
-          <canvas id="chart1" height="200"></canvas>
+          <canvas id="chart1"></canvas>
         </div>
       </div>
-    </div>
-
-    <!-- Gráfico de Clientes Nuevos -->
-    <div class="col-lg-6">
-      <div class="card shadow-sm h-100">
-        <div class="card-header bg-white fw-bold text-secondary">Clientes Nuevos</div>
+      <div class="chart-card">
+        <div class="card-header">Clientes Nuevos</div>
         <div class="card-body">
-          <canvas id="chart2" height="200"></canvas>
+          <canvas id="chart2"></canvas>
         </div>
       </div>
-    </div>
-
-    <!-- Gráfico de Productos Más Vendidos -->
-    <div class="col-lg-6">
-      <div class="card shadow-sm h-100">
-        <div class="card-header bg-white fw-bold text-secondary">Productos Más Vendidos</div>
+      <div class="chart-card">
+        <div class="card-header">Productos Más Vendidos</div>
         <div class="card-body">
-          <canvas id="chart3" height="200"></canvas>
+          <canvas id="chart3"></canvas>
+        </div>
+      </div>
+      <div class="chart-card">
+        <div class="card-header">Sales Over Time</div>
+        <div class="card-body">
+          <canvas id="chart4"></canvas>
         </div>
       </div>
     </div>
-    
-    <div class="col-md-6">
-      <div class="card p-3">
-        <h6>SALES OVER TIME</h6>
-        <canvas id="chart4" height="200"></canvas>
-      </div>
-    </div>
-
   </div>
 </div>
 
 <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
 <script>
-const datesClients = JSON.parse('{{ dates_clients|escapejs }}');
-const countsClients = JSON.parse('{{ counts_clients|escapejs }}');
-const datesSales = JSON.parse('{{ dates_sales|escapejs }}');
-const totalsSales = JSON.parse('{{ totals_sales|escapejs }}');
-const productsNames = JSON.parse('{{ products_names|escapejs }}');
-const productsSales = JSON.parse('{{ products_sales|escapejs }}');
+  // Parse data from Django context
+  const datesClients = JSON.parse('{{ dates_clients|escapejs }}');
+  const countsClients = JSON.parse('{{ counts_clients|escapejs }}');
+  const datesSales = JSON.parse('{{ dates_sales|escapejs }}');
+  const totalsSales = JSON.parse('{{ totals_sales|escapejs }}');
+  const productsNames = JSON.parse('{{ products_names|escapejs }}');
+  const productsSales = JSON.parse('{{ products_sales|escapejs }}');
 
-new Chart(document.getElementById('chart2').getContext('2d'), {
-    type: 'bar',
-    data: {
-        labels: datesClients,
-        datasets: [{
-            label: 'Clientes Nuevos',
-            data: countsClients,
-            backgroundColor: '#2f855a',
-        }]
-    },
-    options: {
-        responsive: true,
-        plugins: {
-            legend: { display: false },
-        },
-        scales: { y: { beginAtZero: true } }
-    }
-});
+  // Chart: Clientes Nuevos
+  new Chart(document.getElementById('chart2').getContext('2d'), {
+    type: 'bar', data: { labels: datesClients, datasets: [{ label: 'Clientes Nuevos', data: countsClients }] },
+    options: { responsive: true, plugins: { legend: { display: false } }, scales: { y: { beginAtZero: true } } }
+  });
 
-new Chart(document.getElementById('chart1').getContext('2d'), {
-    type: 'doughnut',
-    data: {
-        labels: datesSales,
-        datasets: [{
-            label: 'Ventas Diarias',
-            data: totalsSales,
-            backgroundColor: ['#2f855a', '#FF6384', '#FFCE56', '#4BC0C0', '#9966FF', '#FF9F40'],
-            hoverOffset: 4
-        }]
-    },
-    options: {
-        responsive: true,
-        plugins: {
-            legend: { position: 'top' },
-            title: { display: true, text: 'Ventas Diarias' }
-        }
-    }
-});
+  // Chart: Ventas Diarias (doughnut)
+  new Chart(document.getElementById('chart1').getContext('2d'), {
+    type: 'doughnut', data: { labels: datesSales, datasets: [{ label: 'Ventas Diarias', data: totalsSales, hoverOffset: 4 }] },
+    options: { responsive: true, plugins: { legend: { position: 'top' }, title: { display: true, text: 'Ventas Diarias' } } }
+  });
 
-new Chart(document.getElementById('chart3').getContext('2d'), {
-    type: 'bar',
-    data: {
-        labels: productsNames,
-        datasets: [{
-            label: 'Cantidad Vendida',
-            data: productsSales,
-            backgroundColor: ['#4dc9f6', '#f67019', '#f53794', '#537bc4', '#acc236', '#166a8f', '#00a950', '#58595b', '#8549ba'],
-        }]
-    },
-    options: {
-        indexAxis: 'y',
-        responsive: true,
-        plugins: {
-            legend: { display: false },
-            title: { display: true, text: 'Productos Más Vendidos' }
-        },
-        scales: {
-            x: { beginAtZero: true }
-        }
-    }
-});
+  // Chart: Productos Más Vendidos (horizontal bar)
+  new Chart(document.getElementById('chart3').getContext('2d'), {
+    type: 'bar', data: { labels: productsNames, datasets: [{ label: 'Cantidad Vendida', data: productsSales }] },
+    options: { indexAxis: 'y', responsive: true, plugins: { legend: { display: false }, title: { display: true, text: 'Productos Más Vendidos' } }, scales: { x: { beginAtZero: true } } }
+  });
+
+  // Chart: Sales Over Time (line)
+  new Chart(document.getElementById('chart4').getContext('2d'), {
+    type: 'line', data: { labels: datesSales, datasets: [{ label: 'Sales Over Time', data: totalsSales }] },
+    options: { responsive: true, plugins: { legend: { display: false } }, scales: { y: { beginAtZero: true } } }
+  });
 </script>
 {% endblock %}
-
