@@ -7,14 +7,14 @@
 
 <div class="container-fluid px-4 py-4" style="margin-top: 6rem;">
   <div class="dashboard-header d-flex flex-column flex-md-row align-items-start align-items-md-center justify-content-between gap-3">
-    <a href="#" class="dashboard-btn">
+    <a href="{% url 'Dasboard' %}" class="dashboard-btn" style="text-decoration: none;">
       Panel de control
       <span class="icon">
         <i class="bi bi-arrow-clockwise"></i>
       </span>
     </a>
     <h2 class="mb-0">
-      Bienvenido, <span style="color: green;">{{ user.get_full_name|default:user.username }}</span>
+      Bienvenido, <span style="color: green;">{{ user.get_full_name|default:user.username|upper }}</span>
     </h2>
   </div>
 </div>
@@ -36,7 +36,7 @@
 
   <!-- Productos Disponibles -->
   <div class="card-style hover-gradient">
-    <div class="card-header shadow-sm">
+    <div class="card-header">
       <h6>Productos Disponibles</h6>
       <i class="bi bi-box-seam"></i>
     </div>
@@ -75,7 +75,7 @@
   </div>
 </div>
 
-<hr>
+
 <div class="charts-container">
     <div class="charts-grid">
       <div class="chart-card">
@@ -97,7 +97,7 @@
         </div>
       </div>
       <div class="chart-card">
-        <div class="card-header">Sales Over Time</div>
+        <div class="card-header">Ventas a lo largo del tiempo</div>
         <div class="card-body">
           <canvas id="chart4"></canvas>
         </div>
@@ -118,15 +118,46 @@
 
   // Chart: Clientes Nuevos
   new Chart(document.getElementById('chart2').getContext('2d'), {
-    type: 'bar', data: { labels: datesClients, datasets: [{ label: 'Clientes Nuevos', data: countsClients }] },
-    options: { responsive: true, plugins: { legend: { display: false } }, scales: { y: { beginAtZero: true } } }
+    type: 'bar',
+    data: {
+      labels: datesClients,
+      datasets: [{
+        label: 'Clientes Nuevos',
+        data: countsClients,
+        backgroundColor: countsClients.map((_, i) => i % 2 === 0 ? '#96df7d' : 'black'),
+        borderColor: countsClients.map((_, i) => i % 2 === 0 ? '#e1ffe1' : 'gray'),
+        borderWidth: 1
+      }]
+    },
+    options: {
+      responsive: true,
+      plugins: { legend: { display: false } },
+      scales: { y: { beginAtZero: true } }
+    }
   });
 
   // Chart: Ventas Diarias (doughnut)
-  new Chart(document.getElementById('chart1').getContext('2d'), {
-    type: 'doughnut', data: { labels: datesSales, datasets: [{ label: 'Ventas Diarias', data: totalsSales, hoverOffset: 4 }] },
-    options: { responsive: true, plugins: { legend: { position: 'top' }, title: { display: true, text: 'Ventas Diarias' } } }
-  });
+new Chart(document.getElementById('chart1').getContext('2d'), {
+  type: 'doughnut',
+  data: {
+    labels: datesSales,
+    datasets: [{
+      label: 'Ventas Diarias',
+      data: totalsSales,
+      backgroundColor: totalsSales.map((_, i) => i % 2 === 0 ? '#96df7d' : 'black'),
+      borderColor: totalsSales.map((_, i) => i % 2 === 0 ? '#96df7d' : 'gray'),
+      hoverOffset: 4
+    }]
+  },
+  options: {
+    responsive: true,
+    plugins: {
+      legend: { position: 'top' },
+      title: { display: true, text: 'Ventas Diarias' }
+    }
+  }
+});
+
 
   // Chart: Productos Más Vendidos (horizontal bar)
   new Chart(document.getElementById('chart3').getContext('2d'), {

@@ -107,3 +107,29 @@
 <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/sweetalert2@11/dist/sweetalert2.min.css">
 <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
 <script src="{% static 'js/homePages/navbar.js' %}"></script>
+
+<!-- Botón de Ayuda -->
+<a href="https://tu-wiki.com/ayuda" target="_blank" class="btn-ayuda shadow">
+  <i class="bi bi-question-circle-fill"></i> Ayuda
+</a>
+<style>
+  .btn-ayuda {
+    position: fixed;
+    bottom: 20px;
+    right: 20px;
+    background-color: #03100f;
+    color: white;
+    padding: 10px 16px;
+    border-radius: 50px;
+    font-weight: bold;
+    z-index: 1050;
+    text-decoration: none;
+    transition: background-color 0.3s ease;
+  }
+  .btn-ayuda:hover {
+    background-color: #0e9f4d;
+    color: white;
+    text-decoration: none;
+    transform: translateY(-5px);
+  }
+</style>
