@@ -9,7 +9,8 @@
 
   /* Chart grid */
   .charts-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(320px, 1fr)); gap: 1.5rem; }
-  .chart-card { background: #fff; border-radius: 0.75rem; box-shadow: 0 4px 12px rgba(0,0,0,0.05); display: flex; flex-direction: column; height: 100%; }
+  .chart-card { background: #fff; border-radius: 0.75rem; box-shadow: 0 4px 12px rgba(0,0,0,0.05); display: flex; flex-direction: column; height: 100%; transition: transform 0.2s ease; }
+  .chart-card:hover { transform: translateY(-10px); }
   .chart-card .card-header { font-weight: 600; color: #555; background: #fafafa; border-bottom: 1px solid #eee; padding: 0.75rem 1rem; }
   .chart-card .card-body { flex: 1; display: flex; align-items: center; justify-content: center; padding: 1rem; }
 
@@ -26,6 +27,7 @@
   width: 100%;
   padding: 2rem;
   box-sizing: border-box;
+  margin-top: -3rem;
 }
 
 .card-style {
