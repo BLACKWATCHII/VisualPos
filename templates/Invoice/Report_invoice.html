@@ -145,6 +145,13 @@
                                     <td><a href="{% url 'invoice_pdf' invoice.id %}" class="btn btn-outline-danger" download>
                                         Descargar
                                     </a></td>
+                                    {% if invoice.status == 'credit' %}
+                                    <td><a href="" class="btn btn-outline-success">Cuotas por pagar</a></td>
+                                    {% else %}
+                                       No disponible
+                                    {% endif %}
+                                    
+                                    <td><a href=""> </a></td>
                                 </tr>
                                 {% endfor %}
                             </tbody>

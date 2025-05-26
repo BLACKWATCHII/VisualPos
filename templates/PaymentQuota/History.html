@@ -1,33 +1,149 @@
 {% extends 'base.html' %}
-{% block content %}
-<hr>
-<hr>
-<hr>
-<hr>
 
-<h2>Historial de Pagos</h2>
-<table class="table">
-  <thead>
-    <tr>
-      <th>Cliente</th>
-      <th>Factura</th>
-      <th>Cuota</th>
-      <th>Importe</th>
-      <th>Fecha</th>
-    </tr>
-  </thead>
-  <tbody>
-    {% for p in payments %}
-    <tr>
-      <td>{{ p.quota.invoice.customer.name }} {{ p.quota.invoice.customer.lastname }}</td>
-      <td>#{{ p.quota.invoice.invoice_number }}</td>
-      <td>{{ p.quota.number }}</td>
-      <td>{{ p.amount }}</td>
-      <td>{{ p.date }}</td>
-    </tr>
-    {% empty %}
-    <tr><td colspan="5">No hay pagos registrados</td></tr>
-    {% endfor %}
-  </tbody>
-</table>
+{% block content %}
+<style>
+    .dashboard-container {
+        display: flex;
+        gap: 2rem;
+        padding: 2rem;
+        font-family: 'Segoe UI', sans-serif;
+        margin-top: 7rem;
+    }
+
+    .table-wrapper {
+        flex: 2;
+    }
+
+    .payments-table {
+        width: 100%;
+        border-collapse: collapse;
+        border-radius: 12px;
+        overflow: hidden;
+        background-color: #fff;
+        box-shadow: 0 4px 8px rgba(0, 0, 0, 0.06);
+    }
+
+    .payments-table thead {
+        background-color: #f0f4f8;
+    }
+
+    .payments-table th, .payments-table td {
+        padding: 1rem;
+        text-align: left;
+    }
+
+    .payments-table tbody tr:hover {
+        background-color: #e9f5ef;
+        cursor: pointer;
+    }
+
+    .highlight-row {
+        background-color: #c7f5d9 !important;
+    }
+
+    .table-actions {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        margin-bottom: 1rem;
+    }
+
+    .btn-green {
+        background-color: #28a745;
+        color: white;
+        padding: 0.5rem 1rem;
+        border-radius: 8px;
+        text-decoration: none;
+        font-weight: bold;
+    }
+
+    .btn-green:hover {
+        background-color: #218838;
+    }
+
+    .search-bar input {
+        padding: 0.5rem 1rem;
+        border: 1px solid #ccc;
+        border-radius: 8px;
+    }
+
+    .side-panel {
+        flex: 1;
+        background-color: #f8f9fa;
+        border-radius: 12px;
+        padding: 1.5rem;
+        box-shadow: 0 4px 8px rgba(0, 0, 0, 0.05);
+        transition: all 0.3s ease;
+    }
+
+    .side-panel h3 {
+        margin-top: 0;
+        margin-bottom: 1rem;
+        color: #28a745;
+    }
+
+    .detail-item {
+        margin-bottom: 0.75rem;
+    }
+
+    .detail-item span {
+        font-weight: bold;
+        color: #333;
+    }
+</style>
+
+<div class="dashboard-container">
+    <div class="table-wrapper">
+        <div class="table-actions">
+            <h2>Historial de Pagos</h2>
+            <div class="search-bar">
+                <input type="text" placeholder="Buscar cliente...">
+            </div>
+        </div>
+
+        <table class="payments-table">
+            <thead>
+                <tr>
+                    <th>Cliente</th>
+                    <th>Factura</th>
+                    <th>Cuota</th>
+                    <th>Importe</th>
+                    <th>Fecha</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for p in payments %}
+                <tr onclick="showDetails('{{ p.quota.invoice.customer.name }} {{ p.quota.invoice.customer.lastname }}', '{{ p.quota.invoice.invoice_number }}', '{{ p.quota.number }}', '{{ p.amount }}', '{{ p.date }}')">
+                    <td>{{ p.quota.invoice.customer.name }} {{ p.quota.invoice.customer.lastname }}</td>
+                    <td>#{{ p.quota.invoice.invoice_number }}</td>
+                    <td>{{ p.quota.number }}</td>
+                    <td>${{ p.amount }}</td>
+                    <td>{{ p.date }}</td>
+                </tr>
+                {% empty %}
+                <tr><td colspan="5" style="text-align: center;">No hay pagos registrados</td></tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    </div>
+
+    <div class="side-panel" id="details-panel">
+        <h3>Detalles del Pago</h3>
+        <div class="detail-item"><span>Cliente:</span> <span id="detail-client">-</span></div>
+        <div class="detail-item"><span>Factura #:</span> <span id="detail-invoice">-</span></div>
+        <div class="detail-item"><span>Cuota:</span> <span id="detail-quota">-</span></div>
+        <div class="detail-item"><span>Importe:</span> <span id="detail-amount">-</span></div>
+        <div class="detail-item"><span>Fecha:</span> <span id="detail-date">-</span></div>
+    </div>
+</div>
+
+<script>
+    function showDetails(cliente, factura, cuota, importe, fecha) {
+        document.getElementById('detail-client').textContent = cliente;
+        document.getElementById('detail-invoice').textContent = factura;
+        document.getElementById('detail-quota').textContent = cuota;
+        document.getElementById('detail-amount').textContent = "$" + importe;
+        document.getElementById('detail-date').textContent = fecha;
+    }
+</script>
 {% endblock %}
