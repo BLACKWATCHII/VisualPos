@@ -116,6 +116,7 @@
                                     <th>Total</th>
                                     <th>Estado</th>
                                     <th>Descargar Factura</th>
+                                    <th>Cuota por pagar</th>
                                 </tr>
                             </thead>
                             <tbody>
@@ -146,9 +147,9 @@
                                         Descargar
                                     </a></td>
                                     {% if invoice.status == 'credit' %}
-                                    <td><a href="" class="btn btn-outline-success">Cuotas por pagar</a></td>
+                                    <td><a href="" class="btn btn-outline-success"><i class="bi bi-credit-card-fill"></i></a></td>
                                     {% else %}
-                                       No disponible
+                                      <td> <i class="bi bi-bookmark-check-fill"> </i>Pago completado</td>
                                     {% endif %}
                                     
                                     <td><a href=""> </a></td>
