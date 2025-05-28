@@ -9,6 +9,18 @@ from django.core.exceptions import ValidationError
 from django.contrib.auth.forms import PasswordChangeForm
 
 class CustomUserCreationForm(UserCreationForm):
+    name = forms.CharField(
+        label="Nombre",
+        widget=forms.TextInput(attrs={'class': 'form-control'})
+    )
+    lastname = forms.CharField(
+        label="Apellido",
+        widget=forms.TextInput(attrs={'class': 'form-control'})
+    )
+    email = forms.EmailField(
+        label="Correo electrónico",
+        widget=forms.EmailInput(attrs={'class': 'form-control'})
+    )
     username = forms.CharField(
         label="Nombre de usuario",
         widget=forms.TextInput(attrs={'class': 'form-control'})

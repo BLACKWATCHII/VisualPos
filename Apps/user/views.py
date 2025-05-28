@@ -24,10 +24,13 @@ def signup(request):
     if request.method == 'GET':
         return render(request, 'signup.html', {"form": CustomUserCreationForm()})
     else:
+
+        if User.objects.filter(username=request.POST["username"]).exists():
+            return render(request, 'signup.html', {"form": CustomUserCreationForm, "error": "El nombre de usuario ya existe."})
         if request.POST["password1"] == request.POST["password2"]:
             try:
                 user = User.objects.create_user(
-                    username=request.POST["username"], password=request.POST["password1"]
+                    username=request.POST["username"], password=request.POST["password1"], name = request.POST["name"],lastname = request.POST["lastname"], email = request.POST["email"]
                 )
                 user.save()
                 login(request, user)

@@ -93,3 +93,28 @@ p {
   text-align: center;
   font-size: 14px;
 }
+
+.auth-form {
+  display: flex;
+  flex-direction: column;
+  gap: 1rem;
+}
+
+.form-row {
+  display: flex;
+  gap: 1rem;
+  flex-wrap: wrap; 
+}
+
+.form-group {
+  flex: 1;
+  display: flex;
+  flex-direction: column-reverse; 
+  min-width: 200px;
+}
+
+.form-group input {
+  padding: 0.5rem;
+  border: 1px solid #ccc;
+  border-radius: 6px;
+}
