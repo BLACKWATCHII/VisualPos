@@ -2,29 +2,38 @@
 {% load static %}
 {% block content %}
 
-<link rel="stylesheet" href="{% static 'css/homePages/signin.css' %}">    
+<link rel="stylesheet" href="{% static 'css/homePages/signin.css' %}">
 
-<div class="login-container">
-  <div class="login-section">
-    <h2>Login</h2>
-    <form action="/signin/" method="POST">
+<div class="auth-container">
+  <div class="auth-left">
+    <div class="auth-logo">🔒 Berserker</div>
+    <h1>Iniciar sesion</h1>
+    <p>Por favor colocar nombre de usuario y contraseña</p>
+
+    <form action="/signin/" method="POST" class="auth-form">
       {% csrf_token %}
-      <input type="text" name="username" placeholder="Nombre de usuario" required>
+      <input type="text" name="username" placeholder="Correo o usuario" required>
       <input type="password" name="password" placeholder="Contraseña" required>
-      <button type="submit">Sign in</button>
+
+      <div class="auth-options">
+        <label><input type="checkbox" name="remember"> Recuerdame</label>
+        <a href="#" id="forgotPass">¿Olvidastes tu contraseña o usuario?</a>
+      </div>
+
+      <button type="submit" class="btn-submit">Sign In</button>
+
+      <div class="social-login">
+        <img src="{% static 'img/google-icon.png' %}" alt="Google">
+        <img src="{% static 'img/github-icon.png' %}" alt="GitHub">
+        <img src="{% static 'img/facebook-icon.png' %}" alt="Facebook">
+      </div>
+
+      <p class="signup-link">¿No tienes cuenta? <a href="/signup/">Registrate</a></p>
     </form>
-    <p><a href="#" id="forgotPass">Forgot Password?</a></p>
-    <div class="social-login">
-      <img src="{% static 'img/google-icon.png' %}" alt="Google">
-      <img src="{% static 'img/github-icon.png' %}" alt="GitHub">
-      <img src="{% static 'img/facebook-icon.png' %}" alt="Facebook">
-    </div>
-    <p>Don't have an account?  <a href="/signup/" id="DontAccount">Sign up</a></p>
   </div>
-  <div class="info-section">
-    <h2>With tools like Beserker</h2>
-    <p>“ mastering sales and inventory management has never been more accessible. Enhance your skills and boost your career prospects today!”</p>
-    <p><strong>Berserker Corporate</strong></p>
+
+  <div class="auth-right">
+    <img src="{% static 'img/signup.png' %}" alt="Illustration" />
   </div>
 </div>
 
@@ -41,6 +50,6 @@
 </div>
 
 <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
-
 <script src="{% static 'js/homePages/signin.js' %}"></script>
+
 {% endblock %}

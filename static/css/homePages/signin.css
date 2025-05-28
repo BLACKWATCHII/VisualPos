@@ -1,77 +1,102 @@
-body {
-    display: flex;
-    justify-content: center;
-    align-items: center;
-    height: 100vh;
-  }
-  .login-container {
-    display: flex;
-    border-radius: 10px;
-    overflow: hidden;
-    max-width: 900px;
-    width: 100%;
-    box-shadow: 0 4px 8px rgba(0, 0, 0, 0.2);
-  }
-  .login-section {
-    flex: 1;
-    padding: 40px;
-    background: #000;
-    color: white;
-    display: flex;
-    flex-direction: column;
-    justify-content: center;
-  }
-  .login-section h2 {
-    margin-bottom: 20px;
-  }
-  .login-section input {
-    width: 100%;
-    padding: 10px;
-    margin-bottom: 15px;
-    border: 1px solid #83C8EC;
-    border-radius: 5px;
-    background: transparent;
-    color: white;
-  }
-  .login-section input::placeholder {
-    color: #bbb;
-  }
-  .login-section button {
-    background-color: #2f855a;
-    border: none;
-    padding: 10px;
-    color: white;
-    font-size: 16px;
-    border-radius: 5px;
-    cursor: pointer;
-    width: 100%;
-  }
-  .login-section button:hover {
-    background-color: #276749;
-  }
-  .social-login {
-    display: flex;
-    justify-content: center;
-    gap: 20px;
-    margin-top: 20px;
-  }
-  .social-login img {
-    width: 40px;
-    height: 40px;
-    cursor: pointer;
-  }
-  .info-section {
-    flex: 1;
-    padding: 40px;
-    background: #2f855a;
-    color: white;
-    display: flex;
-    flex-direction: column;
-    justify-content: center;
-  }
-  #DontAccount{
-    color: #2f855a;
-  }
-  #forgotPass{
-    color: #2f855a;
-  }
+.auth-container {
+  display: flex;
+  height: 100vh;
+  font-family: 'Poppins', sans-serif;
+}
+
+.auth-left {
+  flex: 1;
+  padding: 60px;
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+}
+
+.auth-logo {
+  font-size: 20px;
+  font-weight: bold;
+  color: #168c3b;
+  margin-bottom: 20px;
+}
+
+h1 {
+  font-size: 32px;
+  margin-bottom: 10px;
+}
+
+p {
+  margin-bottom: 30px;
+  color: #666;
+}
+
+.auth-form {
+  display: flex;
+  flex-direction: column;
+  gap: 20px;
+}
+
+.auth-form input {
+  padding: 12px;
+  border: 1px solid #ddd;
+  border-radius: 8px;
+  font-size: 16px;
+;
+}
+
+.auth-options {
+  display: flex;
+  justify-content: space-between;
+  font-size: 14px;
+  color: #666;
+}
+
+.btn-submit {
+  background-color: #1d7c3c;
+  color: white;
+  padding: 12px;
+  border: none;
+  border-radius: 8px;
+  cursor: pointer;
+  font-weight: bold;
+  font-size: 16px;
+  transition: background-color 0.3s ease;
+}
+
+.btn-submit:hover {
+  background-color: #155e2d;
+}
+
+.social-login {
+  display: flex;
+  justify-content: center;
+  gap: 15px;
+  margin-top: 20px;
+}
+
+.social-login img {
+  width: 36px;
+  cursor: pointer;
+  transition: transform 0.2s;
+}
+
+.social-login img:hover {
+  transform: scale(1.1);
+}
+
+.signup-link {
+  text-align: center;
+  font-size: 14px;
+}
+
+.auth-right {
+  flex: 1;
+  background: linear-gradient(135deg, #7dffba, #247a4a);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.auth-right img {
+  width: 80%;
+  max-width: 400px;
+}
