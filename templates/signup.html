@@ -4,18 +4,29 @@
 
 <link rel="stylesheet" href="{% static 'css/homePages/signup.css' %}"> 
 
-<div class="register-container">
-  <h1 class="register-title">Registrarse</h1>
-  <p>{{ error }}</p>
-  <form action="/signup/" method="POST" class="register-form">
-    {% csrf_token %}
-    {% for field in form %}
-    <div class="floating-label-group">
-      {{ field }}
-      <label for="{{ field.id_for_label }}">{{ field.label }}</label>
-    </div>
-    {% endfor %}
-    <button type="submit">Registrarse</button>
-  </form>
+<div class="auth-container">
+  <div class="auth-left">
+    <div class="auth-logo">🔒 Berserker</div>
+    <h1>Hola, Bienvenido</h1>
+    <p>Crea tu cuenta para empezar tu viaje</p>
+
+    <form action="/signup/" method="POST" class="auth-form">
+      {% csrf_token %}
+      <p class="error-msg">{{ error }}</p>
+      {% for field in form %}
+      <div class="form-group">
+        {{ field }}
+        <label for="{{ field.id_for_label }}">{{ field.label }}</label>
+      </div>
+      {% endfor %}
+      <button type="submit" class="btn-submit">Registrarse</button>
+      <p class="login-link">¿Ya tienes cuenta? <a href="/login/">Inicia sesión</a></p>
+    </form>
+  </div>
+
+  <div class="auth-right">
+    <img src="{% static 'img/signup.png' %}" alt="Ilustración" />
+  </div>
 </div>
+
 {% endblock %}

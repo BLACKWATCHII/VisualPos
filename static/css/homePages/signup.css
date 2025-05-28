@@ -1,67 +1,95 @@
-body {
-    background: linear-gradient(rgba(0, 0, 0, 0.5), rgba(0, 0, 0, 0.5)), url("{% static 'img/backgroundLogin.jpg' %}") no-repeat center center fixed;
-    background-size: cover;
-    padding-top: 150px;
-  }
-  .register-container {
-    max-width: 400px;
-    margin: 50px auto;
-    padding: 20px;
-    border-radius: 10px;
-    box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
-    background-color: #ffffff;
-    text-align: center;
-  }
-  .register-title {
-    color: #2f855a;
-    margin-bottom: 20px;
-  }
-  .register-form p {
-    color: black;
-    font-weight: 500;
-  }
-  .floating-label-group {
-    position: relative;
-    margin-bottom: 15px;
-  }
-  .floating-label-group input {
-    width: 100%;
-    padding: 10px;
-    border: 1px solid #83C8EC;
-    border-radius: 5px;
-    box-sizing: border-box;
-  }
-  .floating-label-group input:focus {
-    outline: none;
-    border-color: #2f855a;
-  }
-  .floating-label-group label {
-    position: absolute;
-    pointer-events: none;
-    left: 10px;
-    top: 10px;
-    transition: 0.2s ease all;
-    color: #999;
-    background: white;
-    padding: 0 5px;
-  }
-  .floating-label-group input:focus ~ label,
-  .floating-label-group input:not(:placeholder-shown) ~ label {
-    top: -10px;
-    left: 10px;
-    font-size: 12px;
-    color: #2f855a;
-  }
-  .register-form button {
-    background-color: #2f855a;
-    border: none;
-    padding: 10px 20px;
-    color: white;
-    font-size: 16px;
-    border-radius: 5px;
-    cursor: pointer;
-    transition: background-color 0.3s ease;
-  }
-  .register-form button:hover {
-    background-color: #2f855a;
-  }
+.auth-container {
+  display: flex;
+  height: 100vh;
+  font-family: 'Poppins', sans-serif;
+}
+
+.auth-left {
+  flex: 1;
+  padding: 60px;
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+}
+
+.auth-logo {
+  font-size: 20px;
+  font-weight: bold;
+  color: #29c539;
+  margin-bottom: 20px;
+}
+
+h1 {
+  font-size: 32px;
+  margin-bottom: 10px;
+}
+
+p {
+  margin-bottom: 30px;
+  color: #666;
+}
+
+.auth-form {
+  display: flex;
+  flex-direction: column;
+  gap: 20px;
+}
+
+.form-group {
+  position: relative;
+}
+
+.form-group input {
+  width: 100%;
+  padding: 12px;
+  border: 1px solid #ddd;
+  border-radius: 8px;
+  outline: none;
+  font-size: 16px;
+}
+
+.form-group label {
+  position: absolute;
+  top: -10px;
+  left: 12px;
+  background: white;
+  font-size: 14px;
+  color: #666;
+  padding: 0 4px;
+}
+
+.btn-submit {
+  padding: 12px;
+  background-color: #1fa92f;
+  color: white;
+  border: none;
+  border-radius: 8px;
+  font-size: 16px;
+  cursor: pointer;
+}
+
+.btn-submit:hover {
+  background-color: #227e25;
+}
+
+.auth-right {
+  flex: 1;
+  background: linear-gradient(135deg, #c2ffc6, #7cdc71);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.auth-right img {
+  width: 100%;
+  max-width: 1000px;
+}
+
+.error-msg {
+  color: red;
+}
+
+.login-link {
+  text-align: center;
+  font-size: 14px;
+}
