@@ -187,39 +187,31 @@
                             </thead>
                             <tbody>
                                 {% for invoice in invoices %}
-                                <tr 
-                                    data-id="{{ invoice.id }}" 
-                                    data-invoice='{{ invoice|safe }}'
-                                    data-status="{{ invoice.status }}" 
-                                    style="cursor: pointer;" 
-                                    data-bs-toggle="modal" 
-                                    data-bs-target="#invoiceModal">
-                                    <td>{{ invoice.date }}</td>
-                                    <td>#{{ invoice.invoice_number }}</td>
-                                    <td>{{ invoice.customer.name }} {{ invoice.customer.lastname }}</td>
-                                    <td>${{ invoice.total|intcomma }}</td>
-                                    <td>
-                                        {% if invoice.status == 'Pagada' %}
-                                            <span class="badge bg-success">Pagada</span>
-                                        {% elif invoice.status == 'pending' %}
-                                            <span class="badge bg-danger text-dark">Pendiente</span>
-                                        {% elif invoice.status == 'credit' %}
-                                            <span class="badge bg-warning">Crédito</span>
-                                        {% else %} 
-                                            <span class="badge bg-secondary">Borrador</span>
-                                        {% endif %}
-                                    </td>
-                                    <td><a href="{% url 'invoice_pdf' invoice.id %}" class="btn btn-outline-danger" download>
-                                        Descargar
-                                    </a></td>
-                                    {% if invoice.status == 'credit' %}
-                                    <td><a href="" class="btn btn-outline-success"><i class="bi bi-credit-card-fill"></i></a></td>
-                                    {% else %}
-                                      <td> <i class="bi bi-bookmark-check-fill"> </i>Pago completado</td>
-                                    {% endif %}
-                                    
-                                    <td><a href=""> </a></td>
-                                </tr>
+                                    <tr onclick="showDetails('{{ invoice.customer.name }} {{ invoice.customer.lastname }}', '#{{ invoice.invoice_number }}', '{{ invoice.quota }}', '{{ invoice.total }}', '{{ invoice.date }}')">
+                                        <td>{{ invoice.date }}</td>
+                                        <td>#{{ invoice.invoice_number }}</td>
+                                        <td>{{ invoice.customer.name }} {{ invoice.customer.lastname }}</td>
+                                        <td>${{ invoice.total|intcomma }}</td>
+                                        <td>
+                                            {% if invoice.status == 'Pagada' %}
+                                                <span class="badge bg-success">Pagada</span>
+                                            {% elif invoice.status == 'pending' %}
+                                                <span class="badge bg-danger text-dark">Pendiente</span>
+                                            {% elif invoice.status == 'credit' %}
+                                                <span class="badge bg-warning">Crédito</span>
+                                            {% else %} 
+                                                <span class="badge bg-secondary">Borrador</span>
+                                            {% endif %}
+                                        </td>
+                                        <td><a href="{% url 'invoice_pdf' invoice.id %}" class="btn btn-outline-danger" download>Descargar</a></td>
+                                        <td>
+                                            {% if invoice.status == 'credit' %}
+                                                <a href="" class="btn btn-outline-success"><i class="bi bi-credit-card-fill"></i></a>
+                                            {% else %}
+                                                <span><i class="bi bi-bookmark-check-fill"></i> Pago completado</span>
+                                            {% endif %}
+                                        </td>
+                                    </tr>
                                 {% endfor %}
                             </tbody>
                         </table>
@@ -229,35 +221,34 @@
         </div> 
 
         <!-- Modal -->
-<div class="modal fade" id="invoiceModal" tabindex="-1" aria-labelledby="invoiceModalLabel" aria-hidden="true">
-    <div class="modal-dialog">
-        <div class="modal-content custom-modal-content">
-            <div class="modal-header custom-modal-header">
-                <h5 class="modal-title" id="detailInvoiceNumber">Factura</h5>
-                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Cerrar"></button>
+        <div class="modal fade" id="invoiceModal" tabindex="-1" aria-labelledby="invoiceModalLabel" aria-hidden="true">
+            <div class="modal-dialog">
+                <div class="modal-content custom-modal-content">
+                    <div class="modal-header custom-modal-header">
+                        <h5 class="modal-title">Factura <span id="detailInvoiceNumber"></span></h5>
+                        <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Cerrar"></button>
+                    </div>
+                    <div class="modal-body text-center">
+                        <p class="mb-1">Hola, <strong><span id="detailCustomerName"></span></strong></p>
+                        <p class="mb-2">Esto es un preview de tu factura</p>
+                        <p class="mb-3">Su orden <strong><u>#<span id="detailInvoiceNumberDisplay"></span></u></strong> fue registrada.</p>
+
+                        <ul class="custom-list">
+                            <li><strong>Cliente:</strong> <span id="detailCustomer"></span></li>
+                            <li><strong>Cuota:</strong> <span id="detailQuota"></span></li>
+                            <li><strong>Fecha:</strong> <span id="detailDate"></span></li>
+                        </ul>
+
+                        <div class="custom-total">
+                            <span>Total:</span> <span><span id="detailAmount"></span></span>
+                        </div>
+
+                        <a href="#" class="see-details-btn">Ver más detalles</a>
+                    </div>
+                </div> 
             </div>
-            <div class="modal-body text-center">
-                <p class="mb-1">Hello, <strong>{First Name}</strong></p>
-                <p class="mb-2">Thank you for your purchase.</p>
-                <p class="mb-3">Your order <strong><u>#<span id="detailInvoiceNumber">ABC123456789</span></u></strong> was paid.</p>
+        </div>
 
-                <ul class="custom-list">
-                    <li><strong>Cliente:</strong> <span id="detailCustomer"></span></li>
-                    <li><strong>Descuento:</strong> <span id="detailDiscount"></span></li>
-                    <li><strong>Método de Pago:</strong> <span id="detailPayment"></span></li>
-                    <li><strong>Status:</strong> <span id="detailStatus"></span></li>
-                    <li><strong>Notas:</strong> <span id="detailNotes"></span></li>
-                </ul>
-
-                <div class="custom-total">
-                    <span>Total:</span> <span>$<span id="detailTotal"></span></span>
-                </div>
-
-                <a href="#" class="see-details-btn">See More Details</a>
-            </div>
-        </div> 
-    </div>
-</div>
     </div>
 </div>
 {% endblock %}
@@ -267,51 +258,51 @@
     <script src="https://cdn.datatables.net/1.10.25/js/jquery.dataTables.min.js"></script>
     <script src="https://cdn.datatables.net/1.10.25/js/dataTables.bootstrap5.min.js"></script>
 
-    <script>
-        $(document).ready(function () {
-            $('#invoiceTable').DataTable({
-                paging: true,
-                searching: true,
-                ordering: true,
-                lengthChange: true,
-                pageLength: 10,
-                deferRender: true,
-                language: {
-                    search: "Buscar:",
-                    lengthMenu: "Mostrar _MENU_ registros",
-                    info: "Mostrando _START_ a _END_ de _TOTAL_ registros",
-                    paginate: {
-                        previous: "Anterior",
-                        next: "Siguiente"
-                    }
-                }
-            });
-
-            $('#invoiceTable tbody').on('click', 'tr', function () {
-                const invoiceData = $(this).data('invoice');
-                if (!invoiceData) return;
-
-                document.getElementById('detailInvoiceNumber').innerText = `Factura #${invoiceData.invoice_number}`;
-                document.getElementById('detailCustomer').innerText = invoiceData.customer_name;
-                document.getElementById('detailTotal').innerText = invoiceData.total;
-                document.getElementById('detailDiscount').innerText = invoiceData.discount || '0';
-                document.getElementById('detailPayment').innerText = invoiceData.payment_method || 'N/A';
-                document.getElementById('detailStatus').innerText = invoiceData.status;
-                document.getElementById('detailNotes').innerText = invoiceData.notes || 'Sin notas';
-            });
+<script>
+$(document).ready(function () {
+    window.showDetails = function(cliente, factura, cuota, importe, fecha) {
+        document.getElementById('detailCustomer').textContent = cliente;
+        document.getElementById('detailInvoiceNumber').textContent = factura;
+        document.getElementById('detailQuota').textContent = cuota;
+        document.getElementById('detailAmount').textContent = "$" + parseFloat(importe).toLocaleString('es-ES', {
+            minimumFractionDigits: 2,
+            maximumFractionDigits: 2
         });
+        document.getElementById('detailDate').textContent = fecha;
+        new bootstrap.Modal(document.getElementById('invoiceModal')).show();
+    };
 
-        function filterStatus(status) {
-            const table = $('#invoiceTable').DataTable();
-            table.rows().every(function () {
-                const rowData = $(this.node());
-                const rowStatus = rowData.attr('data-status');
-                if (!status || rowStatus === status) {
-                    rowData.show();
-                } else {
-                    rowData.hide();
-                }
-            });
+    $('#invoiceTable').DataTable({
+        paging: true,
+        searching: true,
+        ordering: true,
+        lengthChange: true,
+        pageLength: 10,
+        deferRender: true,
+        language: {
+            search: "Buscar:",
+            lengthMenu: "Mostrar _MENU_ registros",
+            info: "Mostrando _START_ a _END_ de _TOTAL_ registros",
+            paginate: {
+                previous: "Anterior",
+                next: "Siguiente"
+            }
         }
-    </script>
+    });
+
+    window.filterStatus = function(status) {
+        const table = $('#invoiceTable').DataTable();
+        table.rows().every(function () {
+            const rowData = $(this.node());
+            const rowStatus = rowData.attr('data-status');
+            if (!status || rowStatus === status) {
+                rowData.show();
+            } else {
+                rowData.hide();
+            }
+        });
+    };
+});
+
+</script>
 {% endblock %}
