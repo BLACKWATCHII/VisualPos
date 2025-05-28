@@ -6,7 +6,7 @@
 
 <div class="card-container">
     <div class="card">
-        <h1 class = "prueba">Impuestos</h1>
+        <h1>Impuestos</h1>
         <div class="section-header">Crear Impuesto</div>
         <form method="post" id="createTax-form">
             {% csrf_token %}
@@ -18,14 +18,6 @@
                 <label for="Referents">Porcentaje</label>
                 <input type="number" id="Referents" name="Percentaje" required>
             </div>
-
-            <!-- <div class="form-group" style="margin-left: 100px; margin-top: 30px;">
-                <input class="form-check-input small-radio" type="radio" name="active" id="inlineRadio1" value="True" required>
-                <label class="form-check-label" for="inlineRadio1" style="margin-right: 50px;">activado</label><br>
-                <input class="form-check-input small-radio" type="radio" name="active" id="inlineRadio2" value="False">
-                <label class="form-check-label" for="inlineRadio2">desactivado</label>
-            </div> -->
-            
             <div class="form-group">
                 <button type="submit" id="saveForm">Guardar</button>
             </div>
