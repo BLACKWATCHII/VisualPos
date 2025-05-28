@@ -3,7 +3,7 @@ import os
 
 class CoreConfig(AppConfig):
     default_auto_field = 'django.db.models.BigAutoField'
-    name = 'user'  # ajusta esto al nombre real de tu app
+    name = 'user' 
 
     def ready(self):
         from django.contrib.auth import get_user_model
@@ -20,5 +20,4 @@ class CoreConfig(AppConfig):
                 )
                 print("Superusuario creado: admin / 1030")
         except (OperationalError, ProgrammingError):
-            # Esto evita errores si la BD aún no está lista (por ejemplo, en migrate)
             pass
