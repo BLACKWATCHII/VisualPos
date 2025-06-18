@@ -126,3 +126,15 @@ gunicorn.pid
 # Others
 instance/
 .webassets-cache
+
+node_modules/       
+.npm/               
+.npmrc              
+npm-debug.log*      
+package-lock.json   
+.yarn/             
+.yarnrc             
+dist/             
+.cache/           
+/tmp/       
+*.tmp           

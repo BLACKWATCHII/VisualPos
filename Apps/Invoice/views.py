@@ -18,8 +18,12 @@ from django.contrib import messages
 from django.db import transaction
 from django.contrib import messages
 from datetime import timedelta, date
-
-
+from django.conf import settings
+from django.template.loader import render_to_string
+from django.http import FileResponse
+import uuid
+import subprocess
+import os
 
 def render_to_pdf(template_src, context_dict={}):
     template = get_template(template_src)
@@ -29,6 +33,34 @@ def render_to_pdf(template_src, context_dict={}):
     if pisa_status.err:
         return HttpResponse('Error generando PDF')
     return response
+
+def render_pdf_with_puppeteer(template_src, context, filename="Factura.pdf"):
+    # Rutas temporales
+    html_id = str(uuid.uuid4())
+    html_path = os.path.join(settings.BASE_DIR, "tmp", f"{html_id}.html")
+    pdf_path = os.path.join(settings.BASE_DIR, "tmp", f"{html_id}.pdf")
+
+    os.makedirs(os.path.dirname(html_path), exist_ok=True)
+
+    html = render_to_string(template_src, context)
+    with open(html_path, "w", encoding="utf-8") as f:
+        f.write(html)
+
+    script_path = os.path.join(settings.BASE_DIR, "pdfgen", "generate_pdf.js")
+
+    result = subprocess.run(
+    ["node", script_path, html_path, pdf_path],
+    capture_output=True,
+    text=True
+    )
+
+    if result.returncode != 0:
+        print("STDOUT:", result.stdout)
+        print("STDERR:", result.stderr)
+        raise Exception(f"Error generando PDF: {result.stderr}")
+
+
+    return FileResponse(open(pdf_path, "rb"), as_attachment=True, filename=filename)
 
 @login_required
 def create_type_transaction(request):
@@ -175,7 +207,7 @@ def create_invoice(request):
                             item.save()
 
                     if request.POST.get('download') == 'pdf':
-                        return render_to_pdf('invoice/receipt_pdf.html', {'invoice': invoice})
+                        return render_pdf_with_puppeteer('invoice/receipt_pdf.html', {'invoice': invoice}, filename=f"Factura_{invoice.invoice_number}.pdf")
 
                     return redirect('home')
         else:
@@ -250,7 +282,7 @@ def invoice_pdf(request, invoice_id):
         invoice = Invoice.objects.get(pk=invoice_id)
     except Invoice.DoesNotExist:
         raise Http404("Invoice not found")
-    return render_to_pdf('invoice/receipt_pdf.html', {'invoice': invoice})
+    return render_pdf_with_puppeteer('invoice/receipt_pdf.html', {'invoice': invoice},filename=f"Factura_{invoice.invoice_number}.pdf")
 
 
 
