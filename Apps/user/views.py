@@ -47,7 +47,7 @@ def signup(request):
 def Dashboard(request):
     customer_count = Customer.objects.count()
     items_count = Item.objects.filter(active=True).count()
-
+    low_stock_items = Item.objects.filter(Stock__lte=2).order_by('Stock')
     # Clientes nuevos
     new_clients_per_day = (
         Customer.objects
@@ -90,6 +90,7 @@ def Dashboard(request):
     products_sales = [entry['total_quantity'] for entry in best_selling_products]
 
     context = {
+        'low_stock_items': low_stock_items,
         'num_Customers': customer_count,
         'num_items': items_count,
         'num_total': Total_Payment,

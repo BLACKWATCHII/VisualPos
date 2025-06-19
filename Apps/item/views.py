@@ -32,46 +32,51 @@ def download_plant(request):
 
 @login_required
 def CreateItem(request):
-    print("Entrando en la vista CreateItem")
     taxes = Tax.objects.all()
 
     if request.method == 'POST':
-        print("Método POST detectado")
         name = request.POST.get('Name')
         referents = request.POST.get('Referents') 
         description = request.POST.get('Description')
         price = request.POST.get('Price')
         stock = request.POST.get('Stock')
         active = request.POST.get('active')
+        tax = request.POST.get('Taxes')
 
         if not (name and referents and description and price and stock and active):
             messages.error(request, 'Todos los campos son obligatorios.')
             return render(request, 'items/createItem.html', {'taxes': taxes})
-        
         active = (active == 'True')
 
         try:
+            price = price.replace('.', '').replace(',', '.')
+            stock = stock.replace('.', '').replace(',', '.')
             price = float(price)
             stock = float(stock)
         except (ValueError, TypeError):
             messages.error(request, 'Los campos Precio y Cantidad deben ser números válidos.')
             return render(request, 'items/createItem.html', {'taxes': taxes})
-
         try:
             if Item.objects.filter(Referents=referents).exists():  
                 print("Referencia duplicada")
                 messages.error(request, 'Ya existe un ítem con esa referencia.')
                 return render(request, 'items/createItem.html', {'taxes': taxes})
 
-            Item.objects.create(
-                Name=name,  
-                Referents=referents,  
-                Description=description, 
-                Price=price,  
-                Stock=stock,  
-                active=active,
-                user=request.user
-            )
+            try:
+                item = Item.objects.create(
+                    Name=name,  
+                    Referents=referents,  
+                    Description=description, 
+                    Price=price,  
+                    Stock=stock,  
+                    active=active,
+                    tax=Tax.objects.get(id=tax) if tax else None,
+                    user=request.user
+                )
+                print(f"Ítem creado exitosamente: {item}")
+            except Exception as e:
+                print(f"Error al crear el ítem: {e}")
+                return render(request, 'items/createItem.html', {'taxes': taxes})
             return redirect('viewItem')
         except IntegrityError as e:
             print(f"Error de integridad: {e}")

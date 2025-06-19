@@ -56,8 +56,20 @@
     </div>
 </div>
 
-<script src="{% static 'js/Inventory/createItem.js' %}"></script>
+<script>
+    
+    document.getElementById('currency-field').addEventListener('input', function (e) {
+        let value = e.target.value.replace(/\D/g, '');
+        if (value) {
+            e.target.value = value.replace(/\B(?=(\d{3})+(?!\d))/g, ".");
+        } else {
+            e.target.value = '';
+        }
+    });
+</script>
 
+<script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
+<script src="{% static 'js/Inventory/createItem.js' %}"></script>
 
 
 

@@ -1,429 +1,278 @@
 <!DOCTYPE html>
 <html lang="es">
 <head>
-    <meta charset="UTF-8">
-    <title>Factura Confirmada - {{ invoice.customer }}</title>
-    <style>
-        * {
-            margin: 0;
-            padding: 0;
-            box-sizing: border-box;
-        }
+  <meta charset="UTF-8">
+  <title>Factura Confirmada - {{ invoice.customer }}</title>
+  <style>
+    * {
+      margin: 0;
+      padding: 0;
+      box-sizing: border-box;
+    }
 
-        html, body {
-            height: 100%;
-        }
+    body {
+      font-family: 'Arial', sans-serif;
+      background: white;
+      margin: 0;
+      padding: 0;
+    }
 
-        body {
-            display: flex;
-            flex-direction: column;
-            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
-            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
-            padding: 20px;
-        }
+    .invoice-container {
+      width: 100%;
+      padding: 40px;
+    }
 
-        .invoice-container {
-            flex: 1;
-            display: flex;
-            flex-direction: column;
-            max-width: 800px;
-            margin: 0 auto;
-            background: white;
-            border-radius: 20px;
-            overflow: hidden;
-            box-shadow: 0 20px 40px rgba(0, 0, 0, 0.1);
-        }
+    .header-section {
+      display: flex;
+      justify-content: space-between;
+      align-items: flex-start;
+      margin-bottom: 20px;
+    }
 
-        .content-wrapper {
-            flex: 1;
-            display: flex;
-            flex-direction: column;
-        }
+    .company-info {
+      display: flex;
+      align-items: center;
+      gap: 15px;
+    }
 
-        .header-section {
-            background: linear-gradient(135deg, #a8d8ea 0%, #aa96da 100%);
-            padding: 40px;
-            position: relative;
-        }
+    .logo {
+      width: 60px;
+      height: 60px;
+      background: #333;
+      color: white;
+      font-size: 24px;
+      font-weight: bold;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      border-radius: 8px;
+    }
 
-        .company-logo {
-            display: flex;
-            align-items: center;
-            gap: 15px;
-            margin-bottom: 30px;
-        }
+    .company-details h1 {
+      font-size: 18px;
+      font-weight: bold;
+      color: #333;
+    }
 
-        .logo-icon {
-            width: 50px;
-            height: 50px;
-            background: #333;
-            border-radius: 10px;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            color: white;
-            font-weight: bold;
-            font-size: 20px;
-        }
+    .company-details p {
+      font-size: 14px;
+      color: #666;
+    }
 
-        .company-details h2 {
-            color: #333;
-            font-size: 18px;
-            font-weight: 600;
-            margin-bottom: 5px;
-        }
+    .invoice-date {
+      font-size: 14px;
+      color: #333;
+      font-weight: 500;
+    }
 
-        .company-details p {
-            color: #666;
-            font-size: 14px;
-            margin: 0;
-        }
+    .invoice-to {
+      font-size: 16px;
+      font-weight: bold;
+      margin-top: 30px;
+    }
 
-        .invoice-date {
-            position: absolute;
-            top: 40px;
-            right: 40px;
-            text-align: right;
-            color: #333;
-            font-size: 14px;
-        }
+    .customer-details,
+    .invoice-details {
+      margin-top: 10px;
+      margin-bottom: 30px;
+    }
 
-        .content-section {
-            padding: 40px;
-            flex: 1;
-        }
+    .customer-details h3 {
+      font-size: 16px;
+      font-weight: 600;
+    }
 
-        .invoice-to {
-            margin-bottom: 30px;
-        }
+    .customer-details p {
+      font-size: 14px;
+      color: #666;
+    }
 
-        .invoice-to h3 {
-            color: #333;
-            font-size: 16px;
-            font-weight: 600;
-            margin-bottom: 10px;
-        }
+    .invoice-details {
+      display: flex;
+      gap: 50px;
+      font-size: 14px;
+    }
 
-        .customer-info {
-            color: #666;
-            font-size: 14px;
-            line-height: 1.6;
-        }
+    .invoice-details .detail-row {
+      margin-bottom: 5px;
+    }
 
-        .invoice-details {
-            display: grid;
-            grid-template-columns: 1fr 1fr;
-            gap: 20px;
-            margin-bottom: 30px;
-            padding: 20px;
-            background: #f8f9fa;
-            border-radius: 10px;
-        }
+    .items-section {
+      width: 100%;
+      margin-bottom: 30px;
+    }
 
-        .detail-item {
-            display: flex;
-            justify-content: space-between;
-            color: #333;
-            font-size: 14px;
-        }
+    table {
+      width: 100%;
+      border-collapse: collapse;
+      font-size: 14px;
+    }
 
-        .detail-label {
-            font-weight: 500;
-        }
+    th, td {
+      padding: 12px;
+      border: 1px solid #ddd;
+    }
 
-        .items-table {
-            width: 100%;
-            border-collapse: collapse;
-            margin-bottom: 30px;
-            border-radius: 10px;
-            overflow: hidden;
-            box-shadow: 0 4px 6px rgba(0, 0, 0, 0.07);
-        }
+    thead {
+      background: #2196f3;
+      color: white;
+    }
 
-        .items-table thead {
-            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
-            color: white;
-        }
+    tbody tr:nth-child(even) {
+      background: #f9f9f9;
+    }
 
-        .items-table th {
-            padding: 15px 20px;
-            text-align: left;
-            font-weight: 500;
-            font-size: 14px;
-        }
+    td:nth-child(2),
+    td:nth-child(3),
+    td:nth-child(4),
+    th:nth-child(2),
+    th:nth-child(3),
+    th:nth-child(4) {
+      text-align: center;
+    }
 
-        .items-table th:last-child {
-            text-align: center;
-        }
+    .totals-section {
+      width: 100%;
+      margin-bottom: 30px;
+      display: flex;
+      justify-content: flex-end;
+    }
 
-        .items-table tbody tr {
-            border-bottom: 1px solid #eee;
-        }
+    .totals-content {
+      width: 300px;
+      font-size: 14px;
+    }
 
-        .items-table tbody tr:last-child {
-            border-bottom: none;
-        }
+    .totals-content div {
+      display: flex;
+      justify-content: space-between;
+      padding: 6px 0;
+    }
 
-        .items-table td {
-            padding: 15px 20px;
-            color: #333;
-            font-size: 14px;
-        }
+    .total-row {
+      background: #4caf50;
+      color: white;
+      padding: 12px;
+      border-radius: 6px;
+      font-weight: bold;
+      margin-top: 10px;
+    }
 
-        .items-table td:last-child {
-            text-align: center;
-            font-weight: 500;
-        }
+    .additional-info {
+      display: flex;
+      justify-content: space-between;
+      font-size: 14px;
+      margin-top: 20px;
+    }
 
-        .totals-section {
-            display: flex;
-            justify-content: flex-end;
-            margin-bottom: 40px;
-        }
+    .payment-info, .terms-info {
+      width: 48%;
+    }
 
-        .totals-box {
-            min-width: 350px;
-        }
+    .payment-info p,
+    .terms-info p {
+      margin: 4px 0;
+      color: #444;
+    }
 
-        .subtotal-row, .tax-row, .discount-row {
-            display: flex;
-            justify-content: space-between;
-            padding: 8px 0;
-            color: #666;
-            font-size: 14px;
-        }
+    @media print {
+      html, body {
+        width: 210mm;
+        height: 297mm;
+        margin: 0;
+        padding: 0;
+        background: white;
+      }
 
-        .total-row {
-            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
-            color: white;
-            padding: 15px 20px;
-            border-radius: 50px;
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-            font-weight: 600;
-            font-size: 18px;
-            margin-top: 15px;
-        }
+      .items-section,
+      table,
+      tr,
+      td,
+      th {
+        page-break-inside: avoid;
+      }
 
-        .payment-info {
-            display: grid;
-            grid-template-columns: 1fr 1fr;
-            gap: 40px;
-            margin-bottom: 40px;
-        }
-
-        .payment-method h4, .terms h4 {
-            color: #333;
-            font-size: 16px;
-            font-weight: 600;
-            margin-bottom: 15px;
-        }
-
-        .payment-method p, .terms p {
-            color: #666;
-            font-size: 14px;
-            line-height: 1.6;
-            margin-bottom: 5px;
-        }
-
-        .signature-section {
-            text-align: right;
-            margin-bottom: 40px;
-        }
-
-        .signature-label {
-            color: #999;
-            font-size: 14px;
-            margin-bottom: 30px;
-        }
-
-        .signature-name {
-            font-size: 32px;
-            color: #333;
-            font-style: italic;
-            font-weight: 300;
-            margin-bottom: 5px;
-        }
-
-        .signature-title {
-            color: #666;
-            font-size: 14px;
-            font-weight: 500;
-            letter-spacing: 1px;
-        }
-
-        .footer-section {
-            background: #f8f9fa;
-            padding: 30px 40px;
-            text-align: center;
-        }
-
-        .footer-title {
-            font-size: 32px;
-            font-weight: 700;
-            color: #333;
-            letter-spacing: 3px;
-            margin-bottom: 10px;
-        }
-
-        .footer-number {
-            color: #666;
-            font-size: 14px;
-            font-weight: 500;
-        }
-
-        .footer-icons {
-            display: flex;
-            justify-content: center;
-            gap: 15px;
-            margin-top: 20px;
-        }
-
-        .footer-icon {
-            width: 40px;
-            height: 40px;
-            background: #333;
-            border-radius: 50%;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            color: white;
-            font-size: 18px;
-        }
-
-        .thank-you {
-            text-align: center;
-            margin: 20px 0;
-            color: #666;
-            font-size: 14px;
-        }
-    </style>
+      .totals-section,
+      .additional-info {
+        page-break-inside: avoid;
+      }
+    }
+  </style>
 </head>
 <body>
-    <div class="invoice-container">
-        <div class="content-wrapper">
-            <!-- Header Section -->
-            <div class="header-section">
-                <div class="company-logo">
-                    <div class="logo-icon">BC</div>
-                    <div class="company-details">
-                        <h2>BERSERKER CORPORATE</h2>
-                        <p>Carrera 22D #75 C 03<br>Los robles-soledad</p>
-                    </div>
-                </div>
-                <div class="invoice-date">
-                    {{ invoice.date }}
-                </div>
-            </div>
-
-            <!-- Content Section -->
-            <div class="content-section">
-                <!-- Invoice To -->
-                <div class="invoice-to">
-                    <h3>INVOICE TO:</h3>
-                    <div class="customer-info">
-                        <strong>{{ invoice.customer }}</strong><br>
-                        {{ invoice.customer_address }}
-                    </div>
-                </div>
-
-                <!-- Invoice Details -->
-                <div class="invoice-details">
-                    <div class="detail-item">
-                        <span class="detail-label">Recibo #:</span>
-                        <span>{{ invoice.invoice_number }}</span>
-                    </div>
-                    <div class="detail-item">
-                        <span class="detail-label">Método de pago:</span>
-                        <span>{{ invoice.payment_method }}</span>
-                    </div>
-                    {% if invoice.Quotas %}
-                    <div class="detail-item">
-                        <span class="detail-label">Cuotas:</span>
-                        <span>{{ invoice.Quotas }}</span>
-                    </div>
-                    {% endif %}
-                </div>
-
-                <!-- Items Table -->
-                <table class="items-table">
-                    <thead>
-                        <tr>
-                            <th>ITEM DESCRIPTION</th>
-                            <th>UNIT PRICE</th>
-                            <th>QTY</th>
-                            <th>TOTAL</th>
-                        </tr>
-                    </thead>
-                    <tbody>
-                        {% for item in invoice.items.all %}
-                        <tr>
-                            <td>{{ item.item.Name }}</td>
-                            <td>${{ item.price }}</td>
-                            <td>{{ item.quantity }}</td>
-                            <td>${{ item.subtotal }}</td>
-                        </tr>
-                        {% endfor %}
-                    </tbody>
-                </table>
-
-                <!-- Totals -->
-                <div class="totals-section">
-                    <div class="totals-box">
-                        <div class="subtotal-row">
-                            <span>SUB TOTAL</span>
-                            <span>${{ invoice.subtotal }}</span>
-                        </div>
-                        <div class="tax-row">
-                            <span>TAX (5%)</span>
-                            <span>${{ invoice.tax }}</span>
-                        </div>
-                        <div class="discount-row">
-                            <span>DESCUENTO</span>
-                            <span>-{{ invoice.discount }}%</span>
-                        </div>
-                        <div class="total-row">
-                            <span>TOTAL</span>
-                            <span>${{ invoice.total }}</span>
-                        </div>
-                    </div>
-                </div>
-
-                <!-- Payment Info and Terms -->
-                <div class="payment-info">
-                    <div class="payment-method">
-                        <h4>Payment Method</h4>
-                        <p><strong>{{ invoice.payment_method }}</strong></p>
-                        <p>Soporte: +57 3013916533</p>
-                    </div>
-                    <div class="terms">
-                        <h4>Term and Condition</h4>
-                        <p>Gracias por tu compra.</p>
-                        <p>¿Tienes dudas? Contáctanos</p>
-                        <p>para cualquier consulta.</p>
-                    </div>
-                </div>
-
-                <!-- Signature -->
-                <div class="signature-section">
-                    <div class="signature-label">Signature</div>
-                    <div class="signature-name">Berserker</div>
-                    <div class="signature-title">ADMINISTRADOR</div>
-                </div>
-            </div>
+  <div class="invoice-container">
+    <div class="header-section">
+      <div class="company-info">
+        <div class="logo">BC</div>
+        <div class="company-details">
+          <h1>BERSERKER CORPORATE</h1>
+          <p>Carrera 22D #75 C 03<br>Los robles-soledad</p>
         </div>
-
-        <!-- Footer Section -->
-        <div class="footer-section">
-            <div class="footer-title">INVOICE</div>
-            <div class="footer-number">#{{ invoice.invoice_number }}</div>
-            <div class="footer-icons">
-                <div class="footer-icon">📧</div>
-                <div class="footer-icon">📱</div>
-                <div class="footer-icon">🌐</div>
-            </div>
-        </div>
+      </div>
+      <div class="invoice-date">{{ invoice.date }}</div>
     </div>
+
+    <div class="invoice-to">INVOICE TO:</div>
+    <div class="customer-details">
+      <h3>{{ invoice.customer }}</h3>
+      <p>{{ invoice.customer_address }}</p>
+    </div>
+
+    <div class="invoice-details">
+      <div>
+        <div class="detail-row">Recibo #: <strong>{{ invoice.invoice_number }}</strong></div>
+        <div class="detail-row">Método de pago: <strong>{{ invoice.payment_method }}</strong></div>
+      </div>
+      {% if invoice.Quotas %}
+      <div>
+        <div class="detail-row">Cuotas: <strong>{{ invoice.Quotas }}</strong></div>
+      </div>
+      {% endif %}
+    </div>
+
+    <div class="items-section">
+      <table>
+        <thead>
+          <tr>
+            <th>ITEM DESCRIPTION</th>
+            <th>UNIT PRICE</th>
+            <th>QTY</th>
+            <th>TOTAL</th>
+          </tr>
+        </thead>
+        <tbody>
+          {% for item in invoice.items.all %}
+          <tr>
+            <td>{{ item.item.Name }}</td>
+            <td>${{ item.price }}</td>
+            <td>{{ item.quantity }}</td>
+            <td>${{ item.subtotal }}</td>
+          </tr>
+          {% endfor %}
+        </tbody>
+      </table>
+    </div>
+
+    <div class="totals-section">
+      <div class="totals-content">
+        <div><span>SUB TOTAL</span><span>${{ invoice.subtotal }}</span></div>
+        <div><span>Impuesto</span><span>${{ invoice.tax }}</span></div>
+        <div><span>DESCUENTO</span><span>-{{ invoice.discount }}%</span></div>
+        <div class="total-row"><span>TOTAL</span><span>${{ invoice.total }}</span></div>
+      </div>
+    </div>
+
+    <div class="additional-info">
+      <div class="payment-info">
+        <p><strong>Payment Method:</strong> {{ invoice.payment_method }}</p>
+        <p>Soporte: +57 3013916533</p>
+      </div>
+      <div class="terms-info">
+        <p><strong>Term and Condition</strong></p>
+        <p>Gracias por tu compra.</p>
+        <p>¿Tienes dudas? Contáctanos para cualquier consulta.</p>
+      </div>
+    </div>
+  </div>
 </body>
 </html>
