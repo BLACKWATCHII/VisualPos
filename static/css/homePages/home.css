@@ -1,51 +1,147 @@
+/* General */
 body {
-    background-color: #000;
-    color: white;
-  }
+  background-color: #000;
+  color: white;
+  font-family: 'Segoe UI', sans-serif;
+}
 
-  .navbar {
-    background-color: white !important;
-  }
+.section-title {
+  font-size: 2.5rem;
+  font-weight: bold;
+  margin-bottom: 30px;
+}
 
-  .btn-custom {
-    background-color: #2f855a;
-    border-color: #2f855a;
-    color: white;
-  }
+/* Botones personalizados */
+.btn-custom {
+  background-color: #2f855a;
+  border-color: #2f855a;
+  color: white;
+}
 
-  .btn-custom:hover {
-    background-color: #276749;
-    border-color: #276749;
-  }
+.btn-custom:hover {
+  background-color: #276749;
+  border-color: #276749;
+  color: white;
+}
 
-  .carousel-item img {
-    height: 700px;
-    object-fit: cover;
-    width: 100%;
-  }
+/* Hero */
+.hero-section {
+  padding: 100px 0;
+  background: linear-gradient(to right, #111, #000);
+}
 
-  .carousel-caption {
-    bottom: 25%;
-  }
+.hero-section .highlight {
+  color: #38b2ac;
+}
 
-  .services-section {
-    background-color: #111;
-    padding: 60px 0;
-    text-align: center;
-  }
+/* Features / Beneficios */
+.features-section {
+  background-color: #111;
+  padding: 80px 0;
+  text-align: center;
+}
 
-  .service-box {
-    padding: 20px;
-    border-radius: 10px;
-    background-color: #222;
-    color: white;
+.feature-box {
+  background-color: #1a1a1a;
+  padding: 30px;
+  border-radius: 12px;
+  transition: transform 0.3s ease;
+}
+
+.feature-box:hover {
+  transform: translateY(-5px);
+  background-color: #2f855a;
+}
+
+.feature-icon {
+  font-size: 40px;
+  color: #38b2ac;
+  margin-bottom: 15px;
+}
+
+/* Planes */
+.pricing-box {
+  background-color: #1a1a1a;
+  border: 1px solid #2f855a;
+  border-radius: 10px;
+  color: white;
+  transition: transform 0.3s ease;
+}
+
+.pricing-box:hover {
+  transform: translateY(-10px);
+  background-color: #2f855a;
+}
+
+/* Inspiración - logos animados */
+.logo-marquee {
+  overflow: hidden;
+  position: relative;
+}
+
+.logo-marquee .track {
+  display: flex;
+  width: calc(250px * 8);
+  animation: scrollLogo 20s linear infinite;
+}
+
+.logo-marquee img {
+  width: 100px;
+  height: auto;
+  margin: 0 30px;
+  filter: grayscale(100%);
+  transition: filter 0.3s ease;
+}
+
+.logo-marquee img:hover {
+  filter: grayscale(0%);
+}
+
+@keyframes scrollLogo {
+  0% {
+    transform: translateX(0);
   }
-  #hover-card {
-        transition: transform 0.3s ease;
-    }
-    
-    #hover-card:hover {
-        transform: scale(1.05);
-        background-color: #2f855a;
-        color: white;
-    }
+  100% {
+    transform: translateX(-50%);
+  }
+}
+
+/* Quiénes Somos */
+.about-section {
+  padding: 80px 0;
+}
+
+.about-section img {
+  border: 5px solid #2f855a;
+  border-radius: 15px;
+}
+
+/* Testimonios */
+.testimonials-section {
+  background-color: #111;
+  padding: 80px 0;
+}
+
+.testimonial-box {
+  background-color: #1a1a1a;
+  color: white;
+  border-radius: 12px;
+  min-height: 200px;
+}
+
+/* Contacto */
+.contact-section {
+  padding: 80px 0;
+}
+
+.contact-section input,
+.contact-section textarea {
+  border-radius: 8px;
+  border: 1px solid #ccc;
+}
+
+.contact-section input:focus,
+.contact-section textarea:focus {
+  border-color: #2f855a;
+  box-shadow: 0 0 0 0.2rem rgba(47, 133, 90, 0.25);
+}

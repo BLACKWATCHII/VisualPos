@@ -1,67 +1,191 @@
-{% extends 'base.html' %} 
-{% block content %}
+{% extends 'base.html' %}
 {% load static %}
 
+{% block content %}
+<link rel="stylesheet" href="{% static 'css/homePages/home.css' %}">
 
-<link rel="stylesheet" href="{% static 'css/homePages/home.css' %}">    
+<script src="https://cdn.jsdelivr.net/npm/aos@2.3.4/dist/aos.js"></script>
+<link href="https://cdn.jsdelivr.net/npm/aos@2.3.4/dist/aos.css" rel="stylesheet" />
 
-<nav class="navbar navbar-expand-lg navbar-dark">
-  <div class="container">
-    <a class="navbar-brand" href="#">Loggie</a>
-  </div>
-</nav>
-
-<div id="carouselExample" class="carousel slide">
-  <div class="carousel-inner">
-    <div class="carousel-item active">
-      <img src="{% static 'img/FondoHomePages.jpg' %}" class="d-block w-100" alt="...">
+<!-- Hero Principal -->
+<section class="hero-section text-center">
+  <div class="container" data-aos="fade-up">
+    <h1 class="display-4">Maximize your business with <span class="highlight">Berserker Solutions</span></h1>
+    <p class="lead mt-3">Controla tus facturas, clientes, productos e inventario en una sola plataforma fácil de usar.</p>
+    {% if not user.is_authenticated %}
+    <div class="mt-4">
+      <a href="/signin" class="btn btn-custom">Iniciar Sesión</a>
+      <a href="/signup" class="btn btn-outline-light ms-2">Crear Cuenta</a>
     </div>
+    {% endif %}
+    <img src="{% static 'img/dashboard_mockup.png' %}" alt="Dashboard Preview" class="img-fluid mt-5 shadow-lg rounded" style="max-width: 1000px;">
   </div>
-  {% if user.is_authenticated %}
-  <!--Aqui no va nada porque si no agrego esta condicion mostrara el boton inicio de session-->
-  {% else %}
-  <div class="carousel-caption">
-    <h1>Welcome to Berserker Corporate</h1>
-    <p>Where your finances are protected and your bills are organized</p>
-    <a href="/signin" class="btn btn-custom">Login</a>
-  </div>
-  {% endif %}
-</div>
+</section>
 
-<section class="services-section">
+<!-- Sección Beneficios -->
+<section class="features-section">
   <div class="container">
-    <h2 class="text-white">Our Services</h2>
-    <div class="row mt-4">
-      <!-- Servicio 1: Hacer facturas -->
-      <div class="col-md-3">
-        <div class="service-box"  id="hover-card">
-          <h5>Invoice Management</h5>
-          <p>Efficient creation and management of invoices for your business.</p>
+    <h2 class="text-center section-title mb-5" data-aos="zoom-in">¿Por qué usar Berserker?</h2>
+    <div class="row g-4">
+      <div class="col-md-3" data-aos="fade-up" data-aos-delay="100">
+        <div class="feature-box">
+          <i class="bi bi-briefcase-fill feature-icon"></i>
+          <h5>Para todo tipo de negocios</h5>
+          <p>Administra desde pequeñas hasta medianas empresas con facilidad y eficiencia.</p>
         </div>
       </div>
-      <!-- Servicio 2: Manejar inventario -->
-      <div class="col-md-3" >
-        <div class="service-box" id="hover-card">
-          <h5>Inventory Control</h5>
-          <p>Accurate tracking and management of your stock and supplies.</p>
+      <div class="col-md-3" data-aos="fade-up" data-aos-delay="200">
+        <div class="feature-box">
+          <i class="bi bi-cash-stack feature-icon"></i>
+          <h5>Precios accesibles</h5>
+          <p>Solución profesional sin afectar tus finanzas. Planes que se ajustan a ti.</p>
         </div>
       </div>
-      <!-- Servicio 3: Manejo de Customers -->
-      <div class="col-md-3" >
-        <div class="service-box" id="hover-card">
-          <h5>Customer Management</h5>
-          <p>Organized handling of client data and interactions.</p>
+      <div class="col-md-3" data-aos="fade-up" data-aos-delay="300">
+        <div class="feature-box">
+          <i class="bi bi-gear-fill feature-icon"></i>
+          <h5>Fácil configuración</h5>
+          <p>No necesitas conocimientos técnicos. Todo funciona desde el primer clic.</p>
         </div>
       </div>
-      <!-- Servicio 4: Reportes de ventas -->
-      <div class="col-md-3" >
-        <div class="service-box" id="hover-card">
-          <h5>Sales Reports</h5>
-          <p>Detailed sales analysis and performance reports.</p>
+      <div class="col-md-3" data-aos="fade-up" data-aos-delay="400">
+        <div class="feature-box">
+          <i class="bi bi-bar-chart-line-fill feature-icon"></i>
+          <h5>Panel interactivo</h5>
+          <p>Visualiza tus datos con claridad y toma decisiones con base en reportes reales.</p>
         </div>
       </div>
     </div>
   </div>
 </section>
 
+<!-- Planes -->
+<section class="pricing-section py-5 bg-dark text-white" data-aos="fade-up">
+  <div class="container">
+    <h2 class="text-center section-title">Nuestros Planes</h2>
+    <div class="row text-center mt-5">
+      <div class="col-md-4">
+        <div class="pricing-box p-4 border rounded">
+          <h4>Básico</h4>
+          <p class="display-6">Gratis</p>
+          <ul class="list-unstyled">
+            <li>5 facturas/mes</li>
+            <li>1 usuario</li>
+            <li>Soporte por email</li>
+          </ul>
+          <a href="#" class="btn btn-custom mt-3">Seleccionar</a>
+        </div>
+      </div>
+      <div class="col-md-4">
+        <div class="pricing-box p-4 border rounded">
+          <h4>Profesional</h4>
+          <p class="display-6">$9.99/mes</p>
+          <ul class="list-unstyled">
+            <li>100 facturas/mes</li>
+            <li>3 usuarios</li>
+            <li>Soporte prioritario</li>
+          </ul>
+          <a href="#" class="btn btn-custom mt-3">Seleccionar</a>
+        </div>
+      </div>
+      <div class="col-md-4">
+        <div class="pricing-box p-4 border rounded">
+          <h4>Corporativo</h4>
+          <p class="display-6">$29.99/mes</p>
+          <ul class="list-unstyled">
+            <li>Facturación ilimitada</li>
+            <li>Usuarios ilimitados</li>
+            <li>Soporte 24/7</li>
+          </ul>
+          <a href="#" class="btn btn-custom mt-3">Seleccionar</a>
+        </div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- Inspiración -->
+<section class="inspiration-section py-5 bg-light">
+  <div class="container text-center">
+    <h2 class="section-title text-dark mb-5">Nuestra Inspiración</h2>
+    <div class="logo-marquee">
+      <div class="track">
+        <img src="{% static 'img/logo_cloudflare.png' %}" alt="Cloudflare">
+        <img src="{% static 'img/logo_microsoft.png' %}" alt="Microsoft">
+        <img src="{% static 'img/Logo_google.png' %}" alt="Google">
+        <img src="{% static 'img/mailchimp_logo.png' %}" alt="Mailchimp">
+        <img src="{% static 'img/github-icon.png' %}" alt="Github">
+        <img src="{% static 'img/microsoft.png' %}" alt="Microsoft">
+        <img src="{% static 'img/LogoPrime.png' %}" alt="Berserker">
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- Quiénes Somos -->
+<section class="about-section py-5 bg-dark text-white">
+  <div class="container">
+    <div class="row align-items-center">
+      <div class="col-md-6" data-aos="fade-right">
+        <img src="{% static 'img/about_us_photo.jpg' %}" class="img-fluid rounded shadow" alt="Sobre nosotros">
+      </div>
+      <div class="col-md-6" data-aos="fade-left">
+        <h2 class="section-title">Quiénes Somos</h2>
+        <p class="lead">Somos una startup comprometida con facilitar la gestión de negocios. Nuestro software combina potencia, simplicidad y diseño moderno para ayudarte a crecer.</p>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- Testimonios -->
+<section class="testimonials-section py-5">
+  <div class="container text-center">
+    <h2 class="section-title">Lo que dicen nuestros clientes</h2>
+    <div class="row mt-4">
+      <div class="col-md-4">
+        <div class="testimonial-box p-4 border rounded">
+          <p>"Berserker me ayudó a automatizar mi negocio de forma increíble. 100% recomendado."</p>
+          <h6 class="mt-3">- Laura Méndez</h6>
+        </div>
+      </div>
+      <div class="col-md-4">
+        <div class="testimonial-box p-4 border rounded">
+          <p>"La plataforma es muy intuitiva. En minutos tenía mis facturas listas para enviar."</p>
+          <h6 class="mt-3">- Carlos Ramírez</h6>
+        </div>
+      </div>
+      <div class="col-md-4">
+        <div class="testimonial-box p-4 border rounded">
+          <p>"Me encanta el soporte. Siempre están disponibles para ayudarte."</p>
+          <h6 class="mt-3">- Andrea Torres</h6>
+        </div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- Contacto -->
+<section class="contact-section py-5 bg-light" data-aos="fade-left">
+  <div class="container">
+    <h2 class="section-title text-center text-dark">Contáctanos</h2>
+    <form class="contact-form mx-auto" style="max-width: 600px;">
+      <div class="mb-3">
+        <input type="text" class="form-control" placeholder="Tu nombre" required>
+      </div>
+      <div class="mb-3">
+        <input type="email" class="form-control" placeholder="Tu correo" required>
+      </div>
+      <div class="mb-3">
+        <textarea class="form-control" rows="4" placeholder="Tu mensaje" required></textarea>
+      </div>
+      <div class="text-center">
+        <button type="submit" class="btn btn-custom">Enviar</button>
+      </div>
+    </form>
+  </div>
+</section>
+
+<script>
+  AOS.init();
+</script>
 {% endblock %}
