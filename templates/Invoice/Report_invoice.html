@@ -171,7 +171,6 @@
                             </ul>
                         </div>
                     </div>
-
                     <div class="table-responsive shadow-sm rounded">
                         <table class="table table-hover mb-0" id="invoiceTable">
                             <thead class="table-light">
@@ -184,11 +183,20 @@
                                     <th>Descargar Factura</th>
                                     <th>Cuota por pagar</th>
                                 </tr>
+                                    <tr>
+                                        <th><input type="text" placeholder="Buscar Fecha" class="form-control form-control-sm" /></th>
+                                        <th><input type="text" placeholder="Buscar Factura" class="form-control form-control-sm" /></th>
+                                        <th><input type="text" placeholder="Buscar Cliente" class="form-control form-control-sm" /></th>
+                                        <th><input type="text" placeholder="Buscar Total" class="form-control form-control-sm" /></th>
+                                        <th><input type="text" placeholder="Buscar Estado" class="form-control form-control-sm" /></th>
+                                        <th></th>
+                                        <th></th>
+                                    </tr>
                             </thead>
                             <tbody>
                                 {% for invoice in invoices %}
                                     <tr onclick="showDetails('{{ invoice.customer.name }} {{ invoice.customer.lastname }}', '#{{ invoice.invoice_number }}', '{{ invoice.quota }}', '{{ invoice.total }}', '{{ invoice.date }}')">
-                                        <td>{{ invoice.date }}</td>
+                                        <td class="invoice-date">{{ invoice.date }}</td>
                                         <td>#{{ invoice.invoice_number }}</td>
                                         <td>{{ invoice.customer.name }} {{ invoice.customer.lastname }}</td>
                                         <td>${{ invoice.total|intcomma }}</td>
@@ -206,7 +214,11 @@
                                         <td><a href="{% url 'invoice_pdf' invoice.id %}" class="btn btn-outline-danger" download>Descargar</a></td>
                                         <td>
                                             {% if invoice.status == 'credit' %}
-                                                <a href="" class="btn btn-outline-success"><i class="bi bi-credit-card-fill"></i></a>
+                                                <a href="{% url 'customer_debts' %}?customer={{ invoice.customer.id }}" 
+                                                class="btn btn-outline-success" 
+                                                title="Pagar cuotas del cliente">
+                                                    <i class="bi bi-credit-card-fill"></i>
+                                                </a>
                                             {% else %}
                                                 <span><i class="bi bi-bookmark-check-fill"></i> Pago completado</span>
                                             {% endif %}
@@ -278,6 +290,16 @@ $(document).ready(function () {
         lengthChange: true,
         pageLength: 10,
         deferRender: true,
+        initComplete: function () {
+            this.api().columns().every(function () {
+                var that = this;
+                $('input', this.header()).on('keyup change clear', function () {
+                    if (that.search() !== this.value) {
+                        that.search(this.value).draw();
+                    }
+                });
+            });
+        },
         language: {
             search: "Buscar:",
             lengthMenu: "Mostrar _MENU_ registros",
@@ -288,6 +310,7 @@ $(document).ready(function () {
             }
         }
     });
+
 
     window.filterStatus = function(status) {
         const table = $('#invoiceTable').DataTable();
@@ -302,6 +325,5 @@ $(document).ready(function () {
         });
     };
 });
-
 </script>
 {% endblock %}
