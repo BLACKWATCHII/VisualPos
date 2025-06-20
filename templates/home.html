@@ -18,7 +18,7 @@
       <a href="/signup" class="btn btn-outline-light ms-2">Crear Cuenta</a>
     </div>
     {% endif %}
-    <img src="{% static 'img/dashboard_mockup.png' %}" alt="Dashboard Preview" class="img-fluid mt-5 shadow-lg rounded" style="max-width: 1000px;">
+    <img src="{% static 'img/dashboard_trans.png' %}" alt="Dashboard Preview" class="img-fluid mt-5 shadow-lg rounded" style="max-width: 1000px;">
   </div>
 </section>
 
@@ -127,11 +127,20 @@
   <div class="container">
     <div class="row align-items-center">
       <div class="col-md-6" data-aos="fade-right">
-        <img src="{% static 'img/about_us_photo.jpg' %}" class="img-fluid rounded shadow" alt="Sobre nosotros">
+        <video 
+          src="{% static 'img/quienes_somos.mov' %}" 
+          class="img-fluid rounded shadow" 
+          autoplay 
+          loop 
+          muted 
+          playsinline
+        ></video>
       </div>
       <div class="col-md-6" data-aos="fade-left">
         <h2 class="section-title">Quiénes Somos</h2>
-        <p class="lead">Somos una startup comprometida con facilitar la gestión de negocios. Nuestro software combina potencia, simplicidad y diseño moderno para ayudarte a crecer.</p>
+        <p class="lead">
+          Somos una startup comprometida con facilitar la gestión de negocios. Nuestro software combina potencia, simplicidad y diseño moderno para ayudarte a crecer.
+        </p>
       </div>
     </div>
   </div>
