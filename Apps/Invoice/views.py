@@ -24,6 +24,9 @@ from django.http import FileResponse
 import uuid
 import subprocess
 import os
+from django.utils.decorators import decorator_from_middleware
+from django.utils.deprecation import MiddlewareMixin
+from functools import wraps
 
 def render_to_pdf(template_src, context_dict={}):
     template = get_template(template_src)
@@ -280,7 +283,21 @@ def invoice_pdf(request, invoice_id):
         raise Http404("Invoice not found")
     return render_pdf_with_puppeteer('invoice/receipt_pdf.html', {'invoice': invoice},filename=f"Factura_{invoice.invoice_number}.pdf")
 
+# Permitir iframes para la vista previa de la factura
+def allow_iframe(view_func):
+    @wraps(view_func)
+    def wrapped_view(request, *args, **kwargs):
+        response = view_func(request, *args, **kwargs)
+        if isinstance(response, HttpResponse):
+            response['X-Frame-Options'] = 'SAMEORIGIN'  
+        return response
+    return wrapped_view
 
+@login_required
+@allow_iframe
+def preview_invoice(request, invoice_id):
+    invoice = get_object_or_404(Invoice, pk=invoice_id)
+    return render(request, 'invoice/receipt_pdf.html', {'invoice': invoice})
 
 #method to view quotas
 @login_required

@@ -13,5 +13,6 @@ urlpatterns = [
     path('payment/history/', views.payment_history, name='payment_history'),
     path('invoice/quota/',views.View_quota, name='view_quota'),
     path('quotaCustomer/', views.View_quota_customer, name='payment_quota_customer'),
+    path('factura-preview/<int:invoice_id>/', views.preview_invoice, name='preview_invoice'),
 
 ]

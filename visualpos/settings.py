@@ -78,6 +78,7 @@ TEMPLATES = [
 
 WSGI_APPLICATION = 'visualpos.wsgi.application'
 
+X_FRAME_OPTIONS = 'SAMEORIGIN'
 
 # Database
 # https://docs.djangoproject.com/en/4.1/ref/settings/#databases
