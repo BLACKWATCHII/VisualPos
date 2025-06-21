@@ -198,7 +198,7 @@
                                     <tr onclick="showDetails('{{ invoice.customer.name }} {{ invoice.customer.lastname }}', '#{{ invoice.invoice_number }}', '{{ invoice.quota }}', '{{ invoice.total }}', '{{ invoice.date }}')">
                                         <td class="invoice-date">{{ invoice.date }}</td>
                                         <td>#{{ invoice.invoice_number }}</td>
-                                        <td>{{ invoice.customer.name }} {{ invoice.customer.lastname }}</td>
+                                        <td>{{ invoice.customer_full_name }}</td>
                                         <td>${{ invoice.total|intcomma }}</td>
                                         <td>
                                             {% if invoice.status == 'Pagada' %}
@@ -213,10 +213,9 @@
                                         </td>
                                         <td><a href="{% url 'invoice_pdf' invoice.id %}" class="btn btn-outline-danger" download>Descargar</a></td>
                                         <td>
-                                            {% if invoice.status == 'credit' %}
-                                                <a href="{% url 'customer_debts' %}?customer={{ invoice.customer.id }}" 
-                                                class="btn btn-outline-success" 
-                                                title="Pagar cuotas del cliente">
+                                            {% if invoice.payment_method == 'credit' and invoice.has_unpaid_quotas %}
+                                                <a href="{% url 'payment_quota_customer' %}?customer={{ invoice.customer_id }}"
+                                                class="btn btn-outline-success" title="Ver cuotas del cliente">
                                                     <i class="bi bi-credit-card-fill"></i>
                                                 </a>
                                             {% else %}

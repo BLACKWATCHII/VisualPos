@@ -225,56 +225,52 @@ def create_invoice(request):
     })
 
 
-
 @login_required
 def invoices_report(request):
-
     invoices = Invoice.objects.select_related('customer').all()
-    total_credit = Invoice.objects.filter(status='credit').aggregate(
-        result_credit=Sum('total')
-    )
-    
-    total = Invoice.objects.filter(status='Pagada').aggregate(
-        result=Sum('total')
-    )
-    #conteo de facturas pagadas y a credito
-    cont_credit = Invoice.objects.filter(status='credit').count()
+
+    # Totales y contadores
+    total_credit = Invoice.objects.filter(payment_method='credit').aggregate(result_credit=Sum('total'))
+    total = Invoice.objects.filter(status='Pagada').aggregate(result=Sum('total'))
+    cont_credit = Invoice.objects.filter(payment_method='credit').count()
     cont_pay = Invoice.objects.filter(status='Pagada').count()
 
-    # Total de facturas pagadas y a credito
     total_credit = float(total_credit.get('result_credit') or 0)
-    total_payment = float(total.get('result') or 0) 
+    total_payment = float(total.get('result') or 0)
 
     invoice_list = []
     for invoice in invoices:
-        customer = invoice.customer 
+        customer = invoice.customer
         full_name = f"{customer.name} {customer.lastname}" if customer else ''
+
+        # Verificar si hay cuotas impagas
+        has_unpaid_quotas = invoice.payment_quotas.filter(is_paid=False).exists()
 
         invoice_list.append({
             'id': invoice.id,
-            'date': invoice.date.strftime('%Y-%m-%d %H:%M:%S'),
+            'date': invoice.date.strftime('%Y-%m-%d %I:%M %p'),
             'invoice_number': invoice.invoice_number,
             'customer_name': customer.name if customer else '',
             'customer_last_name': customer.lastname if customer else '',
             'customer_full_name': full_name,
+            'customer_id': customer.id if customer else '',
             'total': float(invoice.total) if isinstance(invoice.total, Decimal) else invoice.total,
             'payment_method': invoice.payment_method,
             'status': invoice.status,
             'discount': float(invoice.discount) if isinstance(invoice.discount, Decimal) else invoice.discount,
             'notes': invoice.notes,
             'quotas': invoice.quotas,
+            'has_unpaid_quotas': has_unpaid_quotas,
         })
 
     return render(request, 'Invoice/Report_invoice.html', {
-        'invoices': invoices,
+        'invoices': invoice_list,
         'invoices_json': json.dumps(invoice_list),
         'total_pagado': total_payment,
         'total_credito': total_credit,
         'cont_pay': cont_pay,
         'cont_credit': cont_credit,
     })
-
-
 
 @login_required
 def invoice_pdf(request, invoice_id):
@@ -313,6 +309,35 @@ def View_quota(request):
         'count_quota_expired': count_quota_expired,
     }
     return render(request, 'PaymentQuota/Payment_quota.html', context)
+
+
+@login_required
+def View_quota_customer(request):
+    customer_id = request.GET.get('customer')
+    estado = request.GET.get('estado')  
+    customer = Customer.objects.all()
+    count_quota_paid = PaymentQuota.objects.filter(is_paid=1).count()
+    count_quota_unpaid = PaymentQuota.objects.filter(is_paid=0).count()
+    count_quota_expired = PaymentQuota.objects.filter(payment_date__lt=date.today(), is_paid=False).count()
+    quotas = PaymentQuota.objects.select_related('invoice', 'invoice__customer')
+
+    if customer_id:
+        quotas = quotas.filter(invoice__customer__id=customer_id)
+
+    if estado == "Pagadas":
+        quotas = quotas.filter(is_paid=True)
+    elif estado == "Pendientes":
+        quotas = quotas.filter(is_paid=False)
+
+    context = {
+        'customer': customer,
+        'credits': quotas,
+        'count_quota_paid': count_quota_paid,
+        'count_quota_unpaid': count_quota_unpaid,
+        'count_quota_expired': count_quota_expired,
+    }
+    return render(request, 'PaymentQuota/Payment_quota.html', context)
+
 
 
 # pay quota method
