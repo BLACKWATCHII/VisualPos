@@ -1,192 +1,278 @@
 <!DOCTYPE html>
 <html lang="es">
 <head>
-    <meta charset="UTF-8">
-    <title>Factura Confirmada-{{ invoice.customer }}</title>
-    <style>
-        body {
-            font-family: Arial, sans-serif;
-            background-color: #f7f9fb;
-            padding: 40px;
-        }
+  <meta charset="UTF-8">
+  <title>Factura Confirmada - {{ invoice.customer }}</title>
+  <style>
+    * {
+      margin: 0;
+      padding: 0;
+      box-sizing: border-box;
+    }
 
-        .receipt-container {
-            max-width: 700px;
-            background-color: #fff;
-            padding: 30px;
-            margin: auto;
-            border-radius: 10px;
-            box-shadow: 0 0 12px rgba(0, 0, 0, 0.05);
-        }
+    body {
+      font-family: 'Arial', sans-serif;
+      background: white;
+      margin: 0;
+      padding: 0;
+    }
 
-        .header {
-            display: flex;
-            justify-content: space-between;
-            align-items: flex-start;
-            margin-bottom: 30px;
-        }
+    .invoice-container {
+      width: 100%;
+      padding: 40px;
+    }
 
-        .company-info {
-            font-size: 14px;
-        }
+    .header-section {
+      display: flex;
+      justify-content: space-between;
+      align-items: flex-start;
+      margin-bottom: 20px;
+    }
 
-        .logo img {
-            height: 50px;
-        }
+    .company-info {
+      display: flex;
+      align-items: center;
+      gap: 15px;
+    }
 
-        h2.receipt-title {
-            text-align: right;
-            color: #47A992;
-            font-size: 20px;
-            letter-spacing: 2px;
-            margin-bottom: 10px;
-        }
+    .logo {
+      width: 60px;
+      height: 60px;
+      background: #333;
+      color: white;
+      font-size: 24px;
+      font-weight: bold;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      border-radius: 8px;
+    }
 
-        .section-title {
-            color: #666;
-            margin-bottom: 5px;
-        }
+    .company-details h1 {
+      font-size: 18px;
+      font-weight: bold;
+      color: #333;
+    }
 
-        .info-table td {
-            padding: 4px 0;
-            font-size: 14px;
-        }
+    .company-details p {
+      font-size: 14px;
+      color: #666;
+    }
 
-        .item-table {
-            width: 100%;
-            border-collapse: collapse;
-            margin-top: 20px;
-        }
+    .invoice-date {
+      font-size: 14px;
+      color: #333;
+      font-weight: 500;
+    }
 
-        .item-table th, .item-table td {
-            padding: 10px;
-            text-align: left;
-            border: 1px solid #eee;
-            font-size: 14px;
-        }
+    .invoice-to {
+      font-size: 16px;
+      font-weight: bold;
+      margin-top: 30px;
+    }
 
-        .item-table th {
-            background-color: #305D51;
-            color: white;
-        }
+    .customer-details,
+    .invoice-details {
+      margin-top: 10px;
+      margin-bottom: 30px;
+    }
 
-        .totals {
-            margin-top: 20px;
-            float: right;
-            width: 300px;
-        }
+    .customer-details h3 {
+      font-size: 16px;
+      font-weight: 600;
+    }
 
-        .totals td {
-            padding: 6px 10px;
-            font-size: 14px;
-        }
+    .customer-details p {
+      font-size: 14px;
+      color: #666;
+    }
 
-        .totals .label {
-            text-align: left;
-        }
+    .invoice-details {
+      display: flex;
+      gap: 50px;
+      font-size: 14px;
+    }
 
-        .totals .value {
-            text-align: right;
-        }
+    .invoice-details .detail-row {
+      margin-bottom: 5px;
+    }
 
-        .totals .total {
-            font-weight: bold;
-            color: #2D785D;
-            border-top: 2px solid #ccc;
-        }
+    .items-section {
+      width: 100%;
+      margin-bottom: 30px;
+    }
 
-        .footer {
-            text-align: center;
-            margin-top: 40px;
-            font-size: 13px;
-            color: #777;
-        }
+    table {
+      width: 100%;
+      border-collapse: collapse;
+      font-size: 14px;
+    }
 
-        .highlight {
-            color: #2D785D;
-            font-weight: bold;
-        }
-    </style>
+    th, td {
+      padding: 12px;
+      border: 1px solid #ddd;
+    }
+
+    thead {
+      background: #2196f3;
+      color: white;
+    }
+
+    tbody tr:nth-child(even) {
+      background: #f9f9f9;
+    }
+
+    td:nth-child(2),
+    td:nth-child(3),
+    td:nth-child(4),
+    th:nth-child(2),
+    th:nth-child(3),
+    th:nth-child(4) {
+      text-align: center;
+    }
+
+    .totals-section {
+      width: 100%;
+      margin-bottom: 30px;
+      display: flex;
+      justify-content: flex-end;
+    }
+
+    .totals-content {
+      width: 300px;
+      font-size: 14px;
+    }
+
+    .totals-content div {
+      display: flex;
+      justify-content: space-between;
+      padding: 6px 0;
+    }
+
+    .total-row {
+      background: #4caf50;
+      color: white;
+      padding: 12px;
+      border-radius: 6px;
+      font-weight: bold;
+      margin-top: 10px;
+    }
+
+    .additional-info {
+      display: flex;
+      justify-content: space-between;
+      font-size: 14px;
+      margin-top: 20px;
+    }
+
+    .payment-info, .terms-info {
+      width: 48%;
+    }
+
+    .payment-info p,
+    .terms-info p {
+      margin: 4px 0;
+      color: #444;
+    }
+
+    @media print {
+      html, body {
+        width: 210mm;
+        height: 297mm;
+        margin: 0;
+        padding: 0;
+        background: white;
+      }
+
+      .items-section,
+      table,
+      tr,
+      td,
+      th {
+        page-break-inside: avoid;
+      }
+
+      .totals-section,
+      .additional-info {
+        page-break-inside: avoid;
+      }
+    }
+  </style>
 </head>
 <body>
-<div class="receipt-container">
-
-    <div class="header">
-        <div class="company-info">
-            <strong>Berserker Corporate</strong><br>
-            Carrera 22D #75 C 03<br>
-            Los robles-soledad
+  <div class="invoice-container">
+    <div class="header-section">
+      <div class="company-info">
+        <div class="logo">BC</div>
+        <div class="company-details">
+          <h1>BERSERKER CORPORATE</h1>
+          <p>Carrera 22D #75 C 03<br>Los robles-soledad</p>
         </div>
-        <div class="logo">
-            <img src="/static/img/BersekerLogoPrime.png" alt="Company Logo">
-        </div>
+      </div>
+      <div class="invoice-date">{{ invoice.date }}</div>
     </div>
 
-    <h2 class="receipt-title">RECIBO</h2>
-
-    <div class="section">
-        <table class="info-table">
-            <tr><td class="section-title"><strong>Facturado a:</strong></td></tr>
-            <tr><td>{{ invoice.customer }}</td></tr>
-            <tr><td>{{ invoice.customer_address }}</td></tr>
-        </table>
-        <br>
-        <table class="info-table">
-            <tr><td><strong>Recibo #:</strong></td><td>{{ invoice.invoice_number }}</td></tr>
-            <tr><td><strong>Fecha de recibo:</strong></td><td>{{ invoice.date }}</td></tr>
-            <tr><td><strong>Metodo de pago:</strong></td><td>{{ invoice.payment_method }}</td></tr>
-            {% if invoice.Quotas %}
-            <tr><td><strong>Cuotas:</strong></td><td>{{ invoice.Quotas }}</td></tr>
-            {% endif %}
-        </table>
+    <div class="invoice-to">INVOICE TO:</div>
+    <div class="customer-details">
+      <h3>{{ invoice.customer }}</h3>
+      <p>{{ invoice.customer_address }}</p>
     </div>
 
-    <table class="item-table">
+    <div class="invoice-details">
+      <div>
+        <div class="detail-row">Recibo #: <strong>{{ invoice.invoice_number }}</strong></div>
+        <div class="detail-row">Método de pago: <strong>{{ invoice.payment_method }}</strong></div>
+      </div>
+      {% if invoice.Quotas %}
+      <div>
+        <div class="detail-row">Cuotas: <strong>{{ invoice.Quotas }}</strong></div>
+      </div>
+      {% endif %}
+    </div>
+
+    <div class="items-section">
+      <table>
         <thead>
-        <tr>
-            <th>Cant</th>
-            <th>Descripción</th>
-            <th>Precio Unitario</th>
-            <th>Total</th>
-        </tr>
+          <tr>
+            <th>ITEM DESCRIPTION</th>
+            <th>UNIT PRICE</th>
+            <th>QTY</th>
+            <th>TOTAL</th>
+          </tr>
         </thead>
         <tbody>
-        {% for item in invoice.items.all %}
-            <tr>
-                <td>{{ item.quantity }}</td>
-                <td>{{ item.item.Name }}</td>
-                <td>${{ item.price }}</td>
-                <td>${{ item.subtotal }}</td>
-            </tr>
-        {% endfor %}
+          {% for item in invoice.items.all %}
+          <tr>
+            <td>{{ item.item.Name }}</td>
+            <td>${{ item.price }}</td>
+            <td>{{ item.quantity }}</td>
+            <td>${{ item.subtotal }}</td>
+          </tr>
+          {% endfor %}
         </tbody>
-    </table>
-
-    <table class="totals">
-        <tr>
-            <td class="label">Subtotal:</td>
-            <td class="value">${{ invoice.subtotal }}</td>
-        </tr>
-        <tr>
-            <td class="label">Sales Tax (5%):</td>
-            <td class="value">${{ invoice.tax }}</td>
-        </tr>
-        <tr>
-            <td class="label">Descuento:</td>
-            <td class="value">-{{ invoice.discount }}%</td>
-        </tr>
-        <tr class="total">
-            <td class="label">Total (Cop):</td>
-            <td class="value">${{ invoice.total }}</td>
-        </tr>
-    </table>
-
-    <div class="footer">
-        Gracias por tu compra.<br>
-        ¿Tienes dudas? Contáctanos al <soporte class=":">+57 3013916533</soporte>
+      </table>
     </div>
 
-</div>
+    <div class="totals-section">
+      <div class="totals-content">
+        <div><span>SUB TOTAL</span><span>${{ invoice.subtotal }}</span></div>
+        <div><span>Impuesto</span><span>${{ invoice.tax }}</span></div>
+        <div><span>DESCUENTO</span><span>-{{ invoice.discount }}%</span></div>
+        <div class="total-row"><span>TOTAL</span><span>${{ invoice.total }}</span></div>
+      </div>
+    </div>
+
+    <div class="additional-info">
+      <div class="payment-info">
+        <p><strong>Payment Method:</strong> {{ invoice.payment_method }}</p>
+        <p>Soporte: +57 3013916533</p>
+      </div>
+      <div class="terms-info">
+        <p><strong>Term and Condition</strong></p>
+        <p>Gracias por tu compra.</p>
+        <p>¿Tienes dudas? Contáctanos para cualquier consulta.</p>
+      </div>
+    </div>
+  </div>
 </body>
 </html>
-

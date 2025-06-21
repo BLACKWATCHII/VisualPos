@@ -1,5 +1,6 @@
 {% extends 'base.html' %}
 {% load static %}
+{% load humanize %}
 
 {% block title %}Crear Factura{% endblock %}
 
@@ -47,25 +48,35 @@
                             </select>
                         </div>
 
-                        <div class="mb-3">
-                            <label class="form-label">Cliente</label>
-                            <select 
-                                id="customer" 
-                                name="{{ form.customer.name }}" 
-                                class="form-select"
-                                required
-                            >
-                                <option value="">Selecciona cliente</option>
-                                {% for customer in form.customer.field.queryset %}
-                                <option 
-                                    value="{{ customer.pk }}" 
-                                    {% if form.customer.value == customer.pk %}selected{% endif %}
-                                >
-                                    {{ customer.name }} {{ customer.lastname }}
-                                </option>
-                                {% endfor %}
-                            </select>
-                        </div>
+                            <div class="mb-3">
+                                <label class="form-label">Cliente</label>
+                                <div class="input-group">
+                                    <select 
+                                        id="customer" 
+                                        name="{{ form.customer.name }}" 
+                                        class="form-select" 
+                                        required
+                                    >
+                                        <option value="">Selecciona cliente</option>
+                                        {% for customer in form.customer.field.queryset %}
+                                        <option 
+                                            value="{{ customer.pk }}" 
+                                            {% if form.customer.value == customer.pk %}selected{% endif %}
+                                        >
+                                            {{ customer.name }} {{ customer.lastname }}
+                                        </option>
+                                        {% endfor %}
+                                    </select>
+                                    <button 
+                                        type="button" 
+                                        class="btn btn-outline-secondary" 
+                                        data-bs-toggle="modal" 
+                                        data-bs-target="#customerModal"
+                                    >
+                                        Buscar
+                                    </button>
+                                </div>
+                            </div>
 
                         <!-- Asunto -->
                         <div class="mb-3">
@@ -118,7 +129,7 @@
                                     <input type="number" min="1" class="form-control item-qty" name="quantity" placeholder="Qty" value="1" >
                                 </div>
                                 <div class="col-3">
-                                    <input type="number" min="0" class="form-control item-price" name="price" placeholder="Price" value="0" >
+                                    <input type="number" min="0" class="form-control item-price" name="price" placeholder="2.000.000" value="0" >
                                 </div>
                             </div>
                         </div>
@@ -183,13 +194,86 @@
             </div>
         </div>
     </div>
+    <div class="modal fade" id="customerModal" tabindex="-1" aria-labelledby="customerModalLabel" aria-hidden="true">
+        <div class="modal-dialog modal-lg">
+            <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title" id="customerModalLabel">Buscar Cliente</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Cerrar"></button>
+            </div>
+            <div class="modal-body">
+                <input 
+                type="text" 
+                id="searchCustomer" 
+                class="form-control mb-3" 
+                placeholder="Buscar por nombre o apellido..."
+                >
+
+                <table class="table table-hover">
+                <thead>
+                    <tr>
+                    <th>Nombre</th>
+                    <th>Apellido</th>
+                    <th>Acción</th>
+                    </tr>
+                </thead>
+                <tbody id="customerTableBody">
+                    {% for customer in form.customer.field.queryset %}
+                    <tr>
+                    <td>{{ customer.name }}</td>
+                    <td>{{ customer.lastname }}</td>
+                    <td>
+                        <button 
+                        type="button" 
+                        class="btn btn-sm btn-primary select-customer" 
+                        data-id="{{ customer.pk }}" 
+                        data-name="{{ customer.name }} {{ customer.lastname }}"
+                        >
+                        Seleccionar
+                        </button>
+                    </td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+                </table>
+            </div>
+            </div>
+        </div>
+        </div>
 </div>
 {% endblock %}
 
 {% block extra_scripts %}
 <script>
     $(document).ready(function(){
-    
+          // Buscador en el modal
+            document.getElementById('searchCustomer').addEventListener('input', function () {
+                    const filter = this.value.toLowerCase();
+                    const rows = document.querySelectorAll('#customerTableBody tr');
+
+                    rows.forEach(row => {
+                    const name = row.children[0].textContent.toLowerCase();
+                    const lastname = row.children[1].textContent.toLowerCase();
+                    row.style.display = (name.includes(filter) || lastname.includes(filter)) ? '' : 'none';
+                    });
+                });
+
+                // Selección de cliente desde el modal
+                document.querySelectorAll('.select-customer').forEach(button => {
+                    button.addEventListener('click', function () {
+                    const customerId = this.getAttribute('data-id');
+                    const customerName = this.getAttribute('data-name');
+                    const select = document.getElementById('customer');
+
+                    // Cambiar el valor del select
+                    select.value = customerId;
+
+                    // Cerrar el modal
+                    const modal = bootstrap.Modal.getInstance(document.getElementById('customerModal'));
+                    modal.hide();
+                    });
+                });    
+        
         // Mostrar/ocultar campo de cuotas según el método de pago
         $('#payment_method_select').on('change', toggleQuotasField);
         toggleQuotasField(); 
@@ -232,7 +316,7 @@
                 if($(this).find('.item-id').val()){
                     var amount = qty * price;
                     subtotal += amount;
-                    productsHtml += '<tr><td>'+itemName+'</td><td>'+qty+'</td><td>$'+price.toFixed(2)+'</td><td>$'+amount.toFixed(2)+'</td></tr>';
+                    productsHtml += '<tr><td>'+itemName+'</td><td>'+qty+'</td><td>$'+price.toLocaleString("es-CO", { minimumFractionDigits: 2 })+'</td><td>$'+amount.toLocaleString("es-CO", { minimumFractionDigits: 2 })+'</td></tr>';
                 }
             });
     
@@ -241,7 +325,7 @@
             }
     
             $('#preview-products').html(productsHtml);
-            $('#subtotal').text('$' + subtotal.toFixed(2));
+           $('#subtotal').text('$' + subtotal.toLocaleString('es-CO', { minimumFractionDigits: 2 }));
 
     
             // Descuento
@@ -250,11 +334,11 @@
                 var discountAmount = subtotal * (discountPercent / 100);
                 var total = subtotal - discountAmount;
                 $('#discount-preview').show();
-                $('#discount-amount').text('-$' + discountAmount.toFixed(2));
-                $('#total').text('$' + total.toFixed(2));
+                $('#discount-amount').text('-$' + discountAmount.toLocaleString('es-CO', { minimumFractionDigits: 2 }));
+                $('#total').text('$' + total.toLocaleString('es-CO', { minimumFractionDigits: 2 }));
             } else {
                 $('#discount-preview').hide();
-                $('#total').text('$' + subtotal.toFixed(2));
+                $('#total').text('$' + subtotal.toLocaleString('es-CO', { minimumFractionDigits: 2 }));
             }
         }
     
@@ -290,7 +374,7 @@
         });
     
         updatePreview(); // Inicializa preview
-        
+    
     });
     </script>
 {% endblock %}

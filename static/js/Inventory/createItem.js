@@ -1,4 +1,5 @@
 $(document).ready(function() {
+
     $('#create-item-form').submit(function(event) {
         event.preventDefault();
         var formData = new FormData(this);

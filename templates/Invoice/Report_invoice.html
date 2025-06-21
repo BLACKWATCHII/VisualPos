@@ -171,7 +171,6 @@
                             </ul>
                         </div>
                     </div>
-
                     <div class="table-responsive shadow-sm rounded">
                         <table class="table table-hover mb-0" id="invoiceTable">
                             <thead class="table-light">
@@ -184,13 +183,22 @@
                                     <th>Descargar Factura</th>
                                     <th>Cuota por pagar</th>
                                 </tr>
+                                    <tr>
+                                        <th><input type="text" placeholder="Buscar Fecha" class="form-control form-control-sm" /></th>
+                                        <th><input type="text" placeholder="Buscar Factura" class="form-control form-control-sm" /></th>
+                                        <th><input type="text" placeholder="Buscar Cliente" class="form-control form-control-sm" /></th>
+                                        <th><input type="text" placeholder="Buscar Total" class="form-control form-control-sm" /></th>
+                                        <th><input type="text" placeholder="Buscar Estado" class="form-control form-control-sm" /></th>
+                                        <th></th>
+                                        <th></th>
+                                    </tr> 
                             </thead>
                             <tbody>
                                 {% for invoice in invoices %}
-                                    <tr onclick="showDetails('{{ invoice.customer.name }} {{ invoice.customer.lastname }}', '#{{ invoice.invoice_number }}', '{{ invoice.quota }}', '{{ invoice.total }}', '{{ invoice.date }}')">
-                                        <td>{{ invoice.date }}</td>
+                                    <tr onclick="showDetails('{{invoice.customer_full_name }}', '#{{ invoice.invoice_number }}', '{{ invoice.quotas }}', '{{ invoice.total }}', '{{ invoice.date }}', '{{ invoice.id }}')">
+                                        <td class="invoice-date">{{ invoice.date }}</td>
                                         <td>#{{ invoice.invoice_number }}</td>
-                                        <td>{{ invoice.customer.name }} {{ invoice.customer.lastname }}</td>
+                                        <td>{{ invoice.customer_full_name }}</td>
                                         <td>${{ invoice.total|intcomma }}</td>
                                         <td>
                                             {% if invoice.status == 'Pagada' %}
@@ -205,8 +213,11 @@
                                         </td>
                                         <td><a href="{% url 'invoice_pdf' invoice.id %}" class="btn btn-outline-danger" download>Descargar</a></td>
                                         <td>
-                                            {% if invoice.status == 'credit' %}
-                                                <a href="" class="btn btn-outline-success"><i class="bi bi-credit-card-fill"></i></a>
+                                            {% if invoice.payment_method == 'credit' and invoice.has_unpaid_quotas %}
+                                                <a href="{% url 'payment_quota_customer' %}?customer={{ invoice.customer_id }}"
+                                                class="btn btn-outline-success" title="Ver cuotas del cliente">
+                                                    <i class="bi bi-credit-card-fill"></i>
+                                                </a>
                                             {% else %}
                                                 <span><i class="bi bi-bookmark-check-fill"></i> Pago completado</span>
                                             {% endif %}
@@ -242,12 +253,24 @@
                             <span>Total:</span> <span><span id="detailAmount"></span></span>
                         </div>
 
-                        <a href="#" class="see-details-btn">Ver más detalles</a>
+                        <a href="#" class="see-details-btn" id="btnPreviewInvoice" data-invoice-id="">Ver más detalles</a>
                     </div>
                 </div> 
             </div>
         </div>
-
+        <div class="modal fade" id="previewInvoiceModal" tabindex="-1" aria-labelledby="previewInvoiceLabel" aria-hidden="true">
+            <div class="modal-dialog modal-xl modal-dialog-centered modal-fullscreen-sm-down">
+                <div class="modal-content" style="height: 90vh;">
+                    <div class="modal-header">
+                        <h5 class="modal-title" id="previewInvoiceLabel">Previsualización de Factura</h5>
+                        <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Cerrar"></button>
+                    </div>
+                    <div class="modal-body p-0">
+                        <iframe id="invoicePreviewIframe" src="" style="width: 100%; height: 100%; border: none;"></iframe>
+                    </div>
+                </div>
+            </div>
+        </div>    
     </div>
 </div>
 {% endblock %}
@@ -259,7 +282,7 @@
 
 <script>
 $(document).ready(function () {
-    window.showDetails = function(cliente, factura, cuota, importe, fecha) {
+    window.showDetails = function(cliente, factura, cuota, importe, fecha, invoiceId) {
         document.getElementById('detailCustomer').textContent = cliente;
         document.getElementById('detailInvoiceNumber').textContent = factura;
         document.getElementById('detailQuota').textContent = cuota;
@@ -268,6 +291,10 @@ $(document).ready(function () {
             maximumFractionDigits: 2
         });
         document.getElementById('detailDate').textContent = fecha;
+        
+        // Asignar invoice ID al botón de preview
+        document.getElementById('btnPreviewInvoice').setAttribute('data-invoice-id', invoiceId);
+
         new bootstrap.Modal(document.getElementById('invoiceModal')).show();
     };
 
@@ -278,6 +305,16 @@ $(document).ready(function () {
         lengthChange: true,
         pageLength: 10,
         deferRender: true,
+        initComplete: function () {
+            this.api().columns().every(function () {
+                var that = this;
+                $('input', this.header()).on('keyup change clear', function () {
+                    if (that.search() !== this.value) {
+                        that.search(this.value).draw();
+                    }
+                });
+            });
+        },
         language: {
             search: "Buscar:",
             lengthMenu: "Mostrar _MENU_ registros",
@@ -288,6 +325,7 @@ $(document).ready(function () {
             }
         }
     });
+
 
     window.filterStatus = function(status) {
         const table = $('#invoiceTable').DataTable();
@@ -302,6 +340,13 @@ $(document).ready(function () {
         });
     };
 });
-
+document.querySelector('.see-details-btn').addEventListener('click', function (e) {
+    e.preventDefault();
+    const invoiceNumber = document.getElementById('detailInvoiceNumber').textContent.replace('#', '');
+    const invoiceId = this.getAttribute('data-invoice-id');
+    const iframeUrl = `/invoice/factura-preview/${invoiceId}/`;
+    document.getElementById('invoicePreviewIframe').src = iframeUrl;
+    new bootstrap.Modal(document.getElementById('previewInvoiceModal')).show();
+});
 </script>
 {% endblock %}

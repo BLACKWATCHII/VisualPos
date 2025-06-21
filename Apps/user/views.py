@@ -20,14 +20,20 @@ def home(request):
     return render(request, 'home.html')
 
 def signup(request):
-    print(request)
     if request.method == 'GET':
         return render(request, 'signup.html', {"form": CustomUserCreationForm()})
     else:
+
+        if User.objects.filter(username=request.POST["username"]).exists():
+            return render(request, 'signup.html', {"form": CustomUserCreationForm, "error": "El nombre de usuario ya existe."})
         if request.POST["password1"] == request.POST["password2"]:
             try:
                 user = User.objects.create_user(
-                    username=request.POST["username"], password=request.POST["password1"]
+                    username=request.POST["username"],
+                    password=request.POST["password1"],
+                    email=request.POST["email"],
+                    first_name=request.POST["name"],
+                    last_name=request.POST["lastname"]
                 )
                 user.save()
                 login(request, user)
@@ -41,7 +47,7 @@ def signup(request):
 def Dashboard(request):
     customer_count = Customer.objects.count()
     items_count = Item.objects.filter(active=True).count()
-
+    low_stock_items = Item.objects.filter(Stock__lte=2).order_by('Stock')
     # Clientes nuevos
     new_clients_per_day = (
         Customer.objects
@@ -84,6 +90,7 @@ def Dashboard(request):
     products_sales = [entry['total_quantity'] for entry in best_selling_products]
 
     context = {
+        'low_stock_items': low_stock_items,
         'num_Customers': customer_count,
         'num_items': items_count,
         'num_total': Total_Payment,
