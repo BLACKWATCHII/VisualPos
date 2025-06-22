@@ -180,26 +180,26 @@
   });
 
   // Chart: Ventas Diarias (doughnut)
-new Chart(document.getElementById('chart1').getContext('2d'), {
-  type: 'doughnut',
-  data: {
-    labels: datesSales,
-    datasets: [{
-      label: 'Ventas Diarias',
-      data: totalsSales,
-      backgroundColor: totalsSales.map((_, i) => i % 2 === 0 ? '#96df7d' : 'black'),
-      borderColor: totalsSales.map((_, i) => i % 2 === 0 ? '#96df7d' : 'gray'),
-      hoverOffset: 4
-    }]
-  },
-  options: {
-    responsive: true,
-    plugins: {
-      legend: { position: 'top' },
-      title: { display: true, text: 'Ventas Diarias' }
+  new Chart(document.getElementById('chart1').getContext('2d'), {
+    type: 'doughnut',
+    data: {
+      labels: datesSales,
+      datasets: [{
+        label: 'Ventas Diarias',
+        data: totalsSales,
+        backgroundColor: totalsSales.map((_, i) => i % 2 === 0 ? '#96df7d' : 'black'),
+        borderColor: totalsSales.map((_, i) => i % 2 === 0 ? '#96df7d' : 'gray'),
+        hoverOffset: 4
+      }]
+    },
+    options: {
+      responsive: true,
+      plugins: {
+        legend: { position: 'top' },
+        title: { display: true, text: 'Ventas Diarias del Mes Actual' }
+      }
     }
-  }
-});
+  });
 
 
   // Chart: Productos Más Vendidos (horizontal bar)

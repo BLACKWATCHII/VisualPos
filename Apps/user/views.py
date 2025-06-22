@@ -13,6 +13,9 @@ from Invoice.models import Invoice, InvoiceItem
 from django.db.models import Sum
 from .form import UserUpdateForm, CustomPasswordChangeForm
 from django.contrib.auth import update_session_auth_hash
+from datetime import datetime
+from django.db.models.functions import TruncMonth
+import calendar
 
 # Login and register
 
@@ -43,12 +46,17 @@ def signup(request):
         return render(request, 'signup.html', {"form": CustomUserCreationForm(), "error": "Las contraseñas no coinciden."})
 
 
+
 @login_required
 def Dashboard(request):
     customer_count = Customer.objects.count()
     items_count = Item.objects.filter(active=True).count()
     low_stock_items = Item.objects.filter(Stock__lte=2).order_by('Stock')
-    # Clientes nuevos
+
+    year = int(request.GET.get('year', datetime.now().year))
+    month = int(request.GET.get('month', datetime.now().month))
+
+    # Clientes nuevos por día
     new_clients_per_day = (
         Customer.objects
         .filter(record_date__isnull=False)
@@ -57,34 +65,39 @@ def Dashboard(request):
         .order_by('record_date')
     )
 
-    # Ventas diarias
-    sales_per_day = (
+    # ✅ Ventas mensuales
+    monthly_sales = (
         Invoice.objects
-        .filter(date__isnull=False)
-        .values('date')
-        .annotate(total_sales=Sum('total'))
-        .order_by('date')
+        .annotate(month=TruncMonth('date'))
+        .values('month')
+        .annotate(total=Sum('total'))
+        .order_by('month')
     )
+    labels = [f"{calendar.month_name[sale['month'].month]} {sale['month'].year}" for sale in monthly_sales]
+    totals = [float(sale['total']) for sale in monthly_sales]
 
     # Productos más vendidos
     best_selling_products = (
         InvoiceItem.objects
-        .values('item__Name') 
+        .values('item__Name')
         .annotate(total_quantity=Sum('quantity'))
-        .order_by('-total_quantity')[:10] 
+        .order_by('-total_quantity')[:10]
     )
 
-    Total= Invoice.objects.filter(status ='Pagada').aggregate(result =Sum('total'))
+    # Totales por estado
+    Total = Invoice.objects.filter(status='Pagada').aggregate(result=Sum('total'))
     Total_Payment = float(Total.get('result') or 0)
 
-    Total_credit = Invoice.objects.filter(status ='credit').aggregate(result =Sum('total'))
+    Total_credit = Invoice.objects.filter(status='credit').aggregate(result=Sum('total'))
     Total_Payment_credit = float(Total_credit.get('result') or 0)
 
+    # Datos para gráficos
     dates_clients = [entry['record_date'].strftime('%Y-%m-%d') for entry in new_clients_per_day if entry['record_date']]
     counts_clients = [entry['count'] for entry in new_clients_per_day]
 
-    dates_sales = [entry['date'].strftime('%Y-%m-%d') for entry in sales_per_day if entry['date']]
-    totals_sales = [float(entry['total_sales']) for entry in sales_per_day]
+
+    months_sales = json.dumps(labels)
+    totals_sales = json.dumps(totals)
 
     products_names = [entry['item__Name'] for entry in best_selling_products]
     products_sales = [entry['total_quantity'] for entry in best_selling_products]
@@ -96,15 +109,14 @@ def Dashboard(request):
         'num_total': Total_Payment,
         'dates_clients': json.dumps(dates_clients),
         'counts_clients': json.dumps(counts_clients),
-        'dates_sales': json.dumps(dates_sales),
-        'totals_sales': json.dumps(totals_sales),
+        'dates_sales': months_sales,  # <-- cambia a meses
+        'totals_sales': totals_sales,
         'products_names': json.dumps(products_names),
         'products_sales': json.dumps(products_sales),
         'num_total_credit': Total_Payment_credit,
     }
 
     return render(request, 'tasks.html', context)
-
 
 @login_required 
 def signout(request): 
