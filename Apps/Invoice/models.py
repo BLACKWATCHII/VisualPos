@@ -37,7 +37,8 @@ class Invoice(models.Model):
         choices=[
             ('paid', 'Pagada'),
             ('unpaid', 'No Pagada'),
-            ('refunded', 'Reembolsada')
+            ('refunded', 'Reembolsada'),
+            ('canceled', 'Anulada')
         ],
         default='unpaid'
     )

@@ -394,3 +394,7 @@ def payment_history(request, customer_id=None):
     if customer_id:
         qs = qs.filter(quota__invoice__customer__id=customer_id)
     return render(request, 'PaymentQuota/History.html', {'payments': qs})
+
+def cancel_invoice_view(request):
+    invoices = Invoice.objects.select_related('customer').all()
+    return render(request, 'Invoice/Cancel_invoice.html', {'invoices': invoices})

@@ -1,3 +1,4 @@
+{% load humanize %}
 <!DOCTYPE html>
 <html lang="es">
 <head>
@@ -244,9 +245,9 @@
           {% for item in invoice.items.all %}
           <tr>
             <td>{{ item.item.Name }}</td>
-            <td>${{ item.price }}</td>
+            <td>${{ item.price|intcomma }}</td>
             <td>{{ item.quantity }}</td>
-            <td>${{ item.subtotal }}</td>
+            <td>${{ item.subtotal|intcomma }}</td>
           </tr>
           {% endfor %}
         </tbody>
@@ -255,10 +256,10 @@
 
     <div class="totals-section">
       <div class="totals-content">
-        <div><span>SUB TOTAL</span><span>${{ invoice.subtotal }}</span></div>
-        <div><span>Impuesto</span><span>${{ invoice.tax }}</span></div>
+        <div><span>SUB TOTAL</span><span>${{ invoice.subtotal|intcomma }}</span></div>
+        <div><span>Impuesto</span><span>${{ invoice.tax|intcomma }}</span></div>
         <div><span>DESCUENTO</span><span>-{{ invoice.discount }}%</span></div>
-        <div class="total-row"><span>TOTAL</span><span>${{ invoice.total }}</span></div>
+        <div class="total-row"><span>TOTAL</span><span>${{ invoice.total|intcomma }}</span></div>
       </div>
     </div>
 

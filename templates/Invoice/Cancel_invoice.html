@@ -1,0 +1,92 @@
+{% extends 'base.html' %}
+{% load static %}
+{% load humanize %}
+
+{% block title %}Anular factura{% endblock %}
+
+{% block content %}
+<style>
+    .invoice-list {
+        height: 100vh;
+        overflow-y: auto;
+        border-right: 1px solid #dee2e6;
+        background-color: #f8f9fa;
+    }
+    .invoice-item {
+        padding: 1rem;
+        border-bottom: 1px solid #dee2e6;
+        cursor: pointer;
+        transition: background-color 0.2s;
+    }
+    .invoice-item:hover {
+        background-color: #e9ecef;
+    }
+    .invoice-detail {
+        padding: 2rem;
+    }
+    .invoice-detail h4 {
+        color: #327747;
+    }
+</style>
+
+<div class="container-fluid" style="margin-top: 90px;">
+    <div class="row">
+        <!-- Lista de facturas -->
+        <div class="col-md-4 invoice-list">
+            <h5 class="mt-3 ms-3">Facturas</h5>
+            <!-- Repite este bloque con un for en Django -->
+            {% for invoice in invoices %}
+            <div class="invoice-item" onclick="showInvoice({{ invoice.id }})">
+                <strong>{{ invoice.customer.name }}</strong><br>
+                <small>Factura: #{{ invoice.id }}</small><br>
+                <small>Monto: ${{ invoice.total|floatformat:2|intcomma }}</small>
+            </div>
+            {% empty %}
+            <p class="text-center">No hay facturas</p>
+            {% endfor %}
+        </div>
+
+        <!-- Detalle de factura -->
+        <div class="col-md-8 invoice-detail" id="invoice-detail">
+            <h4>Selecciona una factura</h4>
+            <p>El detalle aparecerá aquí...</p>
+        </div>
+    </div>
+</div>
+
+<script>
+    function showInvoice(id) {
+        document.getElementById('invoice-detail').innerHTML = `
+            <h4>Factura #${id}</h4>
+            <p><strong>Cliente:</strong> Pizza Hut</p>
+            <p><strong>Email:</strong> thutostore@gmail.com</p>
+            <p><strong>Total:</strong> $1,699.01</p>
+            <p><strong>Fecha:</strong> 16 Ago 2023</p>
+            <p><strong>Vencimiento:</strong> 26 Ago 2023</p>
+            <table class="table table-bordered mt-4">
+                <thead class="table-primary">
+                    <tr>
+                        <th>#</th>
+                        <th>Producto</th>
+                        <th>Código</th>
+                        <th>Costo</th>
+                        <th>Cant.</th>
+                        <th>Subtotal</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    <tr>
+                        <td>1</td>
+                        <td>Website Design</td>
+                        <td>2023-001</td>
+                        <td>$2,826.392</td>
+                        <td>5</td>
+                        <td>$287,216</td>
+                    </tr>
+                </tbody>
+            </table>
+            <button class="btn btn-danger mt-3">Anular Factura</button>
+        `;
+    }
+</script>
+{% endblock %}
