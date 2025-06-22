@@ -15,4 +15,6 @@ urlpatterns = [
     path('quotaCustomer/', views.View_quota_customer, name='payment_quota_customer'),
     path('factura-preview/<int:invoice_id>/', views.preview_invoice, name='preview_invoice'),
     path('anular-factura', views.cancel_invoice_view, name='cancel_factura'),
+    path('invoice-detail/<int:invoice_id>/', views.invoice_detail_ajax, name='invoice_detail_ajax'),
+    path('anular-factura/<int:invoice_id>/', views.cancel_invoice_ajax, name='cancel_invoice_ajax'),
 ]

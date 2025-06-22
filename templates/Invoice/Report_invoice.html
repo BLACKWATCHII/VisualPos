@@ -208,7 +208,7 @@
                                             {% elif invoice.status == 'credit' %}
                                                 <span class="badge bg-warning">Crédito</span>
                                             {% else %} 
-                                                <span class="badge bg-secondary">Borrador</span>
+                                                <span class="badge bg-secondary">Anulada</span>
                                             {% endif %}
                                         </td>
                                         <td><a href="{% url 'invoice_pdf' invoice.id %}" class="btn btn-outline-danger" download>Descargar</a></td>
