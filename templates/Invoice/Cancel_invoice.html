@@ -39,6 +39,10 @@
                 <strong>{{ invoice.customer.name }} {{ invoice.customer.lastname }}</strong><br>
                 <small>Factura: #{{ invoice.id }}</small><br>
                 <small>Monto: ${{ invoice.total|floatformat:2|intcomma }}</small>
+                <small>Fecha: {{ invoice.date|date:"d M Y" }}</small><br>
+                {% if invoice.status == 'Anulada' %}
+                <span class="badge bg-danger">Anulada</span><br>
+                {% endif %}
             </div>
 
             {% empty %}
@@ -85,6 +89,7 @@ function loadInvoiceDetail(invoiceId) {
                 <p><strong>Cliente:</strong> ${data.customer}</p>
                 <p><strong>Total:</strong> ${formatCurrency(data.total)}</p>
                 <p><strong>Fecha:</strong> ${data.date}</p>
+                <p><strong>Estado:</strong> <span class="badge bg-${data.status == 'Anulada' ? 'danger' : data.status == 'Pagada' ? 'success' : 'warning'}">${data.status}</span></p>
                 <table class="table table-bordered mt-4">
                     <thead class="table-success">
                         <tr>
@@ -102,6 +107,7 @@ function loadInvoiceDetail(invoiceId) {
             `;
         });
 }
+
 function cancelInvoice(invoiceId) {
     if (!confirm("¿Estás seguro de que deseas anular esta factura?")) return;
 

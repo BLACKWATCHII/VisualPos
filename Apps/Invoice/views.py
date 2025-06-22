@@ -416,6 +416,7 @@ def invoice_detail_ajax(request, invoice_id):
 
     data = {
         'id': invoice.id,
+        'status': invoice.status,
         'customer': f"{invoice.customer.name} {invoice.customer.lastname}",
         'total': float(invoice.total),
         'date': invoice.date.strftime('%Y-%m-%d'),
