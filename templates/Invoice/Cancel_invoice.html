@@ -1,0 +1,148 @@
+{% extends 'base.html' %}
+{% load static %}
+{% load humanize %}
+
+{% block title %}Anular factura{% endblock %}
+
+{% block content %}
+<style>
+    .invoice-list {
+        height: 100vh;
+        overflow-y: auto;
+        border-right: 1px solid #dee2e6;
+        background-color: #f8f9fa;
+    }
+    .invoice-item {
+        padding: 1rem;
+        border-bottom: 1px solid #dee2e6;
+        cursor: pointer;
+        transition: background-color 0.2s;
+    }
+    .invoice-item:hover {
+        background-color: #e9ecef;
+    }
+    .invoice-detail {
+        padding: 2rem;
+    }
+    .invoice-detail h4 {
+        color: #327747;
+    }
+</style>
+
+<div class="container-fluid" style="margin-top: 90px;">
+    <div class="row">
+        <!-- Lista de facturas -->
+        <div class="col-md-4 invoice-list">
+            <h5 class="mt-3 ms-3">Facturas</h5>
+            {% for invoice in invoices %}
+            <div class="invoice-item" onclick="loadInvoiceDetail({{ invoice.id }})">
+                <strong>{{ invoice.customer.name }} {{ invoice.customer.lastname }}</strong><br>
+                <small>Factura: #{{ invoice.id }}</small><br>
+                <small>Monto: ${{ invoice.total|floatformat:2|intcomma }}</small>
+                <small>Fecha: {{ invoice.date|date:"d M Y" }}</small><br>
+                {% if invoice.status == 'Anulada' %}
+                <span class="badge bg-danger">Anulada</span><br>
+                {% endif %}
+            </div>
+
+            {% empty %}
+            <p class="text-center">No hay facturas</p>
+            {% endfor %}
+        </div>
+
+        <!-- Detalle de factura -->
+        <div class="col-md-8 invoice-detail" id="invoice-detail">
+            <h4>Selecciona una factura</h4>
+            <p>El detalle aparecerá aquí...</p>
+        </div>
+    </div>
+</div>
+
+<script>
+function formatCurrency(value) {
+    return new Intl.NumberFormat('es-CO', {
+        style: 'currency',
+        currency: 'COP'
+    }).format(value);
+}
+
+function loadInvoiceDetail(invoiceId) {
+    fetch(`invoice-detail/${invoiceId}/`)
+        .then(response => response.json())
+        .then(data => {
+            let rows = '';
+            data.items.forEach(item => {
+                rows += `
+                    <tr>
+                        <td>${item.index}</td>
+                        <td>${item.product}</td>
+                        <td>${item.code}</td>
+                        <td>${formatCurrency(item.price)}</td>
+                        <td>${item.quantity}</td>
+                        <td>${formatCurrency(item.subtotal)}</td>
+                    </tr>
+                `;
+            });
+
+            document.getElementById('invoice-detail').innerHTML = `
+                <h4>Factura #${data.id}</h4>
+                <p><strong>Cliente:</strong> ${data.customer}</p>
+                <p><strong>Total:</strong> ${formatCurrency(data.total)}</p>
+                <p><strong>Fecha:</strong> ${data.date}</p>
+                <p><strong>Estado:</strong> <span class="badge bg-${data.status == 'Anulada' ? 'danger' : data.status == 'Pagada' ? 'success' : 'warning'}">${data.status}</span></p>
+                <table class="table table-bordered mt-4">
+                    <thead class="table-success">
+                        <tr>
+                            <th>#</th>
+                            <th>Producto</th>
+                            <th>Código</th>
+                            <th>Costo</th>
+                            <th>Cant.</th>
+                            <th>Subtotal</th>
+                        </tr>
+                    </thead>
+                    <tbody>${rows}</tbody>
+                </table>
+                <button class="btn btn-danger mt-3" onclick="cancelInvoice(${data.id})">Anular Factura</button>
+            `;
+        });
+}
+
+function cancelInvoice(invoiceId) {
+    if (!confirm("¿Estás seguro de que deseas anular esta factura?")) return;
+
+    fetch(`anular-factura/${invoiceId}/`, {
+        method: "POST",
+        headers: {
+            "X-CSRFToken": getCookie('csrftoken'),
+            "Content-Type": "application/json"
+        },
+        body: JSON.stringify({ reason: "Cancelación manual desde el sistema" })  
+    })
+    .then(response => response.json())
+    .then(data => {
+        alert(data.message);
+        if (data.success) {
+            location.reload();
+        }
+    });
+}
+
+function getCookie(name) {
+    let cookieValue = null;
+    if (document.cookie && document.cookie !== '') {
+        const cookies = document.cookie.split(';');
+        for (let i = 0; i < cookies.length; i++) {
+            const cookie = cookies[i].trim();
+            if (cookie.substring(0, name.length + 1) === (name + '=')) {
+                cookieValue = decodeURIComponent(cookie.substring(name.length + 1));
+                break;
+            }
+        }
+    }
+    return cookieValue;
+}
+
+</script>
+
+{% endblock %}

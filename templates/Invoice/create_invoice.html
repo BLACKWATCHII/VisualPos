@@ -27,6 +27,7 @@
 </style>
 {% endblock %}
 
+
 {% block content %}
 <div class="card" style="margin-top: 4rem;">
     <div class="container my-5">
@@ -43,7 +44,9 @@
                             <label class="form-label">Tipo de transaccion</label>
                             <select name="transaction_type" required class="form-control w-25" id="transactionId" aria-label="Default select example">
                                 {% for trans in transaction_types %}
-                                    <option value="{{ trans.id }}">{{ trans.iniType }}-{{ trans.consecutive }}</option>
+                                    {% if trans.iniType != 'AFV' and trans.iniType != 'AFC' %}
+                                        <option value="{{ trans.id }}">{{ trans.iniType }}-{{ trans.consecutive }}</option>
+                                    {% endif %}
                                 {% endfor %}
                             </select>
                         </div>
@@ -116,13 +119,13 @@
                                 <div class="col-6">
                                     <select class="form-select item-id" name="item_id" required>
                                         <option value="">Select item</option> 
-                                        {% for item in items %}
-                                            {% if item.active == 1 %}
-                                            <option value="{{ item.id }}" data-price="{{ item.Price }}">
-                                                {{ item.Name }}
-                                            </option>
-                                            {% endif %}
-                                        {% endfor %}
+                                            {% for item in items %}
+                                                {% if item.active == 1 and item.Stock > 0 %}
+                                                    <option value="{{ item.id }}" data-price="{{ item.Price }}">
+                                                        {{ item.Name }}
+                                                    </option>
+                                                {% endif %}
+                                            {% endfor %}
                                     </select>
                                 </div>
                                 <div class="col-3">
@@ -162,10 +165,10 @@
                         </div>
 
                         <div class="border-bottom pb-3 mb-3">
-                            <h6 id="preview-invoice-number">#</h6>
-                            <small id="preview-due-date">Due: --</small><br>
+                            <h6 id="preview-invoice-number"></h6>
+                            <small id="preview-due-date">Fecha: --</small><br>
                             <small id="preview-customer">Cliente: --</small><br>
-                            <small id="preview-subject">Subject: --</small>
+                            <small id="preview-subject">Asunto: --</small>
                         </div>
 
                         <table class="table table-bordered mb-3" style="border-color: green;">
@@ -301,11 +304,12 @@
         // Actualiza la previsualización
         function updatePreview() {
             // Cliente, asunto, fecha, numero de factura
-            $('#preview-invoice-number').text('Factura # ' + ($('#transactionId').val() || '--'));
+            var transactionType = $('#transactionId option:selected').text();
+            $('#preview-invoice-number').text(transactionType);
             $('#preview-customer').text('Cliente: ' + ($('#customer option:selected').text() || '--'));
-            $('#preview-subject').text('Subject: ' + ($('#subject').val() || '--'));
-            $('#preview-due-date').text('Due: ' + ($('#due_date').val() || '--'));
-    
+            $('#preview-subject').text('Asunto: ' + ($('#subject').val() || '--'));
+            $('#preview-due-date').text('Fecha: ' + ($('#due_date').val() || '--'));
+
             // Productos
             var productsHtml = '';
             var subtotal = 0;

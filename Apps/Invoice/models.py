@@ -37,14 +37,15 @@ class Invoice(models.Model):
         choices=[
             ('paid', 'Pagada'),
             ('unpaid', 'No Pagada'),
-            ('refunded', 'Reembolsada')
+            ('refunded', 'Reembolsada'),
+            ('canceled', 'Anulada')
         ],
         default='unpaid'
     )
     transaction_type = models.ForeignKey(
         TransactionType,
         on_delete=models.CASCADE,
-        related_name='invoices'
+        related_name='invoices' 
     )
     invoice_number = models.IntegerField()
     notes = models.TextField(blank=True, null=True)
@@ -114,3 +115,14 @@ class Early_Payment(models.Model):
             self.invoice_number = self.quota.invoice.invoice_number
             self.customer = self.quota.invoice.customer
         super().save(*args, **kwargs)
+
+class CanceledInvoice(models.Model):
+    original_invoice = models.OneToOneField(Invoice, on_delete=models.CASCADE, related_name="cancellation")
+    canceled_date = models.DateTimeField(auto_now_add=True)
+    reason = models.TextField(blank=True, null=True)
+    transaction_type = models.ForeignKey(TransactionType, on_delete=models.PROTECT)
+    cancel_number = models.CharField(max_length=20) 
+    user = models.ForeignKey('auth.User', on_delete=models.SET_NULL, null=True)
+
+    def __str__(self):
+        return f"Anulación {self.cancel_number} - Factura #{self.original_invoice.id}"

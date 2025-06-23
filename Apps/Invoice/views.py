@@ -1,5 +1,5 @@
 from django.shortcuts import render, redirect, get_object_or_404
-from .models import Invoice
+from .models import Invoice,CanceledInvoice
 from Invoice.Form import InvoiceForm, InvoiceItem
 from item.models import Item
 from customer.models import Customer
@@ -24,8 +24,6 @@ from django.http import FileResponse
 import uuid
 import subprocess
 import os
-from django.utils.decorators import decorator_from_middleware
-from django.utils.deprecation import MiddlewareMixin
 from functools import wraps
 
 def render_to_pdf(template_src, context_dict={}):
@@ -394,3 +392,73 @@ def payment_history(request, customer_id=None):
     if customer_id:
         qs = qs.filter(quota__invoice__customer__id=customer_id)
     return render(request, 'PaymentQuota/History.html', {'payments': qs})
+
+def cancel_invoice_view(request):
+    invoices = Invoice.objects.select_related('customer').all()
+    return render(request, 'Invoice/Cancel_invoice.html', {'invoices': invoices})
+
+
+def invoice_detail_ajax(request, invoice_id):
+    print("Invoice ID:", invoice_id)
+    invoice = get_object_or_404(Invoice.objects.select_related('customer'), pk=invoice_id)
+    items = InvoiceItem.objects.filter(invoice=invoice).select_related('item')
+
+    item_list = []
+    for i, item in enumerate(items, start=1):
+        item_list.append({
+            'index': i,
+            'product': item.item.Name,
+            'code': item.item.id,
+            'price': float(item.price),
+            'quantity': item.quantity,
+            'subtotal': float(item.price * item.quantity),
+        })
+
+    data = {
+        'id': invoice.id,
+        'status': invoice.status,
+        'customer': f"{invoice.customer.name} {invoice.customer.lastname}",
+        'total': float(invoice.total),
+        'date': invoice.date.strftime('%Y-%m-%d'),
+        'items': item_list
+    }
+    return JsonResponse(data)
+
+
+@login_required
+def cancel_invoice_ajax(request, invoice_id):
+    if request.method == 'POST':
+        invoice = get_object_or_404(Invoice, id=invoice_id)
+
+        # Ya está anulada
+        if invoice.status == 'Anulada':
+            return JsonResponse({'success': False, 'message': 'La factura ya está anulada.'})
+
+        # Determinar tipo de transacción (AFV o AFC)
+        iniType = 'AFV' if invoice.payment_method == 'cash' else 'AFC'
+        try:
+            transaction_type = TransactionType.objects.get(iniType=iniType)
+        except TransactionType.DoesNotExist:
+            return JsonResponse({'success': False, 'message': f"No existe un tipo de transacción con inicial '{iniType}'"})
+
+        # Crear número consecutivo de anulación
+        cancel_number = f"{transaction_type.iniType}{str(transaction_type.consecutive).zfill(4)}"
+        transaction_type.consecutive += 1
+        transaction_type.save()
+
+        # Cambiar estado
+        invoice.status = 'Anulada'
+        invoice.save()
+
+        # Crear registro de anulación
+        CanceledInvoice.objects.create(
+            original_invoice=invoice,
+            transaction_type=transaction_type,
+            cancel_number=cancel_number,
+            reason=request.POST.get('reason', ''),
+            user=request.user
+        )
+
+        return JsonResponse({'success': True, 'message': 'Factura anulada correctamente.'})
+
+    return JsonResponse({'success': False, 'message': 'Método no permitido'}, status=405)
