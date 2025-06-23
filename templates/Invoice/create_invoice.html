@@ -44,7 +44,9 @@
                             <label class="form-label">Tipo de transaccion</label>
                             <select name="transaction_type" required class="form-control w-25" id="transactionId" aria-label="Default select example">
                                 {% for trans in transaction_types %}
-                                    <option value="{{ trans.id }}">{{ trans.iniType }}-{{ trans.consecutive }}</option>
+                                    {% if trans.iniType != 'AFV' and trans.iniType != 'AFC' %}
+                                        <option value="{{ trans.id }}">{{ trans.iniType }}-{{ trans.consecutive }}</option>
+                                    {% endif %}
                                 {% endfor %}
                             </select>
                         </div>
