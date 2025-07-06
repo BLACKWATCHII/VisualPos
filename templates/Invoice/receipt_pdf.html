@@ -256,7 +256,7 @@
 
     <div class="totals-section">
       <div class="totals-content">
-        <div><span>SUB TOTAL</span><span>${{ invoice.subtotal|intcomma }}</span></div>
+        <div><span>SUB TOTAL</span><span>${{ sub_total|intcomma }}</span></div>
         <div><span>IMPUESTO</span><span>{{ invoice.tax|intcomma }}</span></div>
         <div><span>DESCUENTO</span><span>-{{ invoice.discount }}%</span></div>
         <div class="total-row"><span>TOTAL</span><span>${{ invoice.total|intcomma }}</span></div>

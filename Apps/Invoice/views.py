@@ -125,90 +125,97 @@ def delete_type_transaction(request, transaction_id):
 
 @login_required
 def create_invoice(request):
+    sub_total = 0  
     if request.method == 'POST':
         form = InvoiceForm(request.POST)
         if form.is_valid():
-                with transaction.atomic():
-                    invoice = form.save(commit=False)
+            with transaction.atomic():
+                invoice = form.save(commit=False)
 
-                    # Datos del POST
-                    items = request.POST.getlist('item_id')
-                    quantities = request.POST.getlist('quantity')
-                    prices = request.POST.getlist('price')
+                # Datos del POST
+                items = request.POST.getlist('item_id')
+                quantities = request.POST.getlist('quantity')
+                prices = request.POST.getlist('price')
 
-                    payment_method = request.POST.get('payment_method')
-                    status = request.POST.get('status') or 'Pagada'
-                    quotas = request.POST.get('quotas')
-                    notes = request.POST.get('notes')
-                    discount_percent = request.POST.get('discount-percent')
-                    transaction_type_id = request.POST.get('transaction_type')
+                payment_method = request.POST.get('payment_method')
+                status = request.POST.get('status') or 'Pagada'
+                quotas = request.POST.get('quotas')
+                notes = request.POST.get('notes')
+                discount_percent = request.POST.get('discount-percent')
+                transaction_type_id = request.POST.get('transaction_type')
 
-                    # Ajustar estado
-                    if payment_method == 'Credito':
-                        status = 'Credito'
+                # Calcular subtotal
+                sub_total = sum([
+                    float(price.replace(',', '').replace('$', ''))
+                    for price in prices if price
+                ])
 
-                    invoice.payment_method = payment_method
-                    invoice.status = status
-                    invoice.notes = notes
-                    invoice.user = request.user
-                    invoice.quotas = int(quotas) if quotas else 0
+                # Ajustar estado
+                if payment_method == 'Credito':
+                    status = 'Credito'
 
-                    # Calcular total
-                    total = 0
-                    for qty, price in zip(quantities, prices):
-                        if qty and price:
-                            total += int(qty) * float(price)
+                invoice.payment_method = payment_method
+                invoice.status = status
+                invoice.notes = notes
+                invoice.user = request.user
+                invoice.quotas = int(quotas) if quotas else 0
 
-                    if discount_percent:
-                        discount_percent = float(discount_percent)
-                        total -= total * (discount_percent / 100)
-                        invoice.discount = discount_percent
-                    else:
-                        invoice.discount = 0
+                # Calcular total
+                total = 0
+                for qty, price in zip(quantities, prices):
+                    if qty and price:
+                        total += int(qty) * float(price)
 
-                    invoice.total = total
+                if discount_percent:
+                    discount_percent = float(discount_percent)
+                    total -= total * (discount_percent / 100)
+                    invoice.discount = discount_percent
+                else:
+                    invoice.discount = 0
 
-                    # Transacción y consecutivo
-                    transaction_type = get_object_or_404(TransactionType, id=transaction_type_id)
-                    invoice.invoice_number = transaction_type.consecutive
-                    invoice.transaction_type = transaction_type
-                    transaction_type.consecutive += 1
-                    transaction_type.save()
+                invoice.total = total
 
-                    invoice.save()
+                # Transacción y consecutivo
+                transaction_type = get_object_or_404(TransactionType, id=transaction_type_id)
+                invoice.invoice_number = transaction_type.consecutive
+                invoice.transaction_type = transaction_type
+                transaction_type.consecutive += 1
+                transaction_type.save()
 
-                    # Crear cuotas
-                    if payment_method == 'Credito' and invoice.quotas > 1:
-                        quota_amount = invoice.total / invoice.quotas
-                        start_date = invoice.date or date.today()
-                        for i in range(invoice.quotas):
-                            PaymentQuota.objects.create(
-                                invoice=invoice,
-                                number=i + 1,
-                                amount=quota_amount,
-                                payment_date=start_date + timedelta(days=30 * i),
-                                is_paid=False
-                            )
+                invoice.save()
 
-                    # Crear items de factura
-                    for item_id, qty, price in zip(items, quantities, prices):
-                        if item_id and qty and price:
-                            item = Item.objects.get(id=item_id)
-                            InvoiceItem.objects.create(
-                                invoice=invoice,
-                                item=item,
-                                quantity=int(qty),
-                                price=float(price),
-                            )
-                            item.Stock -= int(qty)
-                            item.save()
+                # Crear cuotas
+                if payment_method == 'Credito' and invoice.quotas > 1:
+                    quota_amount = invoice.total / invoice.quotas
+                    start_date = invoice.date or date.today()
+                    for i in range(invoice.quotas):
+                        PaymentQuota.objects.create(
+                            invoice=invoice,
+                            number=i + 1,
+                            amount=quota_amount,
+                            payment_date=start_date + timedelta(days=30 * i),
+                            is_paid=False
+                        )
 
-                    if request.POST.get('download') == 'pdf':
-                        return render_pdf_with_puppeteer('invoice/receipt_pdf.html', {'invoice': invoice}, filename=f"Factura_{invoice.invoice_number}.pdf")
+                # Crear items de factura
+                for item_id, qty, price in zip(items, quantities, prices):
+                    if item_id and qty and price:
+                        item = Item.objects.get(id=item_id)
+                        InvoiceItem.objects.create(
+                            invoice=invoice,
+                            item=item,
+                            quantity=int(qty),
+                            price=float(price),
+                        )
+                        item.Stock -= int(qty)
+                        item.save()
 
-                    return redirect('home')
+                if request.POST.get('download') == 'pdf':
+                    return render_pdf_with_puppeteer('invoice/receipt_pdf.html', {'invoice': invoice}, filename=f"Factura_{invoice.invoice_number}.pdf")
+
+                return redirect('home')
         else:
-            pass
+            pass  # puedes manejar errores aquí si deseas
     else:
         form = InvoiceForm()
 
@@ -218,6 +225,7 @@ def create_invoice(request):
     return render(request, 'invoice/create_invoice.html', {
         'form': form,
         'items': items,
+        'sub_total': sub_total,  # ya no dará error
         'transaction_types': transaction_types,
     })
 
