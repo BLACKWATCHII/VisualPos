@@ -3,7 +3,7 @@
 <html lang="es">
 <head>
   <meta charset="UTF-8">
-  <title>Factura Confirmada - {{ invoice.customer }}</title>
+  <title>Factura Cancelada - {{ invoice.customer }}</title>
   <style>
     * {
       margin: 0;
@@ -16,11 +16,30 @@
       background: white;
       margin: 0;
       padding: 0;
+      position: relative;
+    }
+
+    /* Marca de agua */
+    body::before {
+      content: "ANULADA";
+      position: fixed;
+      top: 50%;
+      left: 50%;
+      transform: translate(-50%, -50%) rotate(-45deg);
+      font-size: 120px;
+      font-weight: bold;
+      color: rgba(255, 0, 0, 0.15);
+      z-index: 1;
+      pointer-events: none;
+      user-select: none;
+      letter-spacing: 8px;
     }
 
     .invoice-container {
       width: 100%;
       padding: 40px;
+      position: relative;
+      z-index: 2;
     }
 
     .header-section {
@@ -185,6 +204,12 @@
         background: white;
       }
 
+      body::before {
+        position: absolute !important;
+        font-size: 100px !important;
+        color: rgba(255, 0, 0, 0.2) !important;
+      }
+
       .items-section,
       table,
       tr,
@@ -213,7 +238,7 @@
       <div class="invoice-date">{{ invoice.date }}</div>
     </div>
 
-    <div class="invoice-to">INVOICE TO:</div>
+    <div class="invoice-to">FACTURA PARA:</div>
     <div class="customer-details">
       <h3>{{ invoice.customer }}</h3>
       <p>{{ invoice.customer_address }}</p>
@@ -277,3 +302,4 @@
   </div>
 </body>
 </html>
+<script>
