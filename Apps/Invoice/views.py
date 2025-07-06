@@ -123,14 +123,10 @@ def delete_type_transaction(request, transaction_id):
     messages.success(request, "Transacción eliminada correctamente.")
     return redirect('create_transaction')
 
-
-
-
 @login_required
 def create_invoice(request):
     if request.method == 'POST':
         form = InvoiceForm(request.POST)
-
         if form.is_valid():
                 with transaction.atomic():
                     invoice = form.save(commit=False)
@@ -148,8 +144,8 @@ def create_invoice(request):
                     transaction_type_id = request.POST.get('transaction_type')
 
                     # Ajustar estado
-                    if payment_method == 'credit':
-                        status = 'credit'
+                    if payment_method == 'Credito':
+                        status = 'Credito'
 
                     invoice.payment_method = payment_method
                     invoice.status = status
@@ -182,7 +178,7 @@ def create_invoice(request):
                     invoice.save()
 
                     # Crear cuotas
-                    if payment_method == 'credit' and invoice.quotas > 1:
+                    if payment_method == 'Credito' and invoice.quotas > 1:
                         quota_amount = invoice.total / invoice.quotas
                         start_date = invoice.date or date.today()
                         for i in range(invoice.quotas):
@@ -231,9 +227,9 @@ def invoices_report(request):
     invoices = Invoice.objects.select_related('customer').all()
 
     # Totales y contadores
-    total_credit = Invoice.objects.filter(payment_method='credit').aggregate(result_credit=Sum('total'))
+    total_credit = Invoice.objects.filter(payment_method='Credito').aggregate(result_credit=Sum('total'))
     total = Invoice.objects.filter(status='Pagada').aggregate(result=Sum('total'))
-    cont_credit = Invoice.objects.filter(payment_method='credit').count()
+    cont_credit = Invoice.objects.filter(payment_method='Credito').count()
     cont_pay = Invoice.objects.filter(status='Pagada').count()
 
     total_credit = float(total_credit.get('result_credit') or 0)
@@ -326,33 +322,37 @@ def View_quota(request):
     return render(request, 'PaymentQuota/Payment_quota.html', context)
 
 
+
 @login_required
 def View_quota_customer(request):
     customer_id = request.GET.get('customer')
     estado = request.GET.get('estado')  
-    customer = Customer.objects.all()
-    count_quota_paid = PaymentQuota.objects.filter(is_paid=1).count()
-    count_quota_unpaid = PaymentQuota.objects.filter(is_paid=0).count()
-    count_quota_expired = PaymentQuota.objects.filter(payment_date__lt=date.today(), is_paid=False).count()
+
+    customers = Customer.objects.all()
     quotas = PaymentQuota.objects.select_related('invoice', 'invoice__customer')
 
     if customer_id:
         quotas = quotas.filter(invoice__customer__id=customer_id)
 
+    base_filter = {'invoice__customer__id': customer_id} if customer_id else {}
+
+    count_quota_paid = PaymentQuota.objects.filter(is_paid=True, **base_filter).count()
+    count_quota_unpaid = PaymentQuota.objects.filter(is_paid=False, **base_filter).count()
+    count_quota_expired = PaymentQuota.objects.filter(payment_date__lt=date.today(), is_paid=False, **base_filter).count()
+    
     if estado == "Pagadas":
         quotas = quotas.filter(is_paid=True)
     elif estado == "Pendientes":
         quotas = quotas.filter(is_paid=False)
 
     context = {
-        'customer': customer,
+        'customer': customers,
         'credits': quotas,
         'count_quota_paid': count_quota_paid,
         'count_quota_unpaid': count_quota_unpaid,
         'count_quota_expired': count_quota_expired,
     }
-    return render(request, 'PaymentQuota/Payment_quota.html', context)
-
+    return render(request, 'PaymentQuota/Payment_quota_customer.html', context)
 
 
 # pay quota method
@@ -424,34 +424,39 @@ def invoice_detail_ajax(request, invoice_id):
     }
     return JsonResponse(data)
 
+@login_required
+def canceled_invoice_pdf_view(request, invoice_id):
+    invoice = get_object_or_404(Invoice, id=invoice_id)
+    html = render_to_string('invoice/receipt_pdf_cancel.html', {'invoice': invoice})
+    return HttpResponse(html)
+
+
 
 @login_required
 def cancel_invoice_ajax(request, invoice_id):
     if request.method == 'POST':
         invoice = get_object_or_404(Invoice, id=invoice_id)
 
-        # Ya está anulada
         if invoice.status == 'Anulada':
             return JsonResponse({'success': False, 'message': 'La factura ya está anulada.'})
 
-        # Determinar tipo de transacción (AFV o AFC)
-        iniType = 'AFV' if invoice.payment_method == 'cash' else 'AFC'
+        iniType = 'AFC' if invoice.payment_method == 'Credito' else 'AFV'
         try:
             transaction_type = TransactionType.objects.get(iniType=iniType)
         except TransactionType.DoesNotExist:
             return JsonResponse({'success': False, 'message': f"No existe un tipo de transacción con inicial '{iniType}'"})
 
-        # Crear número consecutivo de anulación
+        # Crear número de anulación
         cancel_number = f"{transaction_type.iniType}{str(transaction_type.consecutive).zfill(4)}"
         transaction_type.consecutive += 1
         transaction_type.save()
 
-        # Cambiar estado
+        # Actualizar factura
         invoice.status = 'Anulada'
         invoice.save()
 
         # Crear registro de anulación
-        CanceledInvoice.objects.create(
+        canceled = CanceledInvoice.objects.create(
             original_invoice=invoice,
             transaction_type=transaction_type,
             cancel_number=cancel_number,
@@ -459,6 +464,40 @@ def cancel_invoice_ajax(request, invoice_id):
             user=request.user
         )
 
-        return JsonResponse({'success': True, 'message': 'Factura anulada correctamente.'})
+        # Generar HTML temporal
+        html_id = str(uuid.uuid4())
+        html_path = os.path.join(settings.BASE_DIR, "tmp", f"{html_id}.html")
+        pdf_path = os.path.join(settings.MEDIA_ROOT, f"factura_cancelada_{invoice.id}.pdf")
+        os.makedirs(os.path.dirname(html_path), exist_ok=True)
+
+        # Renderizar el HTML desde plantilla
+        html_content = render_to_string('invoice/receipt_pdf_cancel.html', {
+            'invoice': invoice,
+            'canceled': canceled,
+        })
+        with open(html_path, 'w', encoding='utf-8') as f:
+            f.write(html_content)
+
+        # Ejecutar Puppeteer
+        script_path = os.path.join(settings.BASE_DIR, 'pdfgen', 'generate_pdf.js')
+        result = subprocess.run(
+            ['node', script_path, html_path, pdf_path],
+            capture_output=True,
+            text=True
+        )
+
+        if result.returncode != 0:
+            print("STDOUT:", result.stdout)
+            print("STDERR:", result.stderr)
+            return JsonResponse({'success': False, 'message': 'Error generando PDF'})
+
+        # Eliminar HTML temporal
+        os.remove(html_path)
+
+        return JsonResponse({
+            'success': True,
+            'message': 'Factura anulada correctamente.',
+            'pdf_url': f"{settings.MEDIA_URL}factura_cancelada_{invoice.id}.pdf"
+        })
 
     return JsonResponse({'success': False, 'message': 'Método no permitido'}, status=405)

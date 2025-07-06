@@ -92,12 +92,12 @@
                             <label class="form-label" for="payment_method_select">Método de pago</label>
                             <select name="payment_method" id="payment_method_select" class="form-select" required>
                                 <option value="">Selecciona método de pago</option>
-                                <option value="credit_card">Tarjeta crédito</option>
-                                <option value="debit_card">Tarjeta débito</option>
-                                <option value="transfer">Transferencia bancaria</option>
-                                <option value="cash">Efectivo</option>
-                                <option value="credit">Crédito</option>
-                                <option value="other">Otro</option>
+                                <option value="Tarjeta crédito">Tarjeta crédito</option>
+                                <option value="Tarjeta débito">Tarjeta débito</option>
+                                <option value="Transferencia bancaria">Transferencia bancaria</option>
+                                <option value="Efectivo">Efectivo</option>
+                                <option value="Credito">Crédito</option>
+                                <option value="Otro">Otro</option>
                             </select>
                         </div>
                         <!-- Number_quotas -->
@@ -146,8 +146,8 @@
                             </label>
                         </div>
                         <div id="discount-fields" style="display:none;">
-                            <input type="text" id="discount-description" class="form-control mt-2" placeholder="Discount description">
-                            <input type="number" id="discount-percent" class="form-control mt-2" placeholder="Discount %" min="0" max="100">
+                            <input type="text" id="discount-description" class="form-control mt-2" placeholder="Descripción del descuento">
+                            <input type="number" id="discount-percent" name="discount-percent" class="form-control mt-2" placeholder="Descuento %" min="0" max="100">
                         </div>
                         <input type="hidden" name="download" value="pdf">
                         <button type="submit" class="btn btn-primary w-100 mt-4">Procesar factura</button>
@@ -283,7 +283,7 @@
     
         function toggleQuotasField() {
             var paymentMethod = $('#payment_method_select').val();
-            if (paymentMethod === 'credit') {
+            if (paymentMethod === 'Credito') {
                 $('#quotas-field').slideDown();
             } else {
                 $('#quotas-field').slideUp();

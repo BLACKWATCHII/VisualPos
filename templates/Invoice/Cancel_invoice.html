@@ -66,6 +66,21 @@ function formatCurrency(value) {
     }).format(value);
 }
 
+function getCookie(name) {
+    let cookieValue = null;
+    if (document.cookie && document.cookie !== '') {
+        const cookies = document.cookie.split(';');
+        for (let i = 0; i < cookies.length; i++) {
+            const cookie = cookies[i].trim();
+            if (cookie.substring(0, name.length + 1) === (name + '=')) {
+                cookieValue = decodeURIComponent(cookie.substring(name.length + 1));
+                break;
+            }
+        }
+    }
+    return cookieValue;
+}
+
 function loadInvoiceDetail(invoiceId) {
     fetch(`invoice-detail/${invoiceId}/`)
         .then(response => response.json())
@@ -123,24 +138,22 @@ function cancelInvoice(invoiceId) {
     .then(data => {
         alert(data.message);
         if (data.success) {
-            location.reload();
-        }
-    });
-}
+            const link = document.createElement('a');
+            link.href = data.pdf_url;
+            link.download = '';  
+            document.body.appendChild(link);
+            link.click();
+            document.body.removeChild(link);
 
-function getCookie(name) {
-    let cookieValue = null;
-    if (document.cookie && document.cookie !== '') {
-        const cookies = document.cookie.split(';');
-        for (let i = 0; i < cookies.length; i++) {
-            const cookie = cookies[i].trim();
-            if (cookie.substring(0, name.length + 1) === (name + '=')) {
-                cookieValue = decodeURIComponent(cookie.substring(name.length + 1));
-                break;
-            }
+            setTimeout(() => {
+                location.reload();
+            }, 1500);
         }
-    }
-    return cookieValue;
+    })
+    .catch(err => {
+        console.error('Error anulando factura:', err);
+        alert("Hubo un error al anular la factura.");
+    });
 }
 
 </script>
