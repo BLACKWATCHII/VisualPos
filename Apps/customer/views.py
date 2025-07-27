@@ -17,25 +17,102 @@ def Customer_create_view(request):
         if form.is_valid():
             customer = form.save()
             destinatario = customer.email 
-            asunto = '🐍¡Bienvenido a Berserker!🐍'
+            asunto = '¡Bienvenido a Berserker!'
             contenido_texto = f'Hola {customer}, ¡gracias por registrarte!'
             
             contenido_html = f"""
-            <html>
-              <body style="font-family: Arial, sans-serif; background-color: #f4f4f4; padding: 20px;">
-                <div style="max-width: 600px; margin: auto; background: white; padding: 20px; border-radius: 10px;">
-                  <h2 style="color: #333;">¡Hola {customer}!</h2>
-                  <p style="color: #555;">
-                    Bienvenido a berserker. Estamos felices de tenerte con nosotros.
-                  </p>
-                  <a href="https://berserker.com" 
-                     style="display: inline-block; padding: 10px 20px; margin-top: 20px;
-                            background-color: #007bff; color: white; text-decoration: none; border-radius: 5px;">
-                     Explora ahora
-                  </a>
-                  <p style="color: #999; margin-top: 40px;">Cualquier duda, estamos para ayudarte.</p>
+            <!DOCTYPE html>
+            <html lang="es">
+            <head>
+                <meta charset="UTF-8">
+                <meta name="viewport" content="width=device-width, initial-scale=1.0">
+                <title>Bienvenido a Berserker</title>
+            </head>
+            <body style="margin: 0; padding: 0; font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; background-color: #f8f9fa;">
+                <div style="width: 100%; background-color: #f8f9fa; padding: 40px 0;">
+                    <div style="max-width: 600px; margin: 0 auto; background-color: #ffffff; border-radius: 12px; box-shadow: 0 4px 12px rgba(0,0,0,0.1); overflow: hidden;">
+                        
+                        <!-- Header con logo -->
+                        <div style="background: linear-gradient(135deg, #28a745 0%, #20c997 100%); padding: 40px 20px; text-align: center;">
+                            <div style="background-color: rgba(255,255,255,0.15); display: inline-block; padding: 15px 25px; border-radius: 8px; margin-bottom: 20px;">
+                                <h1 style="margin: 0; color: #ffffff; font-size: 32px; font-weight: 700; letter-spacing: 1px;">⚡ BERSERKER</h1>
+                            </div>
+                            <h2 style="margin: 0; color: #ffffff; font-size: 28px; font-weight: 300;">Libera tu potencial</h2>
+                        </div>
+                        
+                        <!-- Contenido principal -->
+                        <div style="padding: 40px 30px;">
+                            <div style="text-align: center; margin-bottom: 30px;">
+                                <!-- Icono de usuario -->
+                                <div style="width: 80px; height: 80px; background: linear-gradient(135deg, #28a745 0%, #20c997 100%); border-radius: 50%; margin: 0 auto 20px; display: flex; align-items: center; justify-content: center;">
+                                    <span style="color: white; font-size: 36px;">👤</span>
+                                </div>
+                            </div>
+                            
+                            <h3 style="color: #2c3e50; font-size: 24px; text-align: center; margin-bottom: 20px; font-weight: 600;">¡Hola {customer.nombre if hasattr(customer, 'nombre') else customer}!</h3>
+                            
+                            <p style="color: #5a6c7d; font-size: 16px; line-height: 1.6; text-align: center; margin-bottom: 25px;">
+                                ¡Bienvenido a <strong>Berserker</strong>! Has sido registrado exitosamente en nuestra plataforma. 
+                                Si quieres disfrutar de nuestros servicios premium y desbloquear todo tu potencial, 
+                                te invitamos a explorar todas las funcionalidades que tenemos preparadas para ti.
+                            </p>
+                            
+                            <!-- Botón principal -->
+                            <div style="text-align: center; margin: 35px 0;">
+                                <a href="https://berserker.com" 
+                                   style="display: inline-block; background: linear-gradient(135deg, #28a745 0%, #20c997 100%); 
+                                          color: #ffffff; text-decoration: none; padding: 15px 35px; 
+                                          border-radius: 8px; font-weight: 600; font-size: 16px; 
+                                          box-shadow: 0 4px 12px rgba(40, 167, 69, 0.3);
+                                          transition: transform 0.2s;">
+                                    Comenzar ahora
+                                </a>
+                            </div>
+                            
+                            
+                            <p style="color: #5a6c7d; font-size: 14px; text-align: center; margin: 30px 0 10px;">
+                                Si tienes alguna pregunta, no dudes en 
+                                <a href="mailto:soporte@berserker.com" style="color: #28a745; text-decoration: none;">contactarnos</a>. 
+                                Siempre estamos felices de ayudar.
+                            </p>
+                        </div>
+                        
+                        <!-- Footer -->
+                        <div style="background-color: #2c3e50; padding: 30px 20px; text-align: center;">
+                            <p style="color: #ecf0f1; margin: 0 0 15px; font-size: 16px; font-weight: 500;">
+                                ¡Saludos!<br>
+                                <span style="color: #20c997;">El equipo de Berserker</span>
+                            </p>
+                            
+                            <!-- Enlaces del footer -->
+                            <div style="margin: 20px 0;">
+                                <a href="https://berserker.com/privacidad" style="color: #95a5a6; text-decoration: none; margin: 0 15px; font-size: 12px;">Política de Privacidad</a>
+                                <span style="color: #95a5a6;">•</span>
+                                <a href="https://berserker.com/contacto" style="color: #95a5a6; text-decoration: none; margin: 0 15px; font-size: 12px;">Contáctanos</a>
+                                <span style="color: #95a5a6;">•</span>
+                                <a href="https://berserker.com/blog" style="color: #95a5a6; text-decoration: none; margin: 0 15px; font-size: 12px;">Blog</a>
+                            </div>
+                            
+                            <!-- Redes sociales -->
+                            <div style="margin: 20px 0;">
+                                <a href="#" style="display: inline-block; margin: 0 10px; width: 36px; height: 36px; background-color: #3b5998; border-radius: 50%; text-align: center; line-height: 36px; color: white; text-decoration: none;">f</a>
+                                <a href="#" style="display: inline-block; margin: 0 10px; width: 36px; height: 36px; background-color: #0077b5; border-radius: 50%; text-align: center; line-height: 36px; color: white; text-decoration: none;">in</a>
+                                <a href="#" style="display: inline-block; margin: 0 10px; width: 36px; height: 36px; background-color: #1da1f2; border-radius: 50%; text-align: center; line-height: 36px; color: white; text-decoration: none;">@</a>
+                            </div>
+                            
+                            <p style="color: #95a5a6; font-size: 12px; margin: 20px 0 0; line-height: 1.4;">
+                                Copyright © 2025 Berserker. Todos los derechos reservados.<br>
+                                Soledad,Atlantico, Colombia.<br>
+                            </p>
+                            
+                            <!-- Logo pequeño del footer -->
+                            <div style="margin-top: 20px;">
+                                <span style="color: #20c997; font-size: 18px; font-weight: 700;">⚡ BERSERKER</span>
+                            </div>
+                        </div>
+                    </div>
                 </div>
-              </body>
+            </body>
             </html>
             """
             try:

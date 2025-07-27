@@ -18,4 +18,5 @@ urlpatterns = [
     path('invoice-detail/<int:invoice_id>/', views.invoice_detail_ajax, name='invoice_detail_ajax'),
     path('anular-factura/<int:invoice_id>/', views.cancel_invoice_ajax, name='cancel_invoice_ajax'),
     path('invoice/pdf-cancel/<int:invoice_id>/', views.canceled_invoice_pdf_view, name='canceled_invoice_pdf'),
+    path('invoice/send/<int:invoice_id>/', views.send_invoice_simple, name='send_invoice'),
 ]

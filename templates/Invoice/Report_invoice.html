@@ -180,8 +180,9 @@
                                     <th>Cliente</th>
                                     <th>Total</th>
                                     <th>Estado</th>
-                                    <th>Descargar Factura</th>
-                                    <th>Cuota por pagar</th>
+                                    <th>Acciones</th>
+                                    <th>Pagos</th>
+                                    <th>Enviar</th>
                                 </tr>
                                     <tr>
                                         <th><input type="text" placeholder="Buscar Fecha" class="form-control form-control-sm" /></th>
@@ -189,6 +190,7 @@
                                         <th><input type="text" placeholder="Buscar Cliente" class="form-control form-control-sm" /></th>
                                         <th><input type="text" placeholder="Buscar Total" class="form-control form-control-sm" /></th>
                                         <th><input type="text" placeholder="Buscar Estado" class="form-control form-control-sm" /></th>
+                                        <th></th>
                                         <th></th>
                                         <th></th>
                                     </tr> 
@@ -211,7 +213,9 @@
                                                 <span class="badge bg-secondary">Anulada</span>
                                             {% endif %}
                                         </td>
-                                        <td><a href="{% url 'invoice_pdf' invoice.id %}" class="btn btn-outline-danger" download>Descargar</a></td>
+                                        <td>
+                                            <a href="{% url 'invoice_pdf' invoice.id %}" class="btn btn-outline-danger" download>Descargar</a>
+                                        </td>
                                         <td>
                                             {% if invoice.payment_method == 'credit' and invoice.has_unpaid_quotas %}
                                                 <a href="{% url 'payment_quota_customer' %}?customer={{ invoice.customer_id }}"
@@ -221,6 +225,15 @@
                                             {% else %}
                                                 <span><i class="bi bi-bookmark-check-fill"></i> Pago completado</span>
                                             {% endif %}
+                                        </td>
+                                        <td>
+                                            <form>
+                                                {% csrf_token %}
+                                                <button class="btn btn-outline-success btn-sm" 
+                                                        onclick="sendInvoiceEmail({{ invoice.id }}, '{{ invoice.customer_full_name }}', '{{ invoice.customer_email|default:"" }}')">
+                                                    <i class="bi bi-send"></i>
+                                                </button>
+                                            </form>
                                         </td>
                                     </tr>
                                 {% endfor %}
@@ -347,6 +360,120 @@ document.querySelector('.see-details-btn').addEventListener('click', function (e
     const iframeUrl = `/invoice/factura-preview/${invoiceId}/`;
     document.getElementById('invoicePreviewIframe').src = iframeUrl;
     new bootstrap.Modal(document.getElementById('previewInvoiceModal')).show();
+});
+function sendInvoiceEmail(invoiceId, customerName, customerEmail) {
+    console.log('🚀 Iniciando envío de factura:', { invoiceId, customerName, customerEmail });
+    
+    // Verificar email
+    if (!customerEmail) {
+        alert('❌ El cliente no tiene un correo electrónico registrado.');
+        return;
+    }
+    
+    // Confirmar envío
+    if (!confirm(`📧 ¿Enviar factura a ${customerName}?\n\nEmail: ${customerEmail}`)) {
+        return;
+    }
+    
+    // UI feedback
+    const button = event.target.closest('button');
+    const originalHTML = button.innerHTML;
+    button.disabled = true;
+    button.innerHTML = '<i class="bi bi-hourglass-split"></i> Enviando...';
+    
+    // Timeout del cliente (60 segundos)
+    const timeoutId = setTimeout(() => {
+        console.log('⏰ Timeout del cliente alcanzado');
+        button.disabled = false;
+        button.innerHTML = originalHTML;
+        alert('❌ La operación está tomando demasiado tiempo.\n\nPosibles causas:\n• Problema con la generación del PDF\n• Error en configuración de email\n• Problema de conexión\n\nRevise la consola del servidor para más detalles.');
+    }, 60000); // 60 segundos
+    
+    // Preparar datos
+    const formData = new FormData();
+    const csrfToken = document.querySelector('[name=csrfmiddlewaretoken]')?.value;
+    
+    if (!csrfToken) {
+        clearTimeout(timeoutId);
+        button.disabled = false;
+        button.innerHTML = originalHTML;
+        alert('❌ Token CSRF no encontrado. Recargue la página.');
+        return;
+    }
+    
+    formData.append('csrfmiddlewaretoken', csrfToken);
+    
+    console.log('📡 Enviando petición a:', `/invoice/send/${invoiceId}/`);
+    console.log('🔑 CSRF Token:', csrfToken.substring(0, 10) + '...');
+    
+    // Realizar petición con timeout
+    const controller = new AbortController();
+    const timeoutSignal = setTimeout(() => controller.abort(), 55000); 
+    
+    fetch(`/invoice/invoice/send/${invoiceId}/`, {
+        method: 'POST',
+        body: formData,
+        headers: {
+            'X-Requested-With': 'XMLHttpRequest',
+        },
+        signal: controller.signal
+    })
+    .then(response => {
+        clearTimeout(timeoutSignal);
+        console.log('📡 Respuesta recibida:', response.status, response.statusText);
+        
+        if (!response.ok) {
+            throw new Error(`HTTP ${response.status}: ${response.statusText}`);
+        }
+        
+        return response.json();
+    })
+    .then(data => {
+        console.log('📋 Datos recibidos:', data);
+        
+        if (data.success) {
+            alert('✅ ' + data.message);
+            console.log('✅ Factura enviada correctamente');
+        } else {
+            alert('❌ ' + data.message);
+            console.error('❌ Error del servidor:', data.message);
+        }
+    })
+    .catch(error => {
+        clearTimeout(timeoutSignal);
+        console.error('❌ Error completo:', error);
+        
+        let errorMessage = 'Error desconocido';
+        
+        if (error.name === 'AbortError') {
+            errorMessage = 'La operación fue cancelada por timeout (55s).\n\nRevise:\n• Configuración de email\n• Generación de PDF\n• Logs del servidor';
+        } else if (error.message.includes('HTTP 404')) {
+            errorMessage = 'URL no encontrada. Verifique:\n• urls.py está configurado\n• La vista existe\n• El nombre de la URL es correcto';
+        } else if (error.message.includes('HTTP 500')) {
+            errorMessage = 'Error interno del servidor.\n\nRevise los logs de Django para más detalles.';
+        } else if (error.message.includes('HTTP 403')) {
+            errorMessage = 'Error de permisos.\n\nPosibles causas:\n• Token CSRF inválido\n• Usuario no autenticado';
+        } else if (error.message.includes('NetworkError') || error.message.includes('Failed to fetch')) {
+            errorMessage = 'Error de red.\n\nVerifique:\n• Conexión a internet\n• Servidor Django ejecutándose\n• URL correcta';
+        }
+        
+        alert('❌ ' + errorMessage);
+    })
+    .finally(() => {
+        clearTimeout(timeoutId);
+        clearTimeout(timeoutSignal);
+        // Restaurar botón
+        button.disabled = false;
+        button.innerHTML = originalHTML;
+        console.log('🔄 Proceso completado');
+    });
+}
+
+// Debug inicial
+document.addEventListener('DOMContentLoaded', function() {
+    const csrfToken = document.querySelector('[name=csrfmiddlewaretoken]');
+    console.log('🔑 CSRF Token encontrado:', csrfToken ? '✅' : '❌');
+    console.log('🌐 URL base:', window.location.origin);
 });
 </script>
 {% endblock %}

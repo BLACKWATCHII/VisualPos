@@ -4,12 +4,12 @@ const path = require('path');
 
 (async () => {
     const args = process.argv.slice(2);
-    const inputPath = args[0];  
+    const inputPath = args[0];
     const outputPath = args[1];
 
     const browser = await puppeteer.launch({
         headless: true,
-        args: ['--no-sandbox']
+        args: ['--no-sandbox', '--disable-setuid-sandbox'],
     });
 
     const page = await browser.newPage();
@@ -20,7 +20,7 @@ const path = require('path');
         path: outputPath,
         format: 'A4',
         printBackground: true,
-        margin: { top: '20px', bottom: '20px', left: '20px', right: '20px' }
+        margin: { top: '20px', bottom: '20px', left: '20px', right: '20px' },
     });
 
     await browser.close();
