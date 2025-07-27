@@ -205,9 +205,9 @@
                                             <td>
                                                 {% if invoice.status == 'Pagada' %}
                                                     <span class="badge bg-success">Pagada</span>
-                                                {% elif invoice.status == 'pending' %}
+                                                {% elif invoice.status == 'Pendiente' %}
                                                     <span class="badge bg-danger text-dark">Pendiente</span>
-                                                {% elif invoice.status == 'credit' %}
+                                                {% elif invoice.status == 'Credito' %}
                                                     <span class="badge bg-warning">Crédito</span>
                                                 {% else %} 
                                                     <span class="badge bg-secondary">Anulada</span>
@@ -217,7 +217,7 @@
                                                 <a href="{% url 'invoice_pdf' invoice.id %}" class="btn btn-outline-danger" download>Descargar</a>
                                             </td>
                                             <td>
-                                                {% if invoice.payment_method == 'credit' and invoice.has_unpaid_quotas %}
+                                                {% if invoice.payment_method == 'Credito' and invoice.has_unpaid_quotas %}
                                                     <a href="{% url 'payment_quota_customer' %}?customer={{ invoice.customer_id }}"
                                                     class="btn btn-outline-success" title="Ver cuotas del cliente">
                                                         <i class="bi bi-credit-card-fill"></i>
