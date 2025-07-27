@@ -195,49 +195,60 @@
                                         <th></th>
                                     </tr> 
                             </thead>
-                            <tbody>
-                                {% for invoice in invoices %}
-                                    <tr onclick="showDetails('{{invoice.customer_full_name }}', '#{{ invoice.invoice_number }}', '{{ invoice.quotas }}', '{{ invoice.total }}', '{{ invoice.date }}', '{{ invoice.id }}')">
-                                        <td class="invoice-date">{{ invoice.date }}</td>
-                                        <td>#{{ invoice.invoice_number }}</td>
-                                        <td>{{ invoice.customer_full_name }}</td>
-                                        <td>${{ invoice.total|intcomma }}</td>
-                                        <td>
-                                            {% if invoice.status == 'Pagada' %}
-                                                <span class="badge bg-success">Pagada</span>
-                                            {% elif invoice.status == 'pending' %}
-                                                <span class="badge bg-danger text-dark">Pendiente</span>
-                                            {% elif invoice.status == 'credit' %}
-                                                <span class="badge bg-warning">Crédito</span>
-                                            {% else %} 
-                                                <span class="badge bg-secondary">Anulada</span>
-                                            {% endif %}
-                                        </td>
-                                        <td>
-                                            <a href="{% url 'invoice_pdf' invoice.id %}" class="btn btn-outline-danger" download>Descargar</a>
-                                        </td>
-                                        <td>
-                                            {% if invoice.payment_method == 'credit' and invoice.has_unpaid_quotas %}
-                                                <a href="{% url 'payment_quota_customer' %}?customer={{ invoice.customer_id }}"
-                                                class="btn btn-outline-success" title="Ver cuotas del cliente">
-                                                    <i class="bi bi-credit-card-fill"></i>
-                                                </a>
-                                            {% else %}
-                                                <span><i class="bi bi-bookmark-check-fill"></i> Pago completado</span>
-                                            {% endif %}
-                                        </td>
-                                        <td>
-                                            <form>
-                                                {% csrf_token %}
-                                                <button class="btn btn-outline-success btn-sm" 
-                                                        onclick="sendInvoiceEmail({{ invoice.id }}, '{{ invoice.customer_full_name }}', '{{ invoice.customer_email|default:"" }}')">
-                                                    <i class="bi bi-send"></i>
-                                                </button>
-                                            </form>
-                                        </td>
-                                    </tr>
-                                {% endfor %}
-                            </tbody>
+                                <tbody>
+                                    {% for invoice in invoices %}
+                                        <tr data-invoice-id="{{ invoice.id }}">
+                                            <td class="invoice-date">{{ invoice.date }}</td>
+                                            <td>#{{ invoice.invoice_number }}</td>
+                                            <td>{{ invoice.customer_full_name }}</td>
+                                            <td>${{ invoice.total|intcomma }}</td>
+                                            <td>
+                                                {% if invoice.status == 'Pagada' %}
+                                                    <span class="badge bg-success">Pagada</span>
+                                                {% elif invoice.status == 'pending' %}
+                                                    <span class="badge bg-danger text-dark">Pendiente</span>
+                                                {% elif invoice.status == 'credit' %}
+                                                    <span class="badge bg-warning">Crédito</span>
+                                                {% else %} 
+                                                    <span class="badge bg-secondary">Anulada</span>
+                                                {% endif %}
+                                            </td>
+                                            <td>
+                                                <a href="{% url 'invoice_pdf' invoice.id %}" class="btn btn-outline-danger" download>Descargar</a>
+                                            </td>
+                                            <td>
+                                                {% if invoice.payment_method == 'credit' and invoice.has_unpaid_quotas %}
+                                                    <a href="{% url 'payment_quota_customer' %}?customer={{ invoice.customer_id }}"
+                                                    class="btn btn-outline-success" title="Ver cuotas del cliente">
+                                                        <i class="bi bi-credit-card-fill"></i>
+                                                    </a>
+                                                {% else %}
+                                                    <span><i class="bi bi-bookmark-check-fill"></i> Pago completado</span>
+                                                {% endif %}
+                                            </td>
+                                            <td>
+                                                <div class="d-flex">
+                                                    <!-- Botón de Preview -->
+                                                    <button class="btn btn-outline-primary btn-sm action-btn" 
+                                                            onclick="showDetails('{{invoice.customer_full_name }}', '#{{ invoice.invoice_number }}', '{{ invoice.quotas }}', '{{ invoice.total }}', '{{ invoice.date }}', '{{ invoice.id }}')">
+                                                        <i class="bi bi-eye"></i>
+                                                    </button>
+                                                    
+                                                    <!-- Botón de Enviar -->
+                                                    <form class="ms-1">
+                                                        {% csrf_token %}
+                                                        <button type="button" 
+                                                            class="btn btn-outline-success btn-sm action-btn"
+                                                            data-url="{% url 'send_invoice' invoice.id %}"
+                                                            onclick="sendInvoiceEmail(this, '{{ invoice.customer_full_name }}', '{{ invoice.customer_email|default:'' }}')">
+                                                            <i class="bi bi-send"></i>
+                                                        </button>
+                                                    </form>
+                                                </div>
+                                            </td>
+                                        </tr>
+                                    {% endfor %}
+                                </tbody>
                         </table>
                     </div>
                 </div>
@@ -353,7 +364,7 @@ $(document).ready(function () {
         });
     };
 });
-document.querySelector('.see-details-btn').addEventListener('click', function (e) {
+document.getElementById('btnPreviewInvoice').addEventListener('click', function (e) {
     e.preventDefault();
     const invoiceNumber = document.getElementById('detailInvoiceNumber').textContent.replace('#', '');
     const invoiceId = this.getAttribute('data-invoice-id');
@@ -361,56 +372,74 @@ document.querySelector('.see-details-btn').addEventListener('click', function (e
     document.getElementById('invoicePreviewIframe').src = iframeUrl;
     new bootstrap.Modal(document.getElementById('previewInvoiceModal')).show();
 });
-function sendInvoiceEmail(invoiceId, customerName, customerEmail) {
-    console.log('🚀 Iniciando envío de factura:', { invoiceId, customerName, customerEmail });
-    
-    // Verificar email
+function sendInvoiceEmail(buttonElement, customerName, customerEmail) {
+    const invoiceUrl = buttonElement.getAttribute('data-url');
+    console.log('🚀 Iniciando envío de factura:', { invoiceUrl, customerName, customerEmail });
+
     if (!customerEmail) {
-        alert('❌ El cliente no tiene un correo electrónico registrado.');
+        Swal.fire({
+            icon: 'error',
+            title: 'Error',
+            text: 'El cliente no tiene un correo electrónico registrado.',
+            confirmButtonColor: '#3085d6'
+        });
         return;
     }
-    
-    // Confirmar envío
-    if (!confirm(`📧 ¿Enviar factura a ${customerName}?\n\nEmail: ${customerEmail}`)) {
-        return;
-    }
-    
-    // UI feedback
-    const button = event.target.closest('button');
+
+    Swal.fire({
+        title: `¿Enviar factura a ${customerName}?`,
+        html: `<b>Email:</b> ${customerEmail}`,
+        icon: 'question',
+        showCancelButton: true,
+        confirmButtonColor: '#3085d6',
+        cancelButtonColor: '#d33',
+        confirmButtonText: 'Sí, enviar',
+        cancelButtonText: 'Cancelar'
+    }).then((result) => {
+        if (result.isConfirmed) {
+            proceedWithEmailSending(invoiceUrl, customerName, customerEmail, buttonElement);
+        }
+    });
+}
+
+function proceedWithEmailSending(url, customerName, customerEmail, button) {
     const originalHTML = button.innerHTML;
     button.disabled = true;
     button.innerHTML = '<i class="bi bi-hourglass-split"></i> Enviando...';
-    
-    // Timeout del cliente (60 segundos)
+
     const timeoutId = setTimeout(() => {
-        console.log('⏰ Timeout del cliente alcanzado');
         button.disabled = false;
         button.innerHTML = originalHTML;
-        alert('❌ La operación está tomando demasiado tiempo.\n\nPosibles causas:\n• Problema con la generación del PDF\n• Error en configuración de email\n• Problema de conexión\n\nRevise la consola del servidor para más detalles.');
-    }, 60000); // 60 segundos
-    
-    // Preparar datos
-    const formData = new FormData();
+        Swal.fire({
+            icon: 'error',
+            title: 'Timeout',
+            html: '❌ La operación está tomando demasiado tiempo.<br><br><b>Posibles causas:</b><br>• Problema con la generación del PDF<br>• Error en configuración de email<br>• Problema de conexión<br><br>Revise la consola del servidor para más detalles.',
+            confirmButtonColor: '#3085d6'
+        });
+    }, 60000);
+
     const csrfToken = document.querySelector('[name=csrfmiddlewaretoken]')?.value;
-    
+
     if (!csrfToken) {
         clearTimeout(timeoutId);
         button.disabled = false;
         button.innerHTML = originalHTML;
-        alert('❌ Token CSRF no encontrado. Recargue la página.');
+        Swal.fire({
+            icon: 'error',
+            title: 'Error de seguridad',
+            text: 'Token CSRF no encontrado. Recargue la página.',
+            confirmButtonColor: '#3085d6'
+        });
         return;
     }
-    
+
+    const formData = new FormData();
     formData.append('csrfmiddlewaretoken', csrfToken);
-    
-    console.log('📡 Enviando petición a:', `/invoice/send/${invoiceId}/`);
-    console.log('🔑 CSRF Token:', csrfToken.substring(0, 10) + '...');
-    
-    // Realizar petición con timeout
+
     const controller = new AbortController();
-    const timeoutSignal = setTimeout(() => controller.abort(), 55000); 
-    
-    fetch(`/invoice/invoice/send/${invoiceId}/`, {
+    const timeoutSignal = setTimeout(() => controller.abort(), 55000);
+
+    fetch(url, {
         method: 'POST',
         body: formData,
         headers: {
@@ -420,60 +449,61 @@ function sendInvoiceEmail(invoiceId, customerName, customerEmail) {
     })
     .then(response => {
         clearTimeout(timeoutSignal);
-        console.log('📡 Respuesta recibida:', response.status, response.statusText);
-        
-        if (!response.ok) {
-            throw new Error(`HTTP ${response.status}: ${response.statusText}`);
-        }
-        
+        if (!response.ok) throw new Error(`HTTP ${response.status}: ${response.statusText}`);
         return response.json();
     })
     .then(data => {
-        console.log('📋 Datos recibidos:', data);
-        
         if (data.success) {
-            alert('✅ ' + data.message);
-            console.log('✅ Factura enviada correctamente');
+            Swal.fire({
+                icon: 'success',
+                title: 'Éxito',
+                text: data.message,
+                confirmButtonColor: '#3085d6'
+            });
         } else {
-            alert('❌ ' + data.message);
-            console.error('❌ Error del servidor:', data.message);
+            Swal.fire({
+                icon: 'error',
+                title: 'Error',
+                text: data.message,
+                confirmButtonColor: '#3085d6'
+            });
         }
     })
     .catch(error => {
         clearTimeout(timeoutSignal);
-        console.error('❌ Error completo:', error);
-        
+        let errorTitle = 'Error';
         let errorMessage = 'Error desconocido';
-        
         if (error.name === 'AbortError') {
-            errorMessage = 'La operación fue cancelada por timeout (55s).\n\nRevise:\n• Configuración de email\n• Generación de PDF\n• Logs del servidor';
+            errorTitle = 'Timeout';
+            errorMessage = 'La operación fue cancelada por timeout (55s).<br><br><b>Revise:</b><br>• Configuración de email<br>• Generación de PDF<br>• Logs del servidor';
         } else if (error.message.includes('HTTP 404')) {
-            errorMessage = 'URL no encontrada. Verifique:\n• urls.py está configurado\n• La vista existe\n• El nombre de la URL es correcto';
+            errorTitle = 'No encontrado';
+            errorMessage = 'URL no encontrada. Verifique la configuración de <code>urls.py</code> y la vista.';
         } else if (error.message.includes('HTTP 500')) {
-            errorMessage = 'Error interno del servidor.\n\nRevise los logs de Django para más detalles.';
+            errorTitle = 'Error del servidor';
+            errorMessage = 'Error interno del servidor. Revise los logs de Django.';
         } else if (error.message.includes('HTTP 403')) {
-            errorMessage = 'Error de permisos.\n\nPosibles causas:\n• Token CSRF inválido\n• Usuario no autenticado';
+            errorTitle = 'Permisos denegados';
+            errorMessage = 'Token CSRF inválido o usuario no autenticado.';
         } else if (error.message.includes('NetworkError') || error.message.includes('Failed to fetch')) {
-            errorMessage = 'Error de red.\n\nVerifique:\n• Conexión a internet\n• Servidor Django ejecutándose\n• URL correcta';
+            errorTitle = 'Error de red';
+            errorMessage = 'No se pudo conectar con el servidor.<br><br>Verifique su conexión o que el servidor esté ejecutándose.';
         }
-        
-        alert('❌ ' + errorMessage);
+
+        Swal.fire({
+            icon: 'error',
+            title: errorTitle,
+            html: errorMessage,
+            confirmButtonColor: '#3085d6'
+        });
     })
     .finally(() => {
         clearTimeout(timeoutId);
         clearTimeout(timeoutSignal);
-        // Restaurar botón
         button.disabled = false;
         button.innerHTML = originalHTML;
-        console.log('🔄 Proceso completado');
     });
 }
 
-// Debug inicial
-document.addEventListener('DOMContentLoaded', function() {
-    const csrfToken = document.querySelector('[name=csrfmiddlewaretoken]');
-    console.log('🔑 CSRF Token encontrado:', csrfToken ? '✅' : '❌');
-    console.log('🌐 URL base:', window.location.origin);
-});
 </script>
 {% endblock %}
