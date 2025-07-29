@@ -26,6 +26,7 @@ import subprocess
 import os
 from functools import wraps
 from customer.sendEmail import send_email_with_attachment
+from dateutil.relativedelta import relativedelta
 
 def render_to_pdf(template_src, context_dict={}):
     template = get_template(template_src)
@@ -132,34 +133,67 @@ def delete_type_transaction(request, transaction_id):
     messages.success(request, "Transacción eliminada correctamente.")
     return redirect('create_transaction')
 
+def calcular_fechas_cuotas(start_date, cuotas, frecuencia):
+    fechas = []
+
+    if frecuencia == 'Mensual':
+        for i in range(cuotas):
+            fechas.append(start_date + relativedelta(months=i))
+
+    elif frecuencia == 'Quincenal':
+        current = start_date
+        for i in range(cuotas):
+            dia = current.day
+            if dia <= 15:
+                quincena = current.replace(day=15)
+                if current.day > 15:
+                    quincena += relativedelta(months=1)
+            else:
+                # Último día del mes
+                quincena = (current.replace(day=1) + relativedelta(months=1)) - timedelta(days=1)
+            fechas.append(quincena)
+            current = quincena + timedelta(days=1)
+
+    elif frecuencia == 'Semanal':
+        for i in range(cuotas):
+            fechas.append(start_date + timedelta(weeks=i))
+
+    else:
+        for i in range(cuotas):
+            fechas.append(start_date + relativedelta(months=i))
+
+    return fechas
+
+
 @login_required
 def create_invoice(request):
-    sub_total = 0  
+    sub_total = 0
     if request.method == 'POST':
         form = InvoiceForm(request.POST)
         if form.is_valid():
             with transaction.atomic():
                 invoice = form.save(commit=False)
 
-                # Datos del POST
+                # Extraer datos del formulario
                 items = request.POST.getlist('item_id')
                 quantities = request.POST.getlist('quantity')
                 prices = request.POST.getlist('price')
 
                 payment_method = request.POST.get('payment_method')
-                status = request.POST.get('status') or 'Pagada'
+                payment_frequency = request.POST.get('payment_frequency')
                 quotas = request.POST.get('quotas')
-                notes = request.POST.get('notes')
                 discount_percent = request.POST.get('discount-percent')
                 transaction_type_id = request.POST.get('transaction_type')
+                notes = request.POST.get('notes')
+                status = request.POST.get('status') or 'Pagada'
 
+                print("frecuencia de pago: " + payment_frequency)
                 # Calcular subtotal
                 sub_total = sum([
                     float(price.replace(',', '').replace('$', ''))
                     for price in prices if price
                 ])
 
-                # Ajustar estado
                 if payment_method == 'Credito':
                     status = 'Credito'
 
@@ -168,8 +202,9 @@ def create_invoice(request):
                 invoice.notes = notes
                 invoice.user = request.user
                 invoice.quotas = int(quotas) if quotas else 0
+                invoice.payment_frequency = payment_frequency  # Guardar frecuencia si el modelo lo permite
 
-                # Calcular total
+                # Calcular total con descuento
                 total = 0
                 for qty, price in zip(quantities, prices):
                     if qty and price:
@@ -184,7 +219,7 @@ def create_invoice(request):
 
                 invoice.total = total
 
-                # Transacción y consecutivo
+                # Relacionar con tipo de transacción y actualizar consecutivo
                 transaction_type = get_object_or_404(TransactionType, id=transaction_type_id)
                 invoice.invoice_number = transaction_type.consecutive
                 invoice.transaction_type = transaction_type
@@ -193,20 +228,22 @@ def create_invoice(request):
 
                 invoice.save()
 
-                # Crear cuotas
+                # Crear cuotas si aplica
                 if payment_method == 'Credito' and invoice.quotas > 1:
-                    quota_amount = invoice.total / invoice.quotas
+                    cuota_valor = invoice.total / invoice.quotas
                     start_date = invoice.date or date.today()
-                    for i in range(invoice.quotas):
+                    fechas = calcular_fechas_cuotas(start_date, invoice.quotas, payment_frequency)
+
+                    for i, fecha in enumerate(fechas):
                         PaymentQuota.objects.create(
                             invoice=invoice,
                             number=i + 1,
-                            amount=quota_amount,
-                            payment_date=start_date + timedelta(days=30 * i),
+                            amount=cuota_valor,
+                            payment_date=fecha,
                             is_paid=False
                         )
 
-                # Crear items de factura
+                # Crear items y actualizar stock
                 for item_id, qty, price in zip(items, quantities, prices):
                     if item_id and qty and price:
                         item = Item.objects.get(id=item_id)
@@ -219,12 +256,17 @@ def create_invoice(request):
                         item.Stock -= int(qty)
                         item.save()
 
+                # Generar PDF si se pidió
                 if request.POST.get('download') == 'pdf':
-                    return render_pdf_with_puppeteer('invoice/receipt_pdf.html', {'invoice': invoice}, filename=f"Factura_{invoice.invoice_number}.pdf")
+                    return render_pdf_with_puppeteer(
+                        'invoice/receipt_pdf.html',
+                        {'invoice': invoice},
+                        filename=f"Factura_{invoice.invoice_number}.pdf"
+                    )
 
                 return redirect('home')
         else:
-            pass 
+            pass  # Puedes agregar manejo de errores aquí si lo deseas
     else:
         form = InvoiceForm()
 
@@ -237,7 +279,6 @@ def create_invoice(request):
         'sub_total': sub_total,
         'transaction_types': transaction_types,
     })
-
 
 @login_required
 def invoices_report(request):

@@ -47,6 +47,20 @@ class Invoice(models.Model):
         on_delete=models.CASCADE,
         related_name='invoices' 
     )
+    
+    payment_frequency = models.CharField(
+    max_length=20,
+        choices=[
+            ('semanal', 'Semanal'),
+            ('quincenal', 'Quincenal'),
+            ('mensual', 'Mensual'),
+            ('personalizable', 'Personalizable')
+        ],
+        default='mensual',
+        blank=True,
+        null=True
+    )
+
     invoice_number = models.IntegerField()
     notes = models.TextField(blank=True, null=True)
     quotas = models.PositiveIntegerField(null=True, blank=True)

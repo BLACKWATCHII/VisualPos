@@ -180,9 +180,8 @@
                                     <th>Cliente</th>
                                     <th>Total</th>
                                     <th>Estado</th>
-                                    <th>Acciones</th>
                                     <th>Pagos</th>
-                                    <th>Enviar</th>
+                                    <th>Acciones</th>
                                 </tr>
                                     <tr>
                                         <th><input type="text" placeholder="Buscar Fecha" class="form-control form-control-sm" /></th>
@@ -190,7 +189,6 @@
                                         <th><input type="text" placeholder="Buscar Cliente" class="form-control form-control-sm" /></th>
                                         <th><input type="text" placeholder="Buscar Total" class="form-control form-control-sm" /></th>
                                         <th><input type="text" placeholder="Buscar Estado" class="form-control form-control-sm" /></th>
-                                        <th></th>
                                         <th></th>
                                         <th></th>
                                     </tr> 
@@ -213,21 +211,28 @@
                                                     <span class="badge bg-secondary">Anulada</span>
                                                 {% endif %}
                                             </td>
-                                            <td>
-                                                <a href="{% url 'invoice_pdf' invoice.id %}" class="btn btn-outline-danger" download>Descargar</a>
-                                            </td>
-                                            <td>
-                                                {% if invoice.payment_method == 'Credito' and invoice.has_unpaid_quotas %}
-                                                    <a href="{% url 'payment_quota_customer' %}?customer={{ invoice.customer_id }}"
-                                                    class="btn btn-outline-success" title="Ver cuotas del cliente">
-                                                        <i class="bi bi-credit-card-fill"></i>
-                                                    </a>
-                                                {% else %}
-                                                    <span><i class="bi bi-bookmark-check-fill"></i> Pago completado</span>
-                                                {% endif %}
-                                            </td>
+                                                <td>
+                                                    {% if invoice.status != 'Anulada' %}
+                                                        {% if invoice.payment_method == 'Credito' and invoice.has_unpaid_quotas %}
+                                                            <a href="{% url 'payment_quota_customer' %}?customer={{ invoice.customer_id }}"
+                                                            class="btn btn-outline-success" title="Ver cuotas del cliente">
+                                                                <i class="bi bi-credit-card-fill"></i>
+                                                            </a>
+                                                        {% else %}
+                                                            <span><i class="bi bi-bookmark-check-fill"></i> Pago completado</span>
+                                                        {% endif %}
+                                                    {% else %}
+                                                        <span>Factura anulada</span>
+                                                    {% endif %}
+                                                </td>
                                             <td>
                                                 <div class="d-flex">
+                                                    <!-- Botón de Descargar PDF -->
+                                                     <button class="btn btn-outline-danger btn-sm action-btn me-1">
+                                                        <a href="{% url 'invoice_pdf' invoice.id %}" download>
+                                                            <i class="bi bi-file-earmark-arrow-down-fill"></i>
+                                                        </a>    
+                                                    </button>
                                                     <!-- Botón de Preview -->
                                                     <button class="btn btn-outline-primary btn-sm action-btn" 
                                                             onclick="showDetails('{{invoice.customer_full_name }}', '#{{ invoice.invoice_number }}', '{{ invoice.quotas }}', '{{ invoice.total }}', '{{ invoice.date }}', '{{ invoice.id }}')">
