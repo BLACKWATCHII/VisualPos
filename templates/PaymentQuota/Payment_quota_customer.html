@@ -31,6 +31,17 @@
             <option value="Todas" {% if request.GET.estado == "Todas" or not request.GET.estado %}selected{% endif %}>Todas</option>
           </select>
         </div>
+          <div class="col-md-4">
+            <label class="form-label">Número de factura</label>
+            <select class="form-select" name="numero_factura">
+              <option value="">Todas las facturas</option>
+              {% for i in invoice %}
+                <option value="{{ i.pk }}" {% if request.GET.numero_factura == i.pk|stringformat:"s" %}selected{% endif %}>
+                  {{ i.invoice_number }}
+                </option>
+              {% endfor %}
+            </select>
+          </div>
         <div class="col-md-4">
           <button type="submit" class="btn btn-primary w-100">Filtrar</button>
         </div>

@@ -214,8 +214,8 @@
                                                 <td>
                                                     {% if invoice.status != 'Anulada' %}
                                                         {% if invoice.payment_method == 'Credito' and invoice.has_unpaid_quotas %}
-                                                            <a href="{% url 'payment_quota_customer' %}?customer={{ invoice.customer_id }}"
-                                                            class="btn btn-outline-success" title="Ver cuotas del cliente">
+                                                            <a href="{% url 'payment_quota_customer' %}?customer={{ invoice.customer_id }}&numero_factura={{ invoice.id }}"
+                                                                class="btn btn-outline-success" title="Ver cuotas del cliente">
                                                                 <i class="bi bi-credit-card-fill"></i>
                                                             </a>
                                                         {% else %}

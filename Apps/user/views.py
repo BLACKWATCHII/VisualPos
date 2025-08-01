@@ -88,7 +88,7 @@ def Dashboard(request):
     Total = Invoice.objects.filter(status='Pagada').aggregate(result=Sum('total'))
     Total_Payment = float(Total.get('result') or 0)
 
-    Total_credit = Invoice.objects.filter(status='credit').aggregate(result=Sum('total'))
+    Total_credit = Invoice.objects.filter(status='Credito').aggregate(result=Sum('total'))
     Total_Payment_credit = float(Total_credit.get('result') or 0)
 
     # Datos para gráficos
@@ -109,7 +109,7 @@ def Dashboard(request):
         'num_total': Total_Payment,
         'dates_clients': json.dumps(dates_clients),
         'counts_clients': json.dumps(counts_clients),
-        'dates_sales': months_sales,  # <-- cambia a meses
+        'dates_sales': months_sales,  
         'totals_sales': totals_sales,
         'products_names': json.dumps(products_names),
         'products_sales': json.dumps(products_sales),
