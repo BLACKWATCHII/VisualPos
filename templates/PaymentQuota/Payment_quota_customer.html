@@ -4,185 +4,612 @@
 {% block title %}Pago de cuotas{% endblock %}
 
 {% block content %}
-<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/5.15.4/css/all.min.css">
-<div class="container py-5 mt-5">
-  <h2 class="fw-bold mb-4">Deudas del cliente</h2>
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+<link href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.10.0/font/bootstrap-icons.css" rel="stylesheet">
 
-  <!-- Filtros -->
-  <div class="card p-4 mb-4" style="border-color: green;">
-    <form method="get">
-      <div class="row g-3 align-items-end">
-        <div class="col-md-4">
-          <label class="form-label">Cliente</label>
-          <select id="customer" name="customer" class="form-select">
-            <option value="">Selecciona cliente</option>
-            {% for c in customer %}
-              <option value="{{ c.pk }}" {% if request.GET.customer == c.pk|stringformat:"s" %}selected{% endif %}>
-                {{ c.name }} {{ c.lastname }}
-              </option>
-            {% endfor %}
-          </select>
-        </div>
-        <div class="col-md-4">
-          <label class="form-label">Estado de la factura</label>
-          <select class="form-select" name="estado">
-            <option value="Pagadas" {% if request.GET.estado == "Pagadas" %}selected{% endif %}>Pagadas</option>
-            <option value="Pendientes" {% if request.GET.estado == "Pendientes" %}selected{% endif %}>Pendientes</option>
-            <option value="Todas" {% if request.GET.estado == "Todas" or not request.GET.estado %}selected{% endif %}>Todas</option>
-          </select>
-        </div>
-          <div class="col-md-4">
-            <label class="form-label">Número de factura</label>
-            <select class="form-select" name="numero_factura">
-              <option value="">Todas las facturas</option>
-              {% for i in invoice %}
-                <option value="{{ i.pk }}" {% if request.GET.numero_factura == i.pk|stringformat:"s" %}selected{% endif %}>
-                  {{ i.invoice_number }}
+<style>
+  :root {
+    --primary-green: #10b981;
+    --dark-green: #047857;
+    --light-green: #d1fae5;
+    --accent-green: #059669;
+    --gradient-bg: linear-gradient(135deg, #10b981 0%, #047857 100%);
+    --card-shadow: 0 10px 30px rgba(16, 185, 129, 0.1);
+    --card-hover-shadow: 0 20px 40px rgba(16, 185, 129, 0.15);
+  }
+
+  body {
+    background: linear-gradient(135deg, #f0fdf4 0%, #ecfdf5 100%);
+    min-height: 100vh;
+  }
+
+  .modern-container {
+    background: rgba(255, 255, 255, 0.95);
+    backdrop-filter: blur(10px);
+    border-radius: 20px;
+    box-shadow: var(--card-shadow);
+    padding: 2rem;
+    margin-top: 2rem;
+    border: 1px solid rgba(16, 185, 129, 0.1);
+  }
+
+  .page-title {
+    background: var(--gradient-bg);
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+    background-clip: text;
+    font-size: 2.5rem;
+    font-weight: 800;
+    margin-bottom: 2rem;
+    text-align: center;
+    position: relative;
+  }
+
+  .page-title::after {
+    content: '';
+    position: absolute;
+    bottom: -10px;
+    left: 50%;
+    transform: translateX(-50%);
+    width: 100px;
+    height: 4px;
+    background: var(--gradient-bg);
+    border-radius: 2px;
+  }
+
+  .filter-card {
+    background: rgba(255, 255, 255, 0.9);
+    border: 2px solid transparent;
+    background-clip: padding-box;
+    border-radius: 15px;
+    box-shadow: var(--card-shadow);
+    position: relative;
+    overflow: hidden;
+    transition: all 0.3s ease;
+  }
+
+  .filter-card::before {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: 0;
+    right: 0;
+    height: 4px;
+    background: var(--gradient-bg);
+  }
+
+  .filter-card:hover {
+    transform: translateY(-2px);
+    box-shadow: var(--card-hover-shadow);
+  }
+
+  .modern-select, .modern-input {
+    border: 2px solid #e5e7eb;
+    border-radius: 12px;
+    padding: 12px 16px;
+    transition: all 0.3s ease;
+    background: rgba(255, 255, 255, 0.9);
+  }
+
+  .modern-select:focus, .modern-input:focus {
+    border-color: var(--primary-green);
+    box-shadow: 0 0 0 3px rgba(16, 185, 129, 0.1);
+    background: white;
+  }
+
+  .modern-btn {
+    background: var(--gradient-bg);
+    border: none;
+    border-radius: 12px;
+    padding: 12px 24px;
+    color: white;
+    font-weight: 600;
+    transition: all 0.3s ease;
+    position: relative;
+    overflow: hidden;
+  }
+
+  .modern-btn::before {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: -100%;
+    width: 100%;
+    height: 100%;
+    background: linear-gradient(90deg, transparent, rgba(255,255,255,0.2), transparent);
+    transition: left 0.5s;
+  }
+
+  .modern-btn:hover::before {
+    left: 100%;
+  }
+
+  .modern-btn:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 10px 25px rgba(16, 185, 129, 0.3);
+  }
+
+  .stats-card {
+    background: rgba(255, 255, 255, 0.95);
+    border-radius: 20px;
+    border: none;
+    box-shadow: var(--card-shadow);
+    transition: all 0.3s ease;
+    position: relative;
+    overflow: hidden;
+  }
+
+  .stats-card::before {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 4px;
+    background: var(--gradient-bg);
+  }
+
+  .stats-card:hover {
+    transform: translateY(-5px);
+    box-shadow: var(--card-hover-shadow);
+  }
+
+  .stats-icon {
+    width: 60px;
+    height: 60px;
+    border-radius: 15px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 24px;
+    background: var(--gradient-bg);
+    color: white;
+    box-shadow: 0 8px 16px rgba(16, 185, 129, 0.3);
+  }
+
+  .stats-number {
+    font-size: 2.5rem;
+    font-weight: 800;
+    background: var(--gradient-bg);
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+    background-clip: text;
+  }
+
+  .modern-table-container {
+    background: rgba(255, 255, 255, 0.95);
+    border-radius: 20px;
+    overflow: hidden;
+    box-shadow: var(--card-shadow);
+    border: none;
+  }
+
+  .modern-table {
+    margin: 0;
+    border: none;
+  }
+
+  .modern-table thead th {
+    background: var(--gradient-bg);
+    color: white;
+    border: none;
+    padding: 20px 16px;
+    font-weight: 600;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+    font-size: 0.9rem;
+  }
+
+  .modern-table tbody tr {
+    border: none;
+    transition: all 0.3s ease;
+  }
+
+  .modern-table tbody tr:hover {
+    background: var(--light-green);
+    transform: scale(1.01);
+  }
+
+  .modern-table tbody td {
+    padding: 20px 16px;
+    border: none;
+    vertical-align: middle;
+    border-bottom: 1px solid rgba(16, 185, 129, 0.1);
+  }
+
+  .modern-badge {
+    padding: 8px 16px;
+    border-radius: 50px;
+    font-weight: 600;
+    font-size: 0.85rem;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+  }
+
+  .badge-pending {
+    background: linear-gradient(135deg, #fbbf24, #f59e0b);
+    color: white;
+  }
+
+  .badge-paid {
+    background: var(--gradient-bg);
+    color: white;
+  }
+
+  .action-btn {
+    width: 40px;
+    height: 40px;
+    border-radius: 12px;
+    border: none;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    transition: all 0.3s ease;
+    font-size: 16px;
+  }
+
+  .action-btn-success {
+    background: var(--gradient-bg);
+    color: white;
+  }
+
+  .action-btn-danger {
+    background: linear-gradient(135deg, #ef4444, #dc2626);
+    color: white;
+  }
+
+  .action-btn:hover {
+    transform: translateY(-3px);
+    box-shadow: 0 8px 20px rgba(0,0,0,0.2);
+  }
+
+  .modern-modal .modal-content {
+    border: none;
+    border-radius: 20px;
+    box-shadow: 0 25px 50px rgba(0,0,0,0.15);
+    overflow: hidden;
+  }
+
+  .modern-modal .modal-header {
+    background: var(--gradient-bg);
+    color: white;
+    border: none;
+    padding: 24px;
+  }
+
+  .modern-modal .modal-title {
+    font-weight: 700;
+    font-size: 1.25rem;
+  }
+
+  .modern-modal .btn-close {
+    filter: invert(1);
+    opacity: 0.8;
+  }
+
+  .modern-modal .modal-body {
+    padding: 24px;
+    background: rgba(240, 253, 244, 0.3);
+  }
+
+  .modern-modal .modal-footer {
+    border: none;
+    padding: 24px;
+    background: white;
+  }
+
+  .info-label {
+    font-weight: 600;
+    color: var(--dark-green);
+    margin-bottom: 8px;
+  }
+
+  .info-value {
+    background: rgba(16, 185, 129, 0.1);
+    padding: 12px 16px;
+    border-radius: 10px;
+    font-weight: 600;
+    color: var(--dark-green);
+    border-left: 4px solid var(--primary-green);
+  }
+
+  .floating-animation {
+    animation: float 6s ease-in-out infinite;
+  }
+
+  @keyframes float {
+    0%, 100% { transform: translateY(0px); }
+    50% { transform: translateY(-10px); }
+  }
+
+  .pulse-animation {
+    animation: pulse 2s infinite;
+  }
+
+  @keyframes pulse {
+    0% { box-shadow: 0 0 0 0 rgba(16, 185, 129, 0.4); }
+    70% { box-shadow: 0 0 0 20px rgba(16, 185, 129, 0); }
+    100% { box-shadow: 0 0 0 0 rgba(16, 185, 129, 0); }
+  }
+
+  .no-data {
+    text-align: center;
+    padding: 60px 20px;
+    color: #6b7280;
+  }
+
+  .no-data i {
+    font-size: 4rem;
+    margin-bottom: 1rem;
+    opacity: 0.5;
+  }
+
+  /* Estilos específicos para estadísticas con colores diferenciados */
+  .stats-vencidas .stats-icon {
+    background: linear-gradient(135deg, #ef4444, #dc2626);
+  }
+
+  .stats-vencidas .stats-number {
+    background: linear-gradient(135deg, #ef4444, #dc2626);
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+    background-clip: text;
+  }
+
+  .stats-pendientes .stats-icon {
+    background: linear-gradient(135deg, #f59e0b, #d97706);
+  }
+
+  .stats-pendientes .stats-number {
+    background: linear-gradient(135deg, #f59e0b, #d97706);
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+    background-clip: text;
+  }
+</style>
+
+<div class="container py-5">
+  <div class="modern-container">
+    <h2 class="page-title">Deudas del Cliente</h2>
+
+    <!-- Filtros modernos con filtro adicional -->
+    <div class="filter-card p-4 mb-5">
+      <form method="get">
+        <div class="row g-4 align-items-end">
+          <div class="col-md-3">
+            <label class="form-label info-label">
+              <i class="fas fa-user me-2"></i>Cliente
+            </label>
+            <select id="customer" name="customer" class="form-select modern-select">
+              <option value="">Selecciona cliente</option>
+              {% for c in customer %}
+                <option value="{{ c.pk }}" {% if request.GET.customer == c.pk|stringformat:"s" %}selected{% endif %}>
+                  {{ c.name }} {{ c.lastname }}
                 </option>
               {% endfor %}
             </select>
           </div>
-        <div class="col-md-4">
-          <button type="submit" class="btn btn-primary w-100">Filtrar</button>
+          <div class="col-md-3">
+            <label class="form-label info-label">
+              <i class="fas fa-filter me-2"></i>Estado de la factura
+            </label>
+            <select class="form-select modern-select" name="estado">
+              <option value="Pagadas" {% if request.GET.estado == "Pagadas" %}selected{% endif %}>Pagadas</option>
+              <option value="Pendientes" {% if request.GET.estado == "Pendientes" %}selected{% endif %}>Pendientes</option>
+              <option value="Todas" {% if request.GET.estado == "Todas" or not request.GET.estado %}selected{% endif %}>Todas</option>
+            </select>
+          </div>
+          <div class="col-md-3">
+            <label class="form-label info-label">
+              <i class="fas fa-receipt me-2"></i>Número de factura
+            </label>
+            <select class="form-select modern-select" name="numero_factura">
+              <option value="">Todas las facturas</option>
+              {% for i in invoice %}
+                <option value="{{ i.pk }}" {% if request.GET.numero_factura == i.pk|stringformat:"s" %}selected{% endif %}>
+                  #{{ i.invoice_number }}
+                </option>
+              {% endfor %}
+            </select>
+          </div>
+          <div class="col-md-3">
+            <button type="submit" class="btn modern-btn w-100 pulse-animation">
+              <i class="fas fa-search me-2"></i>Filtrar Resultados
+            </button>
+          </div>
         </div>
-      </div>
-    </form>
-  </div>
+      </form>
+    </div>
 
-  <!-- Resumen -->
-  <div class="row mb-4">
-    <div class="col-md-4 mb-3">
-      <div class="card border-0 shadow-sm bg-danger bg-opacity-10">
-        <div class="card-body d-flex align-items-center">
-          <div class="me-3 text-danger fs-4">
-            <i class="bi bi-calendar-event-fill"></i>
+    <!-- Estadísticas mejoradas -->
+    <div class="row mb-5">
+      <div class="col-md-4 mb-4">
+        <div class="stats-card stats-vencidas floating-animation" style="animation-delay: 0s;">
+          <div class="card-body p-4 d-flex align-items-center">
+            <div class="stats-icon me-4">
+              <i class="fas fa-exclamation-triangle"></i>
+            </div>
+            <div>
+              <div class="text-muted fw-semibold mb-1">Facturas Vencidas</div>
+              <div class="stats-number">{{ count_quota_expired }}</div>
+              <small class="text-danger fw-semibold">Requieren atención urgente</small>
+            </div>
           </div>
-          <div>
-            <div class="text-muted">Facturas vencidas</div>
-            <div class="fs-4 fw-bold">{{ count_quota_expired }}</div>
+        </div>
+      </div>
+      <div class="col-md-4 mb-4">
+        <div class="stats-card stats-pendientes floating-animation" style="animation-delay: 0.2s;">
+          <div class="card-body p-4 d-flex align-items-center">
+            <div class="stats-icon me-4">
+              <i class="fas fa-clock"></i>
+            </div>
+            <div>
+              <div class="text-muted fw-semibold mb-1">Cuotas Pendientes</div>
+              <div class="stats-number">{{ count_quota_unpaid }}</div>
+              <small class="text-warning fw-semibold">En proceso de pago</small>
+            </div>
+          </div>
+        </div>
+      </div>
+      <div class="col-md-4 mb-4">
+        <div class="stats-card floating-animation" style="animation-delay: 0.4s;">
+          <div class="card-body p-4 d-flex align-items-center">
+            <div class="stats-icon me-4">
+              <i class="fas fa-check-circle"></i>
+            </div>
+            <div>
+              <div class="text-muted fw-semibold mb-1">Cuotas Pagadas</div>
+              <div class="stats-number">{{ count_quota_paid }}</div>
+              <small class="text-success fw-semibold">Completadas exitosamente</small>
+            </div>
           </div>
         </div>
       </div>
     </div>
-    <div class="col-md-4 mb-3">
-      <div class="card border-0 shadow-sm bg-warning bg-opacity-25">
-          <div class="card-body d-flex align-items-center">
-          <div class="me-3 text-warning fs-4">
-            <i class="bi bi-file-earmark-text-fill"></i>
-          </div>
-          <div>
-            <div class="text-muted">Cuotas pendientes</div>
-            <div class="fs-4 fw-bold">{{ count_quota_unpaid }}</div>
-          </div>
-        </div>
-      </div>
-    </div>
-    <div class="col-md-4 mb-3">
-      <div class="card border-0 shadow-sm bg-primary bg-opacity-10">
-        <div class="card-body d-flex align-items-center">
-          <div class="me-3 text-primary fs-4">
-            <i class="bi bi-check2-square"></i>
-          </div>
-          <div>
-            <div class="text-muted">Cuotas pagadas</div>
-            <div class="fs-4 fw-bold">{{ count_quota_paid }}</div>
-          </div>
-        </div>
-      </div>
-    </div>
-  </div>
 
-  <!-- Tabla -->
-  <div class="card shadow-sm" style="border-color: green;">
-    <div class="card-body p-0">
-      <table class="table table-hover mb-0" >
-        <thead class="table-light" style="border-color: green;">
+    <!-- Tabla moderna -->
+    <div class="modern-table-container">
+      <table class="table modern-table">
+        <thead>
           <tr>
-            <th>Factura</th>
-            <th>Cliente</th>
-            <th>Fecha de vencimiento</th>
-            <th>Cantidad</th>
-            <th>Estado</th>
-            <th>Acciones</th>
+            <th><i class="fas fa-receipt me-2"></i>Factura</th>
+            <th><i class="fas fa-user me-2"></i>Cliente</th>
+            <th><i class="fas fa-calendar me-2"></i>Vencimiento</th>
+            <th><i class="fas fa-dollar-sign me-2"></i>Cantidad</th>
+            <th><i class="fas fa-info-circle me-2"></i>Estado</th>
+            <th><i class="fas fa-cogs me-2"></i>Acciones</th>
           </tr>
         </thead>
-            <tbody> 
-              {% if credits %}
-                {% for credit in credits %}
-                  <tr>
-                    <td>#{{ credit.invoice.invoice_number }}</td>
-                    <td>{{ credit.invoice.customer.name }} {{ credit.invoice.customer.lastname }}</td>
-                    <td>{{ credit.payment_date }}</td>
-                    <td>{{ credit.balance|floatformat:2 }}</td>
-                    <td>
-                      {% if not credit.is_paid %}
-                        <span class="badge bg-warning text-dark">Pendiente</span>
-                      {% else %}
-                        <span class="badge bg-success">Pagada</span>
-                      {% endif %}
-                    </td>
-                    <td>
-                      {% if not credit.is_paid %}
-                        <button
-                          type="button"
-                          class="btn btn-sm btn-success"
-                          data-bs-toggle="modal"
-                          data-bs-target="#payModal"
-                          data-id="{{ credit.id }}"
-                          data-balance="{{ credit.balance }}"
-                          data-date="{{ credit.payment_date }}"
-                          data-invoice="{{ credit.invoice.invoice_number }}"
-                          data-url="{% url 'pay_quota' credit.id %}"
-                        >
-                          <i class="bi-check2-square"></i>
-                        </button>
-                      {% else %}
-                        <a href="{% url 'pay_quota' credit.id %}" class="btn btn-sm btn-danger">
-                          <i class="fa-solid fa-file-pdf"></i>
-                        </a>
-                      {% endif %}
-                    </td>
-                  </tr>
-                {% endfor %}
-              {% else %}
-                <tr><td colspan="5" class="text-center">No hay cuotas</td></tr>
-              {% endif %}
-            </tbody>
+        <tbody>
+          {% if credits %}
+            {% for credit in credits %}
+              <tr>
+                <td class="fw-bold text-primary">#{{ credit.invoice.invoice_number }}</td>
+                <td>
+                  <div class="d-flex align-items-center">
+                    <div class="bg-success bg-opacity-10 text-success rounded-circle p-2 me-3">
+                      <i class="fas fa-user-circle"></i>
+                    </div>
+                    <div>
+                      <div class="fw-semibold">{{ credit.invoice.customer.name }}</div>
+                      <small class="text-muted">{{ credit.invoice.customer.lastname }}</small>
+                    </div>
+                  </div>
+                </td>
+                <td>
+                  <div class="d-flex align-items-center">
+                    <i class="fas fa-calendar-alt text-primary me-2"></i>
+                    <span class="fw-medium">{{ credit.payment_date }}</span>
+                  </div>
+                </td>
+                <td>
+                  <div class="d-flex align-items-center">
+                    <i class="fas fa-dollar-sign text-success me-1"></i>
+                    <span class="fw-bold text-success fs-5">{{ credit.balance|floatformat:2 }}</span>
+                  </div>
+                </td>
+                <td>
+                  {% if not credit.is_paid %}
+                    <span class="modern-badge badge-pending">
+                      <i class="fas fa-clock me-1"></i>Pendiente
+                    </span>
+                  {% else %}
+                    <span class="modern-badge badge-paid">
+                      <i class="fas fa-check me-1"></i>Pagada
+                    </span>
+                  {% endif %}
+                </td>
+                <td>
+                  {% if not credit.is_paid %}
+                    <button
+                      type="button"
+                      class="action-btn action-btn-success"
+                      data-bs-toggle="modal"
+                      data-bs-target="#payModal"
+                      data-id="{{ credit.id }}"
+                      data-balance="{{ credit.balance }}"
+                      data-date="{{ credit.payment_date }}"
+                      data-invoice="{{ credit.invoice.invoice_number }}"
+                      data-url="{% url 'pay_quota' credit.id %}"
+                      title="Procesar Pago"
+                    >
+                      <i class="fas fa-credit-card"></i>
+                    </button>
+                  {% else %}
+                    <a href="{% url 'pay_quota' credit.id %}" class="action-btn action-btn-danger" title="Descargar PDF">
+                      <i class="fas fa-file-pdf"></i>
+                    </a>
+                  {% endif %}
+                </td>
+              </tr>
+            {% endfor %}
+          {% else %}
+            <tr>
+              <td colspan="6" class="no-data">
+                <i class="fas fa-search"></i>
+                <h5>No hay cuotas disponibles</h5>
+                <p>No se encontraron registros con los filtros aplicados</p>
+              </td>
+            </tr>
+          {% endif %}
+        </tbody>
       </table>
     </div>
   </div>
+</div>
 
-      <div class="modal fade" id="payModal" tabindex="-1" aria-labelledby="payModalLabel" aria-hidden="true">
-        <div class="modal-dialog">
-          <div class="modal-content border-success">
-            <div class="modal-header">
-              <h5 class="modal-title" id="payModalLabel">Confirmar Pago de Cuota</h5>
-              <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Cerrar"></button>
-            </div>
-            <div class="modal-body">
-              <p><strong>Factura:</strong> <span id="modalInvoice"></span></p>
-              <p><strong>Fecha de vencimiento:</strong> <span id="modalDate"></span></p>
-              <div class="mb-3">
-                <label for="modalPayAmount" class="form-label">Importe a pagar</label>
-                <input type="number" step="0.01" min="0.01" id="modalPayAmount" name="amount" class="form-control">
-                <small class="form-text text-muted">Saldo restante: $<span id="modalBalance"></span></small>
-              </div>
-            </div>
-            <div class="modal-footer">
-              <form id="confirmPayForm" method="post" target="_blank">
-                {% csrf_token %}
-                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancelar</button>
-                <button id="confirmPayButton" type="button" class="btn btn-success">Confirmar Pago</button>
-              </form>
-            </div>
-          </div>
+<!-- Modal moderno -->
+<div class="modal fade modern-modal" id="payModal" tabindex="-1" aria-labelledby="payModalLabel" aria-hidden="true">
+  <div class="modal-dialog modal-dialog-centered">
+    <div class="modal-content">
+      <div class="modal-header">
+        <h5 class="modal-title" id="payModalLabel">
+          <i class="fas fa-credit-card me-2"></i>Confirmar Pago de Cuota
+        </h5>
+        <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Cerrar"></button>
+      </div>
+      <div class="modal-body">
+        <div class="mb-4">
+          <label class="info-label">
+            <i class="fas fa-receipt me-2"></i>Factura
+          </label>
+          <div class="info-value" id="modalInvoice"></div>
+        </div>
+        <div class="mb-4">
+          <label class="info-label">
+            <i class="fas fa-calendar-alt me-2"></i>Fecha de vencimiento
+          </label>
+          <div class="info-value" id="modalDate"></div>
+        </div>
+        <div class="mb-3">
+          <label for="modalPayAmount" class="info-label">
+            <i class="fas fa-dollar-sign me-2"></i>Importe a pagar
+          </label>
+          <input type="number" step="0.01" min="0.01" id="modalPayAmount" name="amount" class="form-control modern-input">
+          <small class="form-text text-muted mt-2">
+            <i class="fas fa-info-circle me-1"></i>
+            Saldo restante: <strong class="text-success">$<span id="modalBalance"></span></strong>
+          </small>
         </div>
       </div>
-        <form id="confirmPayForm">
-          <input type="hidden" name="csrfmiddlewaretoken" value="{{ csrf_token }}">
+      <div class="modal-footer">
+        <form id="confirmPayForm" method="post" target="_blank">
+          {% csrf_token %}
+          <button type="button" class="btn btn-light me-3" data-bs-dismiss="modal">
+            <i class="fas fa-times me-2"></i>Cancelar
+          </button>
+          <button id="confirmPayButton" type="button" class="btn modern-btn">
+            <i class="fas fa-check me-2"></i>Confirmar Pago
+          </button>
         </form>
-
+      </div>
+    </div>
+  </div>
 </div>
+
+<form id="confirmPayForm">
+  <input type="hidden" name="csrfmiddlewaretoken" value="{{ csrf_token }}">
+</form>
 
 <script>
 document.addEventListener('DOMContentLoaded', function () {
@@ -213,6 +640,11 @@ document.addEventListener('DOMContentLoaded', function () {
       return alert('Ingrese un importe válido dentro del saldo restante');
     }
 
+    // Añadir efecto de carga al botón
+    const originalHTML = confirmPayButton.innerHTML;
+    confirmPayButton.innerHTML = '<i class="fas fa-spinner fa-spin me-2"></i>Procesando pago...';
+    confirmPayButton.disabled = true;
+
     fetch(currentActionUrl, {
       method: 'POST',
       headers: {
@@ -229,11 +661,26 @@ document.addEventListener('DOMContentLoaded', function () {
       const url = URL.createObjectURL(blob);
       window.open(url, '_blank');
       bootstrap.Modal.getInstance(payModal).hide();
-      setTimeout(() => location.reload(), 800);
+      
+      // Mostrar mensaje de éxito
+      const successMsg = document.createElement('div');
+      successMsg.className = 'alert alert-success position-fixed';
+      successMsg.style.cssText = 'top: 20px; right: 20px; z-index: 9999;';
+      successMsg.innerHTML = '<i class="fas fa-check-circle me-2"></i>Pago procesado correctamente';
+      document.body.appendChild(successMsg);
+      
+      setTimeout(() => {
+        successMsg.remove();
+        location.reload();
+      }, 2000);
     })
     .catch(err => {
       console.error(err);
-      alert('Hubo un error al procesar el pago');
+      alert('Hubo un error al procesar el pago. Por favor, inténtelo nuevamente.');
+    })
+    .finally(() => {
+      confirmPayButton.innerHTML = originalHTML;
+      confirmPayButton.disabled = false;
     });
   });
 
@@ -243,6 +690,4 @@ document.addEventListener('DOMContentLoaded', function () {
 });
 </script>
 
-
 {% endblock %}
-
