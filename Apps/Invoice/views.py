@@ -386,7 +386,8 @@ def View_quota(request):
 @login_required
 def View_quota_customer(request):
     customer_id = request.GET.get('customer')
-    estado = request.GET.get('estado')  
+    invoice_id = request.GET.get('numero_factura')
+    estado = request.GET.get('estado')
 
     customers = Customer.objects.all()
     quotas = PaymentQuota.objects.select_related('invoice', 'invoice__customer')
@@ -394,16 +395,30 @@ def View_quota_customer(request):
     if customer_id:
         quotas = quotas.filter(invoice__customer__id=customer_id)
 
-    base_filter = {'invoice__customer__id': customer_id} if customer_id else {}
+    if invoice_id:
+        quotas = quotas.filter(invoice__id=invoice_id)
+
+    # Filtro base para contadores
+    base_filter = {}
+    if customer_id:
+        base_filter['invoice__customer__id'] = customer_id
+    if invoice_id:
+        base_filter['invoice__id'] = invoice_id
 
     count_quota_paid = PaymentQuota.objects.filter(is_paid=True, **base_filter).count()
     count_quota_unpaid = PaymentQuota.objects.filter(is_paid=False, **base_filter).count()
     count_quota_expired = PaymentQuota.objects.filter(payment_date__lt=date.today(), is_paid=False, **base_filter).count()
-    
+
+    # Filtro por estado de la cuota
     if estado == "Pagadas":
         quotas = quotas.filter(is_paid=True)
     elif estado == "Pendientes":
         quotas = quotas.filter(is_paid=False)
+
+    # Obtener facturas del cliente para el select
+    invoices = Invoice.objects.all()
+    if customer_id:
+        invoices = invoices.filter(customer__id=customer_id)
 
     context = {
         'customer': customers,
@@ -411,9 +426,9 @@ def View_quota_customer(request):
         'count_quota_paid': count_quota_paid,
         'count_quota_unpaid': count_quota_unpaid,
         'count_quota_expired': count_quota_expired,
+        'invoice': invoices,
     }
     return render(request, 'PaymentQuota/Payment_quota_customer.html', context)
-
 
 
 @login_required

@@ -213,9 +213,6 @@
                 </div>
             </div>
         </div>
-        <div class="position-absolute top-0 end-0 p-3">
-            <button class="btn btn-light btn-sm">Personalizar opciones</button>
-        </div>
     </div>
 
     <form id="invoice-form" method="post" target="_blank">
@@ -228,7 +225,7 @@
                     <select name="transaction_type" required class="form-select" id="transactionId">
                         {% for trans in transaction_types %}
                             {% if trans.iniType != 'AFV' and trans.iniType != 'AFC' %}
-                                <option value="{{ trans.id }}">{{ trans.iniType }}-{{ trans.consecutive }}</option>
+                                <option value="{{ trans.id }}">{{ trans.tra_type }}-{{ trans.consecutive }}</option>
                             {% endif %}
                         {% endfor %}
                     </select>
