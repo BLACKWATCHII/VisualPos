@@ -1,3 +1,7 @@
 from django.shortcuts import render
 
-# Create your views here.
+
+def ajustesInventario(request):
+    if request.method == 'POST':
+        pass
+    return render(request, 'Inventory/AjusteInventario.html')

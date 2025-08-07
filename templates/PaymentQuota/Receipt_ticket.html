@@ -1,39 +1,307 @@
+{% load humanize %}
 <!DOCTYPE html>
 <html lang="es">
 <head>
     <meta charset="UTF-8">
-    <title>Recibo de pago</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Recibo de Pago - Cuota #{{ quota.id }}</title>
     <style>
-        body {
-            font-family: 'Courier New', monospace;
-            width: 300px;
-            margin: auto;
-            padding: 20px;
-            border: 1px dashed black;
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
         }
-        h2 {
+
+        body {
+            font-family: 'Arial', sans-serif;
+            background: white;
+            margin: 0;
+            padding: 0;
+        }
+
+        .receipt-container {
+            width: 100%;
+            max-width: 400px;
+            margin: 0 auto;
+            padding: 30px;
+        }
+
+        .receipt-header {
+            background: #4facfe;
+            color: white;
+            padding: 25px;
+            text-align: center;
+            border-radius: 15px 15px 0 0;
+            margin-bottom: 0;
+        }
+
+        .receipt-icon {
+            width: 50px;
+            height: 50px;
+            background: rgba(255, 255, 255, 0.2);
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            margin: 0 auto 15px;
+            font-size: 24px;
+        }
+
+        .receipt-title {
+            font-size: 22px;
+            font-weight: bold;
+            margin-bottom: 5px;
+        }
+
+        .receipt-subtitle {
+            font-size: 14px;
+            opacity: 0.9;
+        }
+
+        .receipt-body {
+            background: white;
+            border: 2px solid #4facfe;
+            border-top: none;
+            border-radius: 0 0 15px 15px;
+            padding: 25px;
+        }
+
+        .company-info {
+            text-align: center;
+            margin-bottom: 25px;
+            padding-bottom: 20px;
+            border-bottom: 2px dashed #ddd;
+        }
+
+        .company-name {
+            font-size: 18px;
+            font-weight: bold;
+            color: #333;
+            margin-bottom: 5px;
+        }
+
+        .company-address {
+            font-size: 12px;
+            color: #666;
+        }
+
+        .info-section {
+            margin-bottom: 20px;
+        }
+
+        .info-row {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 12px;
+            padding: 8px 0;
+            border-bottom: 1px solid #f0f0f0;
+        }
+
+        .info-row:last-child {
+            border-bottom: none;
+        }
+
+        .info-label {
+            font-size: 14px;
+            color: #666;
+            font-weight: 500;
+        }
+
+        .info-value {
+            font-size: 14px;
+            color: #333;
+            font-weight: 600;
+            text-align: right;
+        }
+
+        .amount-section {
+            background: #f8f9ff;
+            border: 2px solid #e3f2fd;
+            border-radius: 12px;
+            padding: 20px;
+            margin: 25px 0;
             text-align: center;
         }
-        .line {
-            border-bottom: 1px dashed #000;
-            margin: 10px 0;
+
+        .amount-label {
+            font-size: 14px;
+            color: #666;
+            margin-bottom: 8px;
         }
-        .total {
+
+        .amount-value {
+            font-size: 32px;
             font-weight: bold;
+            color: #2196f3;
+        }
+
+        .balance-section {
+            background: #fff3e0;
+            border: 2px solid #ffcc02;
+            border-radius: 12px;
+            padding: 15px;
+            margin: 20px 0;
+        }
+
+        .balance-row {
+            display: flex;
+            justify-content: space-between;
+            margin-bottom: 8px;
+        }
+
+        .balance-row:last-child {
+            margin-bottom: 0;
+            font-weight: bold;
+            font-size: 16px;
+            border-top: 1px solid #ffcc02;
+            padding-top: 8px;
+        }
+
+        .status-section {
+            background: #e8f5e8;
+            border: 2px solid #4caf50;
+            border-radius: 12px;
+            padding: 15px;
+            text-align: center;
+            margin: 25px 0;
+        }
+
+        .status-text {
             font-size: 18px;
+            font-weight: bold;
+            color: #2e7d32;
+        }
+
+        .status-icon {
+            font-size: 24px;
+            margin-right: 8px;
+        }
+
+        .thank-you {
+            text-align: center;
+            margin-top: 25px;
+            padding-top: 20px;
+            border-top: 2px dashed #ddd;
+        }
+
+        .thank-you-text {
+            font-size: 16px;
+            color: #666;
+            font-style: italic;
+            text-align: center;
+        }
+
+        .footer {
+            text-align: center;
+            margin-top: 20px;
+            font-size: 12px;
+            color: #888;
+        }
+
+        @media print {
+            html, body {
+                width: 210mm;
+                height: 297mm;
+                margin: 0;
+                padding: 0;
+                background: white;
+            }
+
+            .receipt-container {
+                max-width: none;
+                margin: 0;
+                padding: 20px;
+            }
         }
     </style>
 </head>
 <body>
-    <h2>💳 Pago recibido</h2>
-    <div class="line"></div>
+    <div class="receipt-container">
+        <div class="receipt-header">
+            <div class="receipt-icon">✓</div>
+            <h1 class="receipt-title">Pago Recibido</h1>
+            <p class="receipt-subtitle">Transacción Exitosa</p>
+        </div>
 
-    <p><strong>Factura:</strong> #{{ invoice.invoice_number }}</p>
-    <p><strong>Cliente:</strong> {{ invoice.customer.name }} {{ invoice.customer.lastname }}</p>
-    <p><strong>Fecha del pago:</strong> {{ quota.payment_date }}</p>
-    <p><strong>Monto pagado:</strong> ${{ amount_paid|floatformat:2 }}</p>
-    <div class="line"></div>
-    <p class="total">Estado: PAGADA ✅</p>
-    <p style="text-align:center; margin-top:20px;">¡Gracias por su pago!</p>
+        <div class="receipt-body">
+            <div class="company-info">
+                <div class="company-name">BERSERKER CORPORATE</div>
+                <div class="company-address">
+                    Carrera 22D #75 C 03<br>
+                    Los robles-soledad<br>
+                    Soporte: +57 3013916533
+                </div>
+            </div>
+
+            <div class="info-section">
+                <div class="info-row">
+                    <span class="info-label">Factura:</span>
+                    <span class="info-value">#{{ invoice.invoice_number }}</span>
+                </div>
+
+                <div class="info-row">
+                    <span class="info-label">Cliente:</span>
+                    <span class="info-value">{{ invoice.customer.name }} {{ invoice.customer.lastname }}</span>
+                </div>
+
+                <div class="info-row">
+                    <span class="info-label">Cuota:</span>
+                    <span class="info-value">#{{ quota.id }}</span>
+                </div>
+
+                <div class="info-row">
+                    <span class="info-label">Fecha de pago:</span>
+                    <span class="info-value">{{ quota.payment_date }}</span>
+                </div>
+
+                <div class="info-row">
+                    <span class="info-label">Método de pago:</span>
+                    <span class="info-value">{{ invoice.payment_method }}</span>
+                </div>
+            </div>
+
+            <div class="amount-section">
+                <div class="amount-label">Monto Pagado</div>
+                <div class="amount-value">${{ amount_paid|floatformat:2|intcomma }}</div>
+            </div>
+
+            {% if quota.balance > 0 %}
+            <div class="balance-section">
+                <div class="balance-row">
+                    <span>Valor original de la cuota:</span>
+                    <span>${{ quota.amount|intcomma }}</span>
+                </div>
+                <div class="balance-row">
+                    <span>Monto pagado:</span>
+                    <span>${{ amount_paid|floatformat:2|intcomma }}</span>
+                </div>
+                <div class="balance-row">
+                    <span>Saldo pendiente:</span>
+                    <span>${{ quota.balance|floatformat:2|intcomma }}</span>
+                </div>
+            </div>
+            {% endif %}
+
+            <div class="status-section">
+                <div class="status-text">
+                    <span class="status-icon">✅</span>
+                    {% if quota.is_paid %}
+                        CUOTA PAGADA COMPLETAMENTE
+                    {% else %}
+                        PAGO PARCIAL REGISTRADO
+                    {% endif %}
+                </div>
+            </div>
+
+            <div class="thank-you">
+                <p class="thank-you-text">¡Gracias por su pago!</p>
+            </div>
+
+            <div class="footer">
+                Recibo generado el {{ "now"|date:"d/m/Y" }} a las {{ "now"|date:"H:i" }}
+            </div>
+        </div>
+    </div>
 </body>
 </html>
