@@ -7,6 +7,7 @@ from customer.models import Customer
 import os
 import pandas as pd
 from customer.sendEmail import send_email
+from Invoice.models import Invoice  
 
 
 @login_required
@@ -164,11 +165,25 @@ def update_Customer(request, client_id):
         form = CustomerForm(instance=client)
     return render(request, 'Customer/updateCustomer.html', {'form': form, 'client_id': client.id})
 
+
 @login_required
 def delete_Customer(request, client_id):
     client = get_object_or_404(Customer, id=client_id)
+
+    
+    
+    if Invoice.objects.filter(customer=client).exists():
+        return JsonResponse({
+            'status': 'error',
+            'message': 'Este cliente tiene movimientos y no se puede eliminar.'
+        })
+
     client.delete()
-    return redirect('viewClient')   
+    return JsonResponse({
+        'status': 'success',
+        'message': 'Cliente eliminado correctamente.'
+    })
+
 
 
 @login_required

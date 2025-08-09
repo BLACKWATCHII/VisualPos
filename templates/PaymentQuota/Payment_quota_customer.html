@@ -536,7 +536,7 @@
                       <i class="fas fa-credit-card"></i>
                     </button>
                   {% else %}
-                    <a href="{% url 'pay_quota' credit.id %}" class="action-btn action-btn-danger" title="Descargar PDF">
+                    <a href="{% url 'download_quota_receipt' credit.id %}" class="action-btn action-btn-danger" title="Descargar PDF" target="_blank">
                       <i class="fas fa-file-pdf"></i>
                     </a>
                   {% endif %}
@@ -615,10 +615,10 @@
 document.addEventListener('DOMContentLoaded', function () {
   const payModal = document.getElementById('payModal');
   const confirmPayButton = document.getElementById('confirmPayButton');
-  const confirmForm = document.getElementById('confirmPayForm');
   const inputAmount = document.getElementById('modalPayAmount');
   let currentActionUrl = '';
 
+  // Configuración del modal
   payModal.addEventListener('show.bs.modal', function (event) {
     const button = event.relatedTarget;
     const invoice = button.getAttribute('data-invoice');
@@ -634,13 +634,14 @@ document.addEventListener('DOMContentLoaded', function () {
     inputAmount.value = balance.toFixed(2);
   });
 
+  // Confirmar pago
   confirmPayButton.addEventListener('click', function () {
     const payValue = parseFloat(inputAmount.value);
     if (isNaN(payValue) || payValue <= 0 || payValue > parseFloat(inputAmount.max)) {
       return alert('Ingrese un importe válido dentro del saldo restante');
     }
 
-    // Añadir efecto de carga al botón
+    // Cambiar a modo cargando
     const originalHTML = confirmPayButton.innerHTML;
     confirmPayButton.innerHTML = '<i class="fas fa-spinner fa-spin me-2"></i>Procesando pago...';
     confirmPayButton.disabled = true;
@@ -658,17 +659,17 @@ document.addEventListener('DOMContentLoaded', function () {
       return response.blob();
     })
     .then(blob => {
-      const url = URL.createObjectURL(blob);
-      window.open(url, '_blank');
+      const pdfURL = URL.createObjectURL(blob);
+      window.open(pdfURL, '_blank'); // Abrir PDF en nueva pestaña
       bootstrap.Modal.getInstance(payModal).hide();
-      
-      // Mostrar mensaje de éxito
+
+      // Mensaje de éxito
       const successMsg = document.createElement('div');
       successMsg.className = 'alert alert-success position-fixed';
       successMsg.style.cssText = 'top: 20px; right: 20px; z-index: 9999;';
       successMsg.innerHTML = '<i class="fas fa-check-circle me-2"></i>Pago procesado correctamente';
       document.body.appendChild(successMsg);
-      
+
       setTimeout(() => {
         successMsg.remove();
         location.reload();

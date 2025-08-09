@@ -4,116 +4,730 @@
 {% block title %}Clientes{% endblock %}
 
 {% block content %}
+<style>
+:root {
+    --primary-color: #327747;
+    --primary-light: #4a9960;
+    --primary-dark: #1e4a2a;
+    --accent-color: #e3f2fd;
+    --border-color: #e1e5e9;
+    --text-muted: #6c757d;
+    --shadow: 0 2px 8px rgba(0,0,0,0.1);
+    --shadow-hover: 0 4px 16px rgba(0,0,0,0.15);
+    --gradient-primary: linear-gradient(135deg, #327747 0%, #4a9960 100%);
+    --gradient-light: linear-gradient(135deg, #f8fffe 0%, #e3f2fd 100%);
+    --shadow-primary: 0 10px 25px rgba(50, 119, 71, 0.15);
+    --shadow-card: 0 8px 32px rgba(0, 0, 0, 0.1);
+    --border-radius: 15px;
+}
+
+/* Scoped styles only for clients view */
+.clients-page {
+    background: linear-gradient(135deg, #f8fffe 0%, #f0f9ff 100%);
+    min-height: 100vh;
+    font-family: 'Inter', -apple-system, BlinkMacSystemFont, sans-serif;
+}
+
+.modern-container {
+    max-width: 1400px;
+    margin: 2rem auto;
+    padding: 0 1rem;
+}
+
+.modern-card {
+    background: rgba(255, 255, 255, 0.95);
+    backdrop-filter: blur(15px);
+    border: 1px solid rgba(50, 119, 71, 0.1);
+    border-radius: var(--border-radius);
+    box-shadow: var(--shadow-card);
+    overflow: hidden;
+    animation: fadeInUp 0.6s ease-out;
+}
+
+.modern-header {
+    background: var(--gradient-primary);
+    padding: 2rem;
+    position: relative;
+    overflow: hidden;
+}
+
+.modern-header::before {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    background: linear-gradient(45deg, rgba(255, 255, 255, 0.1) 25%, transparent 25%),
+                linear-gradient(-45deg, rgba(255, 255, 255, 0.1) 25%, transparent 25%);
+    background-size: 30px 30px;
+    background-position: 0 0, 15px 15px;
+    opacity: 0.3;
+}
+
+.header-content {
+    position: relative;
+    z-index: 1;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    flex-wrap: wrap;
+    gap: 1rem;
+}
+
+.header-title {
+    color: white;
+    font-size: 1.75rem;
+    font-weight: 700;
+    margin: 0;
+    text-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+    display: flex;
+    align-items: center;
+    gap: 0.75rem;
+}
+
+.action-buttons {
+    display: flex;
+    gap: 0.75rem;
+    flex-wrap: wrap;
+}
+
+.clients-page .modern-btn {
+    background: rgba(255, 255, 255, 0.2);
+    border: 2px solid rgba(255, 255, 255, 0.3);
+    color: white;
+    border-radius: 10px;
+    padding: 0.6rem 1.25rem;
+    font-weight: 600;
+    font-size: 0.9rem;
+    text-decoration: none;
+    transition: all 0.3s ease;
+    backdrop-filter: blur(10px);
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+}
+
+.clients-page .modern-btn:hover {
+    background: rgba(255, 255, 255, 0.3);
+    border-color: rgba(255, 255, 255, 0.5);
+    color: white;
+    transform: translateY(-2px);
+    box-shadow: 0 8px 20px rgba(255, 255, 255, 0.2);
+}
+
+.clients-page .modern-btn:disabled {
+    opacity: 0.7;
+    cursor: not-allowed;
+    transform: none;
+}
+
+.clients-page .modern-btn:disabled:hover {
+    transform: none;
+    box-shadow: none;
+}
+
+.export-spinner {
+    width: 16px;
+    height: 16px;
+    border: 2px solid rgba(255, 255, 255, 0.3);
+    border-radius: 50%;
+    border-top-color: white;
+    animation: spin 1s ease-in-out infinite;
+    display: none;
+}
+
+.export-spinner.show {
+    display: inline-block;
+}
+
+@keyframes spin {
+    to { transform: rotate(360deg); }
+}
+
+.clients-page .modern-btn.btn-primary { 
+    background: rgba(59, 130, 246, 0.8); 
+}
+
+.clients-page .modern-btn.btn-success { 
+    background: rgba(34, 197, 94, 0.8); 
+}
+
+.clients-page .modern-btn.btn-danger { 
+    background: rgba(239, 68, 68, 0.8); 
+}
+
+.table-container {
+    padding: 0;
+    background: white;
+    border-radius: 0 0 var(--border-radius) var(--border-radius);
+}
+
+.modern-table {
+    margin: 0;
+    border-collapse: separate;
+    border-spacing: 0;
+    width: 100%;
+    background: white;
+}
+
+.modern-table thead th {
+    background: var(--gradient-light);
+    color: var(--primary-dark);
+    font-weight: 700;
+    text-transform: uppercase;
+    font-size: 0.8rem;
+    letter-spacing: 0.5px;
+    padding: 1.25rem 1rem;
+    border: none;
+    position: sticky;
+    top: 0;
+    z-index: 10;
+}
+
+.modern-table thead th:first-child {
+    border-radius: 0;
+    padding-left: 1.5rem;
+}
+
+.modern-table thead th:last-child {
+    border-radius: 0;
+    padding-right: 1.5rem;
+}
+
+.modern-table tbody tr {
+    transition: all 0.3s ease;
+    border-bottom: 1px solid rgba(50, 119, 71, 0.1);
+}
+
+.modern-table tbody tr:hover {
+    background: rgba(248, 255, 254, 0.8);
+    transform: scale(1.005);
+    box-shadow: 0 4px 20px rgba(50, 119, 71, 0.1);
+}
+
+.modern-table tbody td {
+    padding: 1rem;
+    border: none;
+    vertical-align: middle;
+    font-size: 0.9rem;
+}
+
+.modern-table tbody td:first-child {
+    padding-left: 1.5rem;
+}
+
+.modern-table tbody td:last-child {
+    padding-right: 1.5rem;
+}
+
+.modern-checkbox {
+    width: 18px;
+    height: 18px;
+    border: 2px solid #d1d5db;
+    border-radius: 4px;
+    cursor: pointer;
+    transition: all 0.3s ease;
+}
+
+.modern-checkbox:checked {
+    background: var(--primary-color);
+    border-color: var(--primary-color);
+}
+
+.modern-badge {
+    padding: 0.4rem 0.8rem;
+    border-radius: 20px;
+    font-size: 0.75rem;
+    font-weight: 600;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+    border: none;
+}
+
+.modern-badge.bg-info {
+    background: linear-gradient(135deg, #0ea5e9, #38bdf8) !important;
+    color: white !important;
+    box-shadow: 0 4px 15px rgba(14, 165, 233, 0.3);
+}
+
+.modern-badge.bg-secondary {
+    background: linear-gradient(135deg, #6b7280, #9ca3af) !important;
+    color: white !important;
+    box-shadow: 0 4px 15px rgba(107, 114, 128, 0.3);
+}
+
+.client-id {
+    font-weight: 700;
+    color: var(--primary-color);
+    font-size: 1rem;
+}
+
+.client-name {
+    font-weight: 600;
+    color: var(--primary-dark);
+}
+
+.client-phone {
+    font-family: 'Courier New', monospace;
+    font-weight: 500;
+    color: var(--text-muted);
+    font-size: 0.9rem;
+}
+
+.client-cedula {
+    font-family: 'Courier New', monospace;
+    font-weight: 600;
+    color: var(--primary-color);
+    background: rgba(50, 119, 71, 0.1);
+    padding: 0.25rem 0.5rem;
+    border-radius: 6px;
+    font-size: 0.85rem;
+}
+
+.action-btn {
+    border-radius: 8px !important;
+    padding: 0.5rem !important;
+    font-size: 0.85rem !important;
+    font-weight: 600 !important;
+    transition: all 0.3s ease;
+    border: none !important;
+    margin: 0 2px;
+    min-width: 36px;
+    height: 36px;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+}
+
+.action-btn:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 8px 20px rgba(0, 0, 0, 0.15);
+}
+
+.action-btn.btn-success {
+    background: linear-gradient(135deg, var(--primary-color), var(--primary-light)) !important;
+    color: white !important;
+}
+
+.action-btn.btn-danger {
+    background: linear-gradient(135deg, #ef4444, #f87171) !important;
+    color: white !important;
+}
+
+.action-btn.btn-info {
+    background: linear-gradient(135deg, #0ea5e9, #38bdf8) !important;
+    color: white !important;
+}
+
+/* Modal Styles - scoped */
+.clients-page .modal-content {
+    border: none;
+    border-radius: var(--border-radius);
+    box-shadow: var(--shadow-card);
+}
+
+.clients-page .modal-header {
+    background: var(--gradient-primary);
+    color: white;
+    border-bottom: none;
+    border-radius: var(--border-radius) var(--border-radius) 0 0;
+    padding: 1.5rem 2rem;
+}
+
+.clients-page .modal-title {
+    font-weight: 700;
+    font-size: 1.25rem;
+}
+
+.clients-page .btn-close {
+    filter: brightness(0) invert(1);
+}
+
+.clients-page .modal-body {
+    padding: 2rem;
+}
+
+.clients-page .modal-footer {
+    border-top: 1px solid rgba(50, 119, 71, 0.1);
+    padding: 1.5rem 2rem;
+}
+
+.clients-page .form-control {
+    border: 2px solid #e5e7eb;
+    border-radius: 10px;
+    padding: 0.75rem;
+    transition: all 0.3s ease;
+}
+
+.clients-page .form-control:focus {
+    border-color: var(--primary-color);
+    box-shadow: 0 0 0 4px rgba(50, 119, 71, 0.1);
+}
+
+.clients-page .progress {
+    height: 8px;
+    border-radius: 4px;
+    background: #e5e7eb;
+    overflow: hidden;
+}
+
+.clients-page .progress-bar {
+    background: var(--gradient-primary);
+    transition: width 0.3s ease;
+}
+
+/* Modal buttons styling */
+.clients-page .modal-body .modern-btn {
+    background: var(--gradient-primary);
+    border: none;
+    border-radius: 10px;
+    padding: 0.75rem 1.5rem;
+    color: white;
+    font-weight: 600;
+    text-decoration: none;
+    transition: all 0.3s ease;
+    display: inline-flex;
+    align-items: center;
+    gap: 0.5rem;
+}
+
+.clients-page .modal-body .modern-btn:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 8px 20px rgba(50, 119, 71, 0.3);
+    color: white;
+}
+
+.clients-page .modal-body .modern-btn.btn-primary {
+    background: var(--gradient-primary);
+}
+
+.clients-page .modal-body .modern-btn.btn-success {
+    background: linear-gradient(135deg, #34d399, var(--primary-color));
+}
+
+.empty-state {
+    text-align: center;
+    padding: 3rem 1rem;
+}
+
+.empty-state i {
+    color: var(--text-muted);
+    margin-bottom: 1rem;
+}
+
+.empty-state p {
+    color: var(--text-muted);
+    font-size: 1.1rem;
+    margin: 0;
+}
+
+@keyframes fadeInUp {
+    from {
+        opacity: 0;
+        transform: translateY(30px);
+    }
+    to {
+        opacity: 1;
+        transform: translateY(0);
+    }
+}
+
+/* Responsive Design */
+@media (max-width: 1200px) {
+    .modern-container {
+        max-width: 100%;
+    }
+}
+
+@media (max-width: 768px) {
+    .modern-container {
+        margin: 1rem auto;
+        padding: 0 0.5rem;
+    }
+    
+    .modern-header {
+        padding: 1.5rem;
+    }
+    
+    .header-content {
+        flex-direction: column;
+        align-items: flex-start;
+    }
+    
+    .header-title {
+        font-size: 1.5rem;
+    }
+    
+    .action-buttons {
+        width: 100%;
+        justify-content: stretch;
+    }
+    
+    .modern-btn {
+        flex: 1;
+        justify-content: center;
+        min-width: 0;
+    }
+    
+    .modern-table {
+        font-size: 0.8rem;
+    }
+    
+    .modern-table thead th,
+    .modern-table tbody td {
+        padding: 0.75rem 0.5rem;
+    }
+    
+    .action-btn {
+        min-width: 32px;
+        height: 32px;
+        padding: 0.25rem !important;
+    }
+}
+
+/* DataTables overrides - scoped */
+.clients-page .dataTables_wrapper .dataTables_length,
+.clients-page .dataTables_wrapper .dataTables_filter,
+.clients-page .dataTables_wrapper .dataTables_info,
+.clients-page .dataTables_wrapper .dataTables_paginate {
+    margin: 1rem 0;
+}
+
+.clients-page .dataTables_wrapper .dataTables_paginate .paginate_button {
+    border-radius: 8px !important;
+    margin: 0 2px !important;
+    border: 2px solid transparent !important;
+    background: none !important;
+    color: var(--primary-color) !important;
+}
+
+.clients-page .dataTables_wrapper .dataTables_paginate .paginate_button:hover {
+    background: var(--primary-color) !important;
+    color: white !important;
+    border-color: var(--primary-color) !important;
+}
+
+.clients-page .dataTables_wrapper .dataTables_paginate .paginate_button.current {
+    background: var(--gradient-primary) !important;
+    color: white !important;
+    border-color: var(--primary-color) !important;
+}
+
+.clients-page .dataTables_wrapper .dataTables_filter input {
+    border: 2px solid var(--border-color) !important;
+    border-radius: 8px !important;
+    padding: 0.5rem !important;
+    margin-left: 0.5rem !important;
+}
+
+.clients-page .dataTables_wrapper .dataTables_filter input:focus {
+    border-color: var(--primary-color) !important;
+    box-shadow: 0 0 0 3px rgba(50, 119, 71, 0.1) !important;
+    outline: none !important;
+}
+
+.clients-page .dataTables_wrapper .dataTables_length select {
+    border: 2px solid var(--border-color) !important;
+    border-radius: 8px !important;
+    padding: 0.25rem 0.5rem !important;
+    margin: 0 0.5rem !important;
+}
+</style>
+
 <link rel="stylesheet" href="https://cdn.datatables.net/1.10.25/css/dataTables.bootstrap4.min.css">
 <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/5.15.4/css/all.min.css">
-<link rel="stylesheet" href="{% static 'css/Customer/viewCustomer.css' %}">
 
-<div class="container mt-5 card-margin-top">
-    <div class="card shadow">
-        <div class="card-body">
-            <div class="d-flex flex-column flex-md-row justify-content-between align-items-start align-items-md-center mb-3 gap-2 flex-wrap">
-                <h5 class="card-header mb-0">Clientes registrados</h5>
-                <div class="search-container d-flex flex-wrap justify-content-md-end gap-2">
-                    <a class="btn btn-primary btn-sm btn-spaced" href="{% url 'createCustomer' %}">+ Nuevo</a>
-                    <a class="btn btn-success btn-sm btn-spaced" href="{% url 'export_clients_to_excel' %}" download>Exportar</a>
-                    <a class="btn btn-danger btn-sm btn-spaced" id="importButton" data-bs-toggle="modal" data-bs-target="#miModal">Importar</a>
+<br>
+<br>
+<div class="clients-page">
+<div class="modern-container mt-5 card-margin-top">
+    <div class="modern-card shadow">
+        <div class="modern-header">
+            <div class="header-content">
+                <h5 class="header-title">
+                    <i class="fas fa-users"></i>
+                    Clientes Registrados
+                </h5>
+                <div class="action-buttons">
+                    <a class="modern-btn btn-primary" href="{% url 'createCustomer' %}">
+                        <i class="fas fa-plus"></i>
+                        Nuevo
+                    </a>
+                    <a class="modern-btn btn-success" href="{% url 'export_clients_to_excel' %}" download id="exportBtn">
+                        <div class="export-spinner" id="exportSpinner"></div>
+                        <i class="fas fa-download" id="exportIcon"></i>
+                        <span id="exportText">Exportar</span>
+                    </a>
+                    <a class="modern-btn btn-danger" id="importButton" data-bs-toggle="modal" data-bs-target="#miModal">
+                        <i class="fas fa-upload"></i>
+                        Importar
+                    </a>
                 </div>
             </div>
+        </div>
 
+        <div class="table-container">
             <div class="table-responsive">
-                <table id="clientsTable" class="table table-hover">
+                <table id="clientsTable" class="modern-table table table-hover">
                     <thead class="thead-light">
                         <tr>
-                            <th><input type="checkbox"></th>
-                            <th>#</th>
-                            <th>Cédula</th>
-                            <th>Nombre</th>
-                            <th>Apellido</th>
-                            <th>Teléfono</th>
-                            <th>PDF</th>
-                            <th>Acciones</th>
+                            <th><input type="checkbox" class="modern-checkbox"></th>
+                            <th><i class="fas fa-hashtag me-2"></i>#</th>
+                            <th><i class="fas fa-id-card me-2"></i>Cédula</th>
+                            <th><i class="fas fa-user me-2"></i>Nombre</th>
+                            <th><i class="fas fa-user me-2"></i>Apellido</th>
+                            <th><i class="fas fa-phone me-2"></i>Teléfono</th>
+                            <th><i class="fas fa-file-pdf me-2"></i>PDF</th>
+                            <th><i class="fas fa-cogs me-2"></i>Acciones</th>
                         </tr>
                     </thead>
                     <tbody id="tableBody">
                         {% if clients %}
                             {% for client in clients %}
                                 <tr>
-                                    <td><input type="checkbox"></td>
-                                    <td>#{{ client.id }}</td>
-                                    <td>{{ client.cedula }}</td>
-                                    <td>{{ client.name }}</td>
-                                    <td>{{ client.lastname }}</td>
-                                    <td>{{ client.phone }}</td>
+                                    <td><input type="checkbox" class="modern-checkbox"></td>
+                                    <td><span class="client-id">#{{ client.id }}</span></td>
+                                    <td><span class="client-cedula">{{ client.cedula }}</span></td>
+                                    <td><span class="client-name">{{ client.name }}</span></td>
+                                    <td><strong>{{ client.lastname }}</strong></td>
+                                    <td><span class="client-phone">{{ client.phone }}</span></td>
                                     <td>
                                         {% if client.pdf %}
-                                            <a href="{% url 'download_pdf' client.id %}" class="btn btn-sm btn-info">Descargar PDF</a>
+                                            <a href="{% url 'download_pdf' client.id %}" class="modern-badge bg-info">
+                                                <i class="fas fa-download me-1"></i>
+                                                Descargar
+                                            </a>
                                         {% else %}
-                                            No PDF
+                                            <span class="modern-badge bg-secondary">Sin PDF</span>
                                         {% endif %}
                                     </td>
                                     <td>
-                                        <a href="{% url 'update_Customer' client.id %}" class="btn btn-sm btn-success">
-                                            <i class="fas fa-edit"></i>
-                                        </a>
-                                        <a href="{% url 'delete_Customer' client.id %}" class="btn btn-sm btn-danger delete-btn" data-url="{% url 'delete_Customer' client.id %}">
-                                            <i class="fas fa-trash"></i>
-                                        </a>
+                                        <div class="d-flex gap-1">
+                                            <a href="{% url 'update_Customer' client.id %}" class="btn btn-sm btn-success action-btn" title="Editar">
+                                                <i class="fas fa-edit"></i>
+                                            </a>
+                                            <a href="{% url 'delete_Customer' client.id %}" class="btn btn-sm btn-danger action-btn delete-btn" data-url="{% url 'delete_Customer' client.id %}" title="Eliminar">
+                                                <i class="fas fa-trash"></i>
+                                            </a>
+                                        </div>
                                     </td>
                                 </tr>
                             {% endfor %}
                         {% else %}
                             <tr>
-                                <td colspan="8" class="text-center">No hay Clientes registrados</td>
+                                <td colspan="8" class="empty-state">
+                                    <i class="fas fa-users fa-3x"></i>
+                                    <p>No hay clientes registrados</p>
+                                </td>
                             </tr>
                         {% endif %}
                     </tbody>
                 </table>
             </div>
         </div>
+    </div>
+</div>
+</div>
 
-        <!-- Modal -->
-        <div class="modal fade" id="miModal" tabindex="-1" aria-labelledby="miModalLabel" aria-hidden="true">
-            <div class="modal-dialog">
-                <div class="modal-content">
-                    <div class="modal-header">
-                        <h5 class="modal-title" id="miModalLabel">Carga masiva de datos</h5>
-                        <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Cerrar"></button>
+<!-- Modal -->
+<div class="modal fade" id="miModal" tabindex="-1" aria-labelledby="miModalLabel" aria-hidden="true">
+    <div class="modal-dialog modal-dialog-centered">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title" id="miModalLabel">
+                    <i class="fas fa-upload me-2"></i>
+                    Carga Masiva de Datos
+                </h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Cerrar"></button>
+            </div>
+            <div class="modal-body">
+                <form id="formCargarArchivo" enctype="multipart/form-data" data-url="{% url 'cargar_datos_excel' %}">
+                    {% csrf_token %}
+                    <div class="mb-4">
+                        <label for="archivoExcel" class="form-label fw-bold">
+                            <i class="fas fa-file-excel me-2"></i>
+                            Selecciona un archivo Excel
+                        </label>
+                        <input type="file" class="form-control" id="archivoExcel" name="archivo" accept=".xlsx, .xls">
                     </div>
-                    <div class="modal-body">
-                        <form id="formCargarArchivo" enctype="multipart/form-data" data-url="{% url 'cargar_datos_excel' %}">
-                            {% csrf_token %}
-                            <div class="mb-3">
-                                <label for="archivoExcel" class="form-label">Selecciona un archivo Excel</label>
-                                <input type="file" class="form-control" id="archivoExcel" name="archivo" accept=".xlsx, .xls">
-                            </div>
-                            <div class="d-flex justify-content-center flex-wrap gap-2">
-                                <button type="submit" class="btn btn-primary" id="btnCargar">Cargar</button>
-                                <a id="descargarPlantilla" class="btn btn-success">Descargar Plantilla</a>
-                            </div>
-                            <div id="progresoCarga" class="mt-3" style="display:none;">
-                                <p>Cargando... <span id="progresoPorcentaje">0%</span></p>
-                                <div class="progress">
-                                    <div id="progresoBarra" class="progress-bar" style="width: 0%"></div>
-                                </div>
-                            </div>
-                        </form>
+                    <div class="d-flex justify-content-center flex-wrap gap-3">
+                        <button type="submit" class="modern-btn btn-primary" id="btnCargar">
+                            <i class="fas fa-upload me-2"></i>
+                            Cargar
+                        </button>
+                        <a id="descargarPlantilla" class="modern-btn btn-success">
+                            <i class="fas fa-download me-2"></i>
+                            Descargar Plantilla
+                        </a>
                     </div>
-                    <div class="modal-footer">
-                        <button type="button" class="btn btn-danger" data-bs-dismiss="modal">Cerrar</button>
+                    <div id="progresoCarga" class="mt-4" style="display:none;">
+                        <p class="fw-bold mb-2">Cargando... <span id="progresoPorcentaje">0%</span></p>
+                        <div class="progress">
+                            <div id="progresoBarra" class="progress-bar" style="width: 0%"></div>
+                        </div>
                     </div>
-                </div>
+                </form>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">
+                    <i class="fas fa-times me-2"></i>
+                    Cerrar
+                </button>
             </div>
         </div>
     </div>
 </div>
+
 {% endblock %}
 
 {% block extra_scripts %}
 
-<!-- DataTables JS -->
 <script src="https://cdn.datatables.net/1.10.25/js/jquery.dataTables.min.js"></script>
 <script src="https://cdn.datatables.net/1.10.25/js/dataTables.bootstrap4.min.js"></script>
 
-<!-- Tu script personalizado -->
 <script src="{% static 'js/Customer/viewCustomer.js' %}"></script>
+
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    const exportBtn = document.getElementById('exportBtn');
+    const exportSpinner = document.getElementById('exportSpinner');
+    const exportIcon = document.getElementById('exportIcon');
+    const exportText = document.getElementById('exportText');
+
+    if (exportBtn) {
+        exportBtn.addEventListener('click', function(e) {
+
+            exportBtn.disabled = true;
+            exportSpinner.classList.add('show');
+            exportIcon.style.display = 'none';
+            exportText.textContent = 'Exportando...';
+
+            const downloadUrl = this.getAttribute('href');
+            const tempLink = document.createElement('a');
+            tempLink.href = downloadUrl;
+            tempLink.download = '';
+            document.body.appendChild(tempLink);
+            
+            
+            e.preventDefault();
+            
+            
+            tempLink.click();
+            document.body.removeChild(tempLink);
+
+            
+            setTimeout(() => {
+                exportBtn.disabled = false;
+                exportSpinner.classList.remove('show');
+                exportIcon.style.display = 'inline-block';
+                exportText.textContent = 'Exportar';
+            }, 2000);
+            let downloadTimer = setInterval(() => {
+                clearInterval(downloadTimer);
+            }, 100);
+        });
+    }
+});
+</script>
 {% endblock %}
