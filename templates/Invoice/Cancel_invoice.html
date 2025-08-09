@@ -5,6 +5,7 @@
 {% block title %}Anular factura{% endblock %}
 
 {% block content %}
+
 <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/limonte-sweetalert2/11.10.1/sweetalert2.min.css">
 <script src="https://cdnjs.cloudflare.com/ajax/libs/limonte-sweetalert2/11.10.1/sweetalert2.all.min.js"></script>
 <style>
@@ -408,9 +409,9 @@
 
     <div class="row">
         <div class="col-md-4 p-0">
-            <div class="invoice-list">
+            <div class="invoice-list" id="invoiceListContainer">
                 <div class="results-info" id="resultsInfo">
-                    📊 Mostrando todas las facturas
+                    📊 Mostrando facturas más recientes
                 </div>
                 
                 <div id="invoicesList">
@@ -473,6 +474,9 @@
 <script>
 let allInvoices = [];
 let selectedInvoiceId = null;
+let currentPage = 1;
+let isLoading = false;
+let hasMorePages = true;
 
 function showToast(icon, title, position = 'top-end') {
     const Toast = Swal.mixin({
@@ -493,9 +497,7 @@ function showToast(icon, title, position = 'top-end') {
     });
 }
 
-
 document.addEventListener('DOMContentLoaded', function() {
-
     const invoiceElements = document.querySelectorAll('.invoice-item');
     allInvoices = Array.from(invoiceElements).map(el => ({
         element: el,
@@ -508,13 +510,113 @@ document.addEventListener('DOMContentLoaded', function() {
     
     updateResultsInfo();
     
-
     document.getElementById('searchCustomer').addEventListener('input', filterInvoices);
     document.getElementById('searchInvoice').addEventListener('input', filterInvoices);
     document.getElementById('searchDate').addEventListener('change', filterInvoices);
     document.getElementById('statusFilter').addEventListener('change', filterInvoices);
     document.getElementById('minAmount').addEventListener('input', filterInvoices);
+
+    document.getElementById('invoiceListContainer').addEventListener('scroll', handleScroll);
 });
+
+function handleScroll() {
+    const container = document.getElementById('invoiceListContainer');
+    
+    if (container.scrollTop + container.clientHeight >= container.scrollHeight - 100) {
+        loadMoreInvoices();
+    }
+}
+
+function loadMoreInvoices() {
+    if (isLoading || !hasMorePages) return;
+    
+    isLoading = true;
+    currentPage++;
+    
+    showLoadingIndicator();
+    
+    fetch(`load-more-invoices/?page=${currentPage}`)
+        .then(response => response.json())
+        .then(data => {
+            if (data.success && data.invoices.length > 0) {
+                data.invoices.forEach(invoice => {
+                    const invoiceHtml = createInvoiceHTML(invoice);
+                    document.getElementById('invoicesList').insertAdjacentHTML('beforeend', invoiceHtml);
+                    
+                    const newElement = document.querySelector(`[data-invoice-id="${invoice.id}"]`);
+                    allInvoices.push({
+                        element: newElement,
+                        customer: invoice.customer_name.toLowerCase(),
+                        invoiceId: invoice.id.toString(),
+                        amount: parseFloat(invoice.total),
+                        date: invoice.date,
+                        status: invoice.status
+                    });
+                });
+                
+                hasMorePages = data.has_next;
+                updateResultsInfo();
+            } else {
+                hasMorePages = false;
+            }
+            
+            isLoading = false;
+            hideLoadingIndicator();
+        })
+        .catch(error => {
+            console.error('Error cargando más facturas:', error);
+            isLoading = false;
+            hideLoadingIndicator();
+        });
+}
+
+function createInvoiceHTML(invoice) {
+    const statusClass = invoice.status === 'Anulada' ? 'status-anulada' : 
+                       invoice.status === 'Pagada' ? 'status-pagada' : 'status-pendiente';
+    
+    return `
+        <div class="invoice-item" 
+             onclick="loadInvoiceDetail(${invoice.id})" 
+             data-customer="${invoice.customer_name}"
+             data-invoice-id="${invoice.id}"
+             data-amount="${invoice.total}"
+             data-date="${invoice.date}"
+             data-status="${invoice.status}">
+            
+            <div class="invoice-customer">
+                <span>👤</span>
+                ${invoice.customer_name}
+            </div>
+            
+            <div class="invoice-meta">
+                <div><strong>#${invoice.id}</strong></div>
+                <div>$${parseFloat(invoice.total).toLocaleString('es-CO', {minimumFractionDigits: 2})}</div>
+                <div>${invoice.date_display}</div>
+                <div>
+                    <span class="status-badge ${statusClass}">${invoice.status}</span>
+                </div>
+            </div>
+        </div>
+    `;
+}
+
+function showLoadingIndicator() {
+    if (!document.getElementById('loading-indicator')) {
+        document.getElementById('invoicesList').insertAdjacentHTML('beforeend', `
+            <div id="loading-indicator" class="loading-more">
+                <div class="spinner"></div>
+                <p>Cargando más facturas...</p>
+            </div>
+        `);
+    }
+}
+
+function hideLoadingIndicator() {
+    const indicator = document.getElementById('loading-indicator');
+    if (indicator) {
+        indicator.remove();
+    }
+}
 
 function formatCurrency(value) {
     return new Intl.NumberFormat('es-CO', {

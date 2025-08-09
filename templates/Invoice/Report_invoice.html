@@ -245,7 +245,8 @@
                                                         <button type="button" 
                                                             class="btn btn-outline-success btn-sm action-btn"
                                                             data-url="{% url 'send_invoice' invoice.id %}"
-                                                            onclick="sendInvoiceEmail(this, '{{ invoice.customer_full_name }}', '{{ invoice.customer_email|default:'' }}')">
+                                                            onclick="sendInvoiceEmail(this, '{{ invoice.customer_full_name }}', '{{ invoice.customer_email|default:'' }}')"
+                                                            {% if invoice.status == 'Anulada' %}disabled{% endif %}>
                                                             <i class="bi bi-send"></i>
                                                         </button>
                                                     </form>
