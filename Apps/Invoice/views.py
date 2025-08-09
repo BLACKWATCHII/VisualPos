@@ -578,7 +578,7 @@ def pay_quota(request, quota_id):
                     
                     <p style="color: #666; font-size: 14px; margin-bottom: 0;">
                         Saludos cordiales,<br>
-                        <strong style="color: #667eea;">El equipo de [Nombre de tu empresa]</strong>
+                        <strong style="color: #667eea;">El equipo de BerserkerDev</strong>
                     </p>
                 </div>
                 
