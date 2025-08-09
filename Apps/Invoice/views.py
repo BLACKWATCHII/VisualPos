@@ -11,7 +11,7 @@ from django.http import HttpResponse, HttpResponseBadRequest, HttpResponseNotAll
 from django.template.loader import get_template
 from xhtml2pdf import pisa
 from django.http import Http404
-from datetime import timedelta, date
+from datetime import datetime, timedelta, date
 from .models import PaymentQuota,Early_Payment
 from .models import TransactionType
 from django.contrib import messages
@@ -431,6 +431,44 @@ def View_quota_customer(request):
     return render(request, 'PaymentQuota/Payment_quota_customer.html', context)
 
 
+def render_pdf_inline_with_puppeteer(template_src, context, filename="ReciboPagoCuota.pdf", return_path=False):
+    html_id = str(uuid.uuid4())
+    tmp_dir = os.path.join(settings.BASE_DIR, "tmp")
+    html_path = os.path.join(tmp_dir, f"{html_id}.html")
+    pdf_path = os.path.join(tmp_dir, f"{html_id}.pdf")
+
+    os.makedirs(tmp_dir, exist_ok=True)
+
+    html = render_to_string(template_src, context)
+    with open(html_path, "w", encoding="utf-8") as f:
+        f.write(html)
+
+    script_path = os.path.join(settings.BASE_DIR, "pdfgen", "generate_pdf.js")
+    result = subprocess.run(
+        ["node", script_path, html_path, pdf_path],
+        capture_output=True,
+        text=True
+    )
+
+    if result.returncode != 0:
+        if os.path.exists(html_path): os.remove(html_path)
+        if os.path.exists(pdf_path): os.remove(pdf_path)
+        raise Exception(f"Error generando PDF:\n{result.stderr.strip()}")
+
+    if not os.path.exists(pdf_path):
+        raise Exception("El archivo PDF no se generó correctamente.")
+
+    os.remove(html_path)
+
+    if return_path:
+        # Devolvemos solo la ruta para que la vista pueda enviarlo por correo
+        return pdf_path
+
+    response = FileResponse(open(pdf_path, 'rb'), content_type='application/pdf')
+    response['Content-Disposition'] = f'inline; filename="{filename}"'
+
+    return response
+
 @login_required
 def pay_quota(request, quota_id):
     quota = get_object_or_404(PaymentQuota, id=quota_id)
@@ -444,13 +482,11 @@ def pay_quota(request, quota_id):
         if pay_amount <= 0 or pay_amount > quota.balance:
             return HttpResponseBadRequest("Importe fuera del rango válido")
 
-
         payment = Early_Payment.objects.create(quota=quota, amount=pay_amount)
 
         if quota.balance <= 0:
             quota.is_paid = True
             quota.save()
-            quota.refresh_from_db()
 
         context = {
             'payment': payment,
@@ -459,9 +495,126 @@ def pay_quota(request, quota_id):
             'amount_paid': pay_amount
         }
 
-        return render_pdf_with_puppeteer('PaymentQuota/Receipt_ticket.html', context, filename="ReciboPagoCuota.pdf")
+        pdf_path = render_pdf_inline_with_puppeteer(
+            'PaymentQuota/Receipt_ticket.html',
+            context,
+            filename="ReciboPagoCuota.pdf",
+            return_path=True
+        )
+
+        send_email_with_attachment(
+            destinatario=quota.invoice.customer.email,
+            asunto="✅ Confirmación de pago - Recibo incluido",
+            contenido_texto=f"""
+        Hola {quota.invoice.customer.name},
+
+        ¡Tu pago ha sido procesado exitosamente! 
+
+        📄 En este correo encontrarás tu recibo de pago adjunto para tus registros.
+
+        Detalles del pago:
+        • Estado: Confirmado
+        • Fecha: {datetime.now().strftime('%d/%m/%Y')}
+        • Referencia: #{quota.invoice.id}
+
+        Si tienes alguna pregunta sobre tu pago, no dudes en contactarnos respondiendo a este correo.
+
+        ¡Gracias por tu confianza!
+
+        Saludos cordiales,
+        El equipo de [Nombre de tu empresa]
+            """.strip(),
+            contenido_html=f"""
+            <div style="font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; max-width: 600px; margin: 0 auto; background-color: #f8f9fa;">
+                <div style="background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); padding: 30px; text-align: center;">
+                    <h1 style="color: white; margin: 0; font-size: 24px; font-weight: 600;">
+                        ✅ Pago Confirmado
+                    </h1>
+                </div>
+                
+                <div style="padding: 30px; background-color: white; margin: 20px; border-radius: 10px; box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);">
+                    <p style="font-size: 18px; color: #333; margin-bottom: 20px;">
+                        Hola <strong style="color: #667eea;">{quota.invoice.customer.name}</strong>,
+                    </p>
+                    
+                    <div style="background-color: #d4edda; border: 1px solid #c3e6cb; border-radius: 8px; padding: 15px; margin: 20px 0;">
+                        <p style="color: #155724; margin: 0; font-weight: 600;">
+                            🎉 ¡Tu pago ha sido procesado exitosamente!
+                        </p>
+                    </div>
+                    
+                    <p style="color: #666; line-height: 1.6; margin-bottom: 25px;">
+                        📄 En este correo encontrarás tu <strong>recibo de pago adjunto</strong> para tus registros.
+                    </p>
+                    
+                    <div style="background-color: #f8f9fa; border-left: 4px solid #667eea; padding: 20px; margin: 20px 0;">
+                        <h3 style="color: #333; margin: 0 0 15px 0; font-size: 16px;">📋 Detalles del pago</h3>
+                        <table style="width: 100%; border-collapse: collapse;">
+                            <tr>
+                                <td style="padding: 8px 0; color: #666; font-weight: 500;">Estado:</td>
+                                <td style="padding: 8px 0; color: #28a745; font-weight: 600;">✅ Confirmado</td>
+                            </tr>
+                            <tr>
+                                <td style="padding: 8px 0; color: #666; font-weight: 500;">Fecha:</td>
+                                <td style="padding: 8px 0; color: #333;">{datetime.now().strftime('%d/%m/%Y')}</td>
+                            </tr>
+                            <tr>
+                                <td style="padding: 8px 0; color: #666; font-weight: 500;">Referencia:</td>
+                                <td style="padding: 8px 0; color: #333;">#{quota.invoice.id}</td>
+                            </tr>
+                        </table>
+                    </div>
+                    
+                    <div style="background-color: #e3f2fd; border-radius: 8px; padding: 20px; margin: 25px 0;">
+                        <p style="color: #1565c0; margin: 0; font-size: 14px; line-height: 1.5;">
+                            💬 <strong>¿Necesitas ayuda?</strong><br>
+                            Si tienes alguna pregunta sobre tu pago, no dudes en contactarnos respondiendo a este correo.
+                        </p>
+                    </div>
+                    
+                    <p style="color: #333; font-size: 16px; margin-top: 30px;">
+                        ¡Gracias por tu confianza! 🙏
+                    </p>
+                    
+                    <p style="color: #666; font-size: 14px; margin-bottom: 0;">
+                        Saludos cordiales,<br>
+                        <strong style="color: #667eea;">El equipo de [Nombre de tu empresa]</strong>
+                    </p>
+                </div>
+                
+                <div style="text-align: center; padding: 20px; color: #999; font-size: 12px;">
+                    <p style="margin: 0;">Este correo fue enviado automáticamente. Por favor, no respondas a esta dirección.</p>
+                </div>
+            </div>
+            """,
+            attachment_path=pdf_path,
+            attachment_name="ReciboPagoCuota.pdf"
+        )
+
+        return FileResponse(open(pdf_path, 'rb'), content_type='application/pdf')
 
     return HttpResponseNotAllowed(['POST'])
+
+@login_required
+def download_quota_receipt(request, quota_id):
+    quota = get_object_or_404(PaymentQuota, pk=quota_id)
+
+    # Obtenemos el último pago asociado a esta cuota
+    payment = quota.payments.order_by('-date').first()
+    if not payment:
+        return HttpResponse("No hay pagos para esta cuota.", status=404)
+
+    context = {
+        'quota': quota,
+        'payment': payment
+    }
+
+    return render_pdf_with_puppeteer(
+        'PaymentQuota/Receipt_ticket.html',
+        context,
+        filename=f"Recibo_Cuota_{quota.id}.pdf"
+    )
+
 
 @login_required
 def payment_history(request, customer_id=None):

@@ -105,24 +105,57 @@ $(document).ready(function () {
     });
 
 
-    $(document).on('click', '.delete-btn', function (event) {
-        event.preventDefault();
+$(document).on('click', '.delete-btn', function (event) {
+    event.preventDefault();
 
-        const url = $(this).data('url');
+    const url = $(this).data('url');
 
-        Swal.fire({
-            title: `¿Estás seguro que quieres eliminar a este Cliente?`,
-            text: "¡No podrás revertir esta acción!",
-            icon: 'warning',
-            showCancelButton: true,
-            confirmButtonColor: '#d33',
-            cancelButtonColor: '#3085d6',
-            confirmButtonText: 'Sí, eliminar',
-            cancelButtonText: 'Cancelar'
-        }).then((result) => {
-            if (result.isConfirmed && url) {
-                window.location.href = url;
-            }
-        });
+    Swal.fire({
+        title: `¿Estás seguro que quieres eliminar a este Cliente?`,
+        text: "¡No podrás revertir esta acción!",
+        icon: 'warning',
+        showCancelButton: true,
+        confirmButtonColor: '#d33',
+        cancelButtonColor: '#3085d6',
+        confirmButtonText: 'Sí, eliminar',
+        cancelButtonText: 'Cancelar'
+    }).then((result) => {
+        if (result.isConfirmed && url) {
+            $.ajax({
+                url: url,
+                type: 'POST',
+                headers: {
+                    'X-CSRFToken': getCookie('csrftoken')
+                },
+                success: function (data) {
+                    if (data.status === 'error') {
+                        Swal.fire('Error', data.message, 'error');
+                    } else {
+                        Swal.fire('Eliminado', data.message, 'success')
+                            .then(() => location.reload());
+                    }
+                },
+                error: function () {
+                    Swal.fire('Error', 'No se pudo procesar la solicitud.', 'error');
+                }
+            });
+        }
     });
+
+    function getCookie(name) {
+        let cookieValue = null;
+        if (document.cookie && document.cookie !== '') {
+            const cookies = document.cookie.split(';');
+            for (let i = 0; i < cookies.length; i++) {
+                const cookie = cookies[i].trim();
+                if (cookie.substring(0, name.length + 1) === (name + '=')) {
+                    cookieValue = decodeURIComponent(cookie.substring(name.length + 1));
+                    break;
+                }
+            }
+        }
+        return cookieValue;
+    }
+});
+
 });
