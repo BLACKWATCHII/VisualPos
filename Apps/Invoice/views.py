@@ -444,6 +444,7 @@ def pay_quota(request, quota_id):
         if pay_amount <= 0 or pay_amount > quota.balance:
             return HttpResponseBadRequest("Importe fuera del rango válido")
 
+
         payment = Early_Payment.objects.create(quota=quota, amount=pay_amount)
 
         if quota.balance <= 0:
@@ -457,7 +458,8 @@ def pay_quota(request, quota_id):
             'invoice': quota.invoice,
             'amount_paid': pay_amount
         }
-        return render_to_pdf('PaymentQuota/Receipt_ticket.html', context)
+
+        return render_pdf_with_puppeteer('PaymentQuota/Receipt_ticket.html', context, filename="ReciboPagoCuota.pdf")
 
     return HttpResponseNotAllowed(['POST'])
 
@@ -529,6 +531,11 @@ def cancel_invoice_ajax(request, invoice_id):
         
         invoice.status = 'Anulada'
         invoice.save()
+
+        for detail in invoice.items.all():
+            item = detail.item
+            item.Stock += detail.quantity
+            item.save()
 
         
         canceled = CanceledInvoice.objects.create(

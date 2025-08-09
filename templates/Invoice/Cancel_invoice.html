@@ -5,7 +5,7 @@
 {% block title %}Anular factura{% endblock %}
 
 {% block content %}
-<!-- SweetAlert2 CSS y JS -->
+
 <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/limonte-sweetalert2/11.10.1/sweetalert2.min.css">
 <script src="https://cdnjs.cloudflare.com/ajax/libs/limonte-sweetalert2/11.10.1/sweetalert2.all.min.js"></script>
 <style>
@@ -278,7 +278,6 @@
         opacity: 0.5;
     }
 
-    /* Scrollbar personalizado */
     .invoice-list::-webkit-scrollbar {
         width: 6px;
     }
@@ -362,7 +361,6 @@
 </style>
 
 <div class="modern-container">
-    <!-- Sección de Filtros -->
     <div class="filters-section">
         <div class="filters-header">
             <div class="filter-icon">🔍</div>
@@ -410,11 +408,10 @@
     </div>
 
     <div class="row">
-        <!-- Lista de facturas -->
         <div class="col-md-4 p-0">
-            <div class="invoice-list">
+            <div class="invoice-list" id="invoiceListContainer">
                 <div class="results-info" id="resultsInfo">
-                    📊 Mostrando todas las facturas
+                    📊 Mostrando facturas más recientes
                 </div>
                 
                 <div id="invoicesList">
@@ -462,7 +459,6 @@
             </div>
         </div>
 
-        <!-- Detalle de factura -->
         <div class="col-md-8 p-0">
             <div class="invoice-detail" id="invoice-detail">
                 <h4>
@@ -476,11 +472,12 @@
 </div>
 
 <script>
-// Variables globales
 let allInvoices = [];
 let selectedInvoiceId = null;
+let currentPage = 1;
+let isLoading = false;
+let hasMorePages = true;
 
-// Función para mostrar notificaciones toast
 function showToast(icon, title, position = 'top-end') {
     const Toast = Swal.mixin({
         toast: true,
@@ -500,9 +497,7 @@ function showToast(icon, title, position = 'top-end') {
     });
 }
 
-// Inicializar cuando carga la página
 document.addEventListener('DOMContentLoaded', function() {
-    // Guardar todas las facturas para filtrado
     const invoiceElements = document.querySelectorAll('.invoice-item');
     allInvoices = Array.from(invoiceElements).map(el => ({
         element: el,
@@ -515,13 +510,113 @@ document.addEventListener('DOMContentLoaded', function() {
     
     updateResultsInfo();
     
-    // Event listeners para filtros
     document.getElementById('searchCustomer').addEventListener('input', filterInvoices);
     document.getElementById('searchInvoice').addEventListener('input', filterInvoices);
     document.getElementById('searchDate').addEventListener('change', filterInvoices);
     document.getElementById('statusFilter').addEventListener('change', filterInvoices);
     document.getElementById('minAmount').addEventListener('input', filterInvoices);
+
+    document.getElementById('invoiceListContainer').addEventListener('scroll', handleScroll);
 });
+
+function handleScroll() {
+    const container = document.getElementById('invoiceListContainer');
+    
+    if (container.scrollTop + container.clientHeight >= container.scrollHeight - 100) {
+        loadMoreInvoices();
+    }
+}
+
+function loadMoreInvoices() {
+    if (isLoading || !hasMorePages) return;
+    
+    isLoading = true;
+    currentPage++;
+    
+    showLoadingIndicator();
+    
+    fetch(`load-more-invoices/?page=${currentPage}`)
+        .then(response => response.json())
+        .then(data => {
+            if (data.success && data.invoices.length > 0) {
+                data.invoices.forEach(invoice => {
+                    const invoiceHtml = createInvoiceHTML(invoice);
+                    document.getElementById('invoicesList').insertAdjacentHTML('beforeend', invoiceHtml);
+                    
+                    const newElement = document.querySelector(`[data-invoice-id="${invoice.id}"]`);
+                    allInvoices.push({
+                        element: newElement,
+                        customer: invoice.customer_name.toLowerCase(),
+                        invoiceId: invoice.id.toString(),
+                        amount: parseFloat(invoice.total),
+                        date: invoice.date,
+                        status: invoice.status
+                    });
+                });
+                
+                hasMorePages = data.has_next;
+                updateResultsInfo();
+            } else {
+                hasMorePages = false;
+            }
+            
+            isLoading = false;
+            hideLoadingIndicator();
+        })
+        .catch(error => {
+            console.error('Error cargando más facturas:', error);
+            isLoading = false;
+            hideLoadingIndicator();
+        });
+}
+
+function createInvoiceHTML(invoice) {
+    const statusClass = invoice.status === 'Anulada' ? 'status-anulada' : 
+                       invoice.status === 'Pagada' ? 'status-pagada' : 'status-pendiente';
+    
+    return `
+        <div class="invoice-item" 
+             onclick="loadInvoiceDetail(${invoice.id})" 
+             data-customer="${invoice.customer_name}"
+             data-invoice-id="${invoice.id}"
+             data-amount="${invoice.total}"
+             data-date="${invoice.date}"
+             data-status="${invoice.status}">
+            
+            <div class="invoice-customer">
+                <span>👤</span>
+                ${invoice.customer_name}
+            </div>
+            
+            <div class="invoice-meta">
+                <div><strong>#${invoice.id}</strong></div>
+                <div>$${parseFloat(invoice.total).toLocaleString('es-CO', {minimumFractionDigits: 2})}</div>
+                <div>${invoice.date_display}</div>
+                <div>
+                    <span class="status-badge ${statusClass}">${invoice.status}</span>
+                </div>
+            </div>
+        </div>
+    `;
+}
+
+function showLoadingIndicator() {
+    if (!document.getElementById('loading-indicator')) {
+        document.getElementById('invoicesList').insertAdjacentHTML('beforeend', `
+            <div id="loading-indicator" class="loading-more">
+                <div class="spinner"></div>
+                <p>Cargando más facturas...</p>
+            </div>
+        `);
+    }
+}
+
+function hideLoadingIndicator() {
+    const indicator = document.getElementById('loading-indicator');
+    if (indicator) {
+        indicator.remove();
+    }
+}
 
 function formatCurrency(value) {
     return new Intl.NumberFormat('es-CO', {
@@ -557,32 +652,32 @@ function filterInvoices() {
     allInvoices.forEach(invoice => {
         let shouldShow = true;
         
-        // Filtro por nombre de cliente
+     
         if (customerSearch && !invoice.customer.includes(customerSearch)) {
             shouldShow = false;
         }
         
-        // Filtro por número de factura
+       
         if (invoiceSearch && !invoice.invoiceId.includes(invoiceSearch)) {
             shouldShow = false;
         }
         
-        // Filtro por fecha
+     
         if (dateSearch && invoice.date !== dateSearch) {
             shouldShow = false;
         }
         
-        // Filtro por estado
+       
         if (statusFilter && invoice.status !== statusFilter) {
             shouldShow = false;
         }
         
-        // Filtro por monto mínimo
+       
         if (minAmount > 0 && invoice.amount < minAmount) {
             shouldShow = false;
         }
         
-        // Mostrar/ocultar elemento
+        
         if (shouldShow) {
             invoice.element.style.display = 'block';
             visibleCount++;
@@ -591,7 +686,7 @@ function filterInvoices() {
         }
     });
     
-    // Mostrar/ocultar mensaje de sin resultados
+    
     const noResults = document.getElementById('noResults');
     if (visibleCount === 0) {
         noResults.style.display = 'block';
@@ -615,7 +710,7 @@ function updateResultsInfo(visibleCount = null) {
 }
 
 function clearAllFilters() {
-    // SweetAlert para confirmación
+   
     Swal.fire({
         title: '🗑️ Limpiar todos los filtros',
         text: '¿Estás seguro de que deseas limpiar todos los filtros aplicados?',
@@ -634,7 +729,7 @@ function clearAllFilters() {
             document.getElementById('statusFilter').value = '';
             document.getElementById('minAmount').value = '';
             
-            // Mostrar todas las facturas
+           
             allInvoices.forEach(invoice => {
                 invoice.element.style.display = 'block';
             });
@@ -642,19 +737,19 @@ function clearAllFilters() {
             document.getElementById('noResults').style.display = 'none';
             updateResultsInfo();
             
-            // Toast de confirmación
+           
             showToast('success', '🧹 Filtros limpiados correctamente');
         }
     });
 }
 
 function loadInvoiceDetail(invoiceId) {
-    // Remover selección anterior
+  
     document.querySelectorAll('.invoice-item').forEach(item => {
         item.classList.remove('selected');
     });
     
-    // Agregar selección actual
+    
     const selectedItem = document.querySelector(`[data-invoice-id="${invoiceId}"]`);
     if (selectedItem) {
         selectedItem.classList.add('selected');
@@ -728,7 +823,7 @@ function loadInvoiceDetail(invoiceId) {
         .catch(error => {
             console.error('Error:', error);
             
-            // SweetAlert para error de carga
+          
             Swal.fire({
                 title: '❌ Error al cargar factura',
                 html: `
@@ -754,7 +849,7 @@ function loadInvoiceDetail(invoiceId) {
                 if (result.isConfirmed) {
                     loadInvoiceDetail(invoiceId);
                 } else {
-                    // Mostrar mensaje por defecto
+                    
                     document.getElementById('invoice-detail').innerHTML = `
                         <h4>
                             <span>📋</span>
@@ -768,7 +863,7 @@ function loadInvoiceDetail(invoiceId) {
 }
 
 function cancelInvoice(invoiceId) {
-    // SweetAlert para confirmación
+   
     Swal.fire({
         title: '¿Anular esta factura?',
         html: `
@@ -801,7 +896,7 @@ function cancelInvoice(invoiceId) {
             cancelButton: 'btn-modern'
         },
         didOpen: () => {
-            // Enfocar el textarea
+            
             document.getElementById('cancellation-reason').focus();
         },
         preConfirm: () => {
@@ -810,7 +905,7 @@ function cancelInvoice(invoiceId) {
         }
     }).then((result) => {
         if (result.isConfirmed) {
-            // Mostrar loading
+        
             Swal.fire({
                 title: 'Anulando factura...',
                 html: '⏳ Por favor espera mientras procesamos la anulación',
@@ -822,7 +917,7 @@ function cancelInvoice(invoiceId) {
                 }
             });
 
-            // Realizar la petición
+         
             fetch(`anular-factura/${invoiceId}/`, {
                 method: "POST",
                 headers: {
@@ -836,7 +931,7 @@ function cancelInvoice(invoiceId) {
                 Swal.close();
                 
                 if (data.success) {
-                    // Success con opción de descarga
+                  
                     Swal.fire({
                         title: '✅ Factura anulada exitosamente',
                         html: `
@@ -864,7 +959,7 @@ function cancelInvoice(invoiceId) {
                             popup: 'swal-wide'
                         },
                         didOpen: () => {
-                            // Manejar descarga de PDF
+                          
                             const downloadBtn = document.getElementById('download-pdf');
                             if (downloadBtn && data.pdf_url) {
                                 downloadBtn.addEventListener('click', () => {
@@ -875,7 +970,6 @@ function cancelInvoice(invoiceId) {
                                     link.click();
                                     document.body.removeChild(link);
                                     
-                                    // Feedback de descarga
                                     Swal.showToast({
                                         icon: 'info',
                                         title: '📥 Descarga iniciada'
@@ -920,7 +1014,6 @@ function cancelInvoice(invoiceId) {
                 console.error('Error anulando factura:', err);
                 Swal.close();
                 
-                // Error de conexión
                 Swal.fire({
                     title: '🔌 Error de conexión',
                     html: `

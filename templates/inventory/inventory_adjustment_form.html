@@ -1,0 +1,603 @@
+{% extends 'base.html' %}
+{% load static %}
+{% load humanize %}
+
+{% block title %}Ajuste de inventario{% endblock %}
+
+{% block content %}
+<style>
+:root {
+    --primary-green: #10b981;
+    --primary-green-dark: #047857;
+    --secondary-green: #d1fae5;
+    --accent-green: #34d399;
+    --light-green: #ecfdf5;
+    --dark-green: #064e3b;
+    --gradient-primary: linear-gradient(135deg, #10b981 0%, #047857 100%);
+    --gradient-light: linear-gradient(135deg, #ecfdf5 0%, #d1fae5 100%);
+    --shadow-primary: 0 10px 25px rgba(16, 185, 129, 0.15);
+    --shadow-card: 0 8px 32px rgba(0, 0, 0, 0.1);
+}
+
+body {
+    background: linear-gradient(135deg, #f0fdf4 0%, #ecfdf5 100%);
+    min-height: 100vh;
+}
+
+.modern-card {
+    background: rgba(255, 255, 255, 0.95);
+    backdrop-filter: blur(10px);
+    border: 1px solid rgba(16, 185, 129, 0.1);
+    border-radius: 20px;
+    box-shadow: var(--shadow-card);
+    transition: all 0.3s ease;
+}
+
+.modern-card:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 12px 40px rgba(16, 185, 129, 0.15);
+}
+
+.modern-header {
+    background: var(--gradient-primary);
+    border-radius: 20px 20px 0 0 !important;
+    padding: 1.5rem 2rem;
+    border: none;
+    position: relative;
+    overflow: hidden;
+}
+
+.modern-header::before {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    background: linear-gradient(45deg, rgba(255, 255, 255, 0.1) 25%, transparent 25%),
+                linear-gradient(-45deg, rgba(255, 255, 255, 0.1) 25%, transparent 25%);
+    background-size: 20px 20px;
+    background-position: 0 0, 10px 10px;
+    opacity: 0.3;
+}
+
+.modern-header h4, .modern-header h5 {
+    position: relative;
+    z-index: 1;
+    margin: 0;
+    font-weight: 700;
+    text-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+}
+
+.modern-form-control {
+    border: 2px solid #e5e7eb;
+    border-radius: 12px;
+    padding: 0.75rem 1rem;
+    background: rgba(255, 255, 255, 0.8);
+    transition: all 0.3s ease;
+    font-size: 0.95rem;
+}
+
+.modern-form-control:focus {
+    border-color: var(--primary-green);
+    box-shadow: 0 0 0 4px rgba(16, 185, 129, 0.1);
+    background: white;
+    transform: translateY(-1px);
+}
+
+.modern-form-control:hover {
+    border-color: var(--accent-green);
+    background: white;
+}
+
+.form-label {
+    font-weight: 600;
+    color: var(--dark-green);
+    margin-bottom: 0.5rem;
+    font-size: 0.9rem;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+}
+
+.modern-btn {
+    background: var(--gradient-primary);
+    border: none;
+    border-radius: 12px;
+    padding: 0.75rem 2rem;
+    font-weight: 600;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+    transition: all 0.3s ease;
+    box-shadow: var(--shadow-primary);
+    position: relative;
+    overflow: hidden;
+}
+
+.modern-btn::before {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: -100%;
+    width: 100%;
+    height: 100%;
+    background: linear-gradient(90deg, transparent, rgba(255, 255, 255, 0.2), transparent);
+    transition: left 0.5s;
+}
+
+.modern-btn:hover::before {
+    left: 100%;
+}
+
+.modern-btn:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 15px 35px rgba(16, 185, 129, 0.3);
+}
+
+.modern-table {
+    border-radius: 0 0 20px 20px;
+    overflow: hidden;
+    box-shadow: none;
+}
+
+.modern-table thead th {
+    background: var(--gradient-light);
+    border: none;
+    padding: 1rem;
+    font-weight: 700;
+    color: var(--dark-green);
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+    font-size: 0.85rem;
+}
+
+.modern-table tbody tr {
+    transition: all 0.3s ease;
+    border: none;
+}
+
+.modern-table tbody tr:hover {
+    background: var(--light-green);
+    transform: scale(1.01);
+}
+
+.modern-table tbody td {
+    padding: 1rem;
+    border-color: rgba(16, 185, 129, 0.1);
+    vertical-align: middle;
+}
+
+.modern-badge {
+    padding: 0.5rem 1rem;
+    border-radius: 25px;
+    font-weight: 600;
+    font-size: 0.8rem;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+}
+
+.modern-badge.bg-success {
+    background: linear-gradient(135deg, #10b981, #34d399) !important;
+    box-shadow: 0 4px 15px rgba(16, 185, 129, 0.3);
+}
+
+.modern-badge.bg-danger {
+    background: linear-gradient(135deg, #ef4444, #f87171) !important;
+    box-shadow: 0 4px 15px rgba(239, 68, 68, 0.3);
+}
+
+.modern-alert {
+    border-radius: 12px;
+    border: none;
+    padding: 1rem 1.5rem;
+    margin-top: 1rem;
+    font-weight: 500;
+}
+
+.modern-pagination {
+    background: white;
+    border-radius: 0 0 20px 20px;
+    padding: 1.5rem 2rem;
+    border-top: 1px solid rgba(16, 185, 129, 0.1);
+}
+
+.pagination .page-link {
+    color: var(--primary-green);
+    border: 2px solid transparent;
+    border-radius: 10px;
+    margin: 0 0.25rem;
+    font-weight: 600;
+    transition: all 0.3s ease;
+}
+
+.pagination .page-link:hover {
+    color: white;
+    background: var(--primary-green);
+    border-color: var(--primary-green);
+    transform: translateY(-2px);
+    box-shadow: 0 8px 20px rgba(16, 185, 129, 0.3);
+}
+
+.pagination .page-item.disabled .page-link {
+    color: #9ca3af;
+    background: #f9fafb;
+    border-color: #e5e7eb;
+}
+
+@keyframes fadeInUp {
+    from {
+        opacity: 0;
+        transform: translateY(30px);
+    }
+    to {
+        opacity: 1;
+        transform: translateY(0);
+    }
+}
+
+.modern-card {
+    animation: fadeInUp 0.6s ease-out;
+}
+
+.modern-card:nth-child(2) {
+    animation-delay: 0.2s;
+}
+
+/* Responsive improvements */
+@media (max-width: 768px) {
+    .modern-header {
+        padding: 1rem;
+    }
+    
+    .modern-pagination {
+        padding: 1rem;
+    }
+    
+    .modern-table tbody td {
+        padding: 0.75rem 0.5rem;
+        font-size: 0.9rem;
+    }
+}
+</style>
+
+<br>
+<br>
+<br>
+<div class="container mt-5">
+    <div class="modern-card shadow-lg border-0 rounded-lg mb-4">
+        <div class="modern-header card-header bg-primary text-white">
+            <h4 class="mb-0"><i class="bi bi-sliders me-2"></i>Ajuste de Inventario</h4>
+        </div>
+        <div class="card-body" style="padding: 2rem;">
+            <form method="post" class="needs-validation" novalidate>
+                {% csrf_token %}
+                
+                <div class="row">
+                    <div class="col-md-4 mb-3">
+                        <label class="form-label"><i class="bi bi-box me-1"></i>Producto</label>
+                        <div class="input-group">
+                            <input type="hidden" id="selectedProductId" name="item" required>
+                            <input type="text" id="selectedProductName" class="modern-form-control form-control" 
+                                   placeholder="Buscar y seleccionar producto..." readonly required>
+                            <button type="button" class="btn btn-outline-success" data-bs-toggle="modal" data-bs-target="#productModal">
+                                <i class="bi bi-search"></i>
+                            </button>
+                        </div>
+                    </div>
+
+                    <div class="col-md-3 mb-3">
+                        <label class="form-label"><i class="bi bi-arrow-up-down me-1"></i>Tipo de ajuste</label>
+                        <select class="modern-form-control form-select" name="adjustment_type" required>
+                            <option value="">Seleccione...</option>
+                            <option value="IN">Entrada</option>
+                            <option value="OUT">Salida</option>
+                        </select>
+                    </div>
+
+                    <div class="col-md-2 mb-3">
+                        <label class="form-label"><i class="bi bi-123 me-1"></i>Cantidad</label>
+                        <input type="number" class="modern-form-control form-control" name="quantity" min="1" placeholder="1" required>
+                    </div>
+
+                    <div class="col-md-3 mb-3">
+                        <label class="form-label"><i class="bi bi-chat-text me-1"></i>Motivo</label>
+                        <input type="text" class="modern-form-control form-control" name="reason" placeholder="Opcional">
+                    </div>
+                </div>
+
+                <button type="submit" class="modern-btn btn btn-success">
+                    <i class="bi bi-save me-2"></i>Guardar ajuste
+                </button>
+            </form>
+        </div>
+    </div>
+
+    {% if messages %}
+        {% for message in messages %}
+            <div class="modern-alert alert alert-{{ message.tags }} mt-3">{{ message }}</div>
+        {% endfor %}
+    {% endif %}
+
+    <!-- Tabla de historial -->
+    <div class="modern-card shadow-lg border-0 rounded-lg">
+        <div class="modern-header card-header bg-secondary text-white">
+            <h5 class="mb-0"><i class="bi bi-clock-history me-2"></i>Historial de ajustes</h5>
+        </div>
+        <div class="card-body p-0">
+            <table class="modern-table table table-hover mb-0">
+                <thead class="table-light">
+                    <tr>
+                        <th><i class="bi bi-calendar me-1"></i>Fecha</th>
+                        <th><i class="bi bi-box me-1"></i>Producto</th>
+                        <th><i class="bi bi-tag me-1"></i>Tipo</th>
+                        <th><i class="bi bi-123 me-1"></i>Cantidad</th>
+                        <th><i class="bi bi-chat-text me-1"></i>Motivo</th>
+                        <th><i class="bi bi-person me-1"></i>Usuario</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for adj in adjustments %}
+                        <tr>
+                            <td>{{ adj.created_at|date:"d/m/Y H:i" }}</td>
+                            <td><strong>{{ adj.item.Name }}</strong></td>
+                            <td>
+                                {% if adj.adjustment_type == "IN" %}
+                                    <span class="modern-badge badge bg-success">Entrada</span>
+                                {% else %}
+                                    <span class="modern-badge badge bg-danger">Salida</span>
+                                {% endif %}
+                            </td>
+                            <td><strong>{{ adj.quantity }}</strong></td>
+                            <td>{{ adj.reason|default:"-" }}</td>
+                            <td>{{ adj.user.username }}</td>
+                        </tr>
+                    {% empty %}
+                        <tr>
+                            <td colspan="6" class="text-center py-4">
+                                <i class="bi bi-inbox display-4 text-muted"></i>
+                                <p class="mt-2 text-muted">No hay ajustes registrados.</p>
+                            </td>
+                        </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+
+        <!-- Paginación -->
+        <div class="modern-pagination card-footer">
+            <nav>
+                <ul class="pagination justify-content-center mb-0">
+                    {% if adjustments.has_previous %}
+                        <li class="page-item">
+                            <a class="page-link" href="?page={{ adjustments.previous_page_number }}">
+                                <i class="bi bi-chevron-left me-1"></i>Anterior
+                            </a>
+                        </li>
+                    {% else %}
+                        <li class="page-item disabled">
+                            <span class="page-link">
+                                <i class="bi bi-chevron-left me-1"></i>Anterior
+                            </span>
+                        </li>
+                    {% endif %}
+
+                    <li class="page-item disabled">
+                        <span class="page-link">Página {{ adjustments.number }} de {{ adjustments.paginator.num_pages }}</span>
+                    </li>
+
+                    {% if adjustments.has_next %}
+                        <li class="page-item">
+                            <a class="page-link" href="?page={{ adjustments.next_page_number }}">
+                                Siguiente<i class="bi bi-chevron-right ms-1"></i>
+                            </a>
+                        </li>
+                    {% else %}
+                        <li class="page-item disabled">
+                            <span class="page-link">
+                                Siguiente<i class="bi bi-chevron-right ms-1"></i>
+                            </span>
+                        </li>
+                    {% endif %}
+                </ul>
+            </nav>
+        </div>
+    </div>
+</div>
+
+<!-- Modal de búsqueda de productos -->
+<div class="modal fade" id="productModal" tabindex="-1" aria-labelledby="productModalLabel" aria-hidden="true">
+    <div class="modal-dialog modal-lg modal-dialog-centered">
+        <div class="modal-content modern-card" style="border-radius: 15px;">
+            <div class="modal-header modern-header" style="border-radius: 15px 15px 0 0;">
+                <h5 class="modal-title text-white" id="productModalLabel">
+                    <i class="bi bi-search me-2"></i>Buscar Producto
+                </h5>
+                <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <div class="modal-body p-0">
+                <div class="p-3 border-bottom">
+                    <div class="input-group">
+                        <span class="input-group-text bg-light border-0">
+                            <i class="bi bi-search text-muted"></i>
+                        </span>
+                        <input type="text" id="productSearch" class="form-control border-0 bg-light" 
+                               placeholder="Escriba el nombre del producto..." autocomplete="off">
+                    </div>
+                </div>
+                <div class="product-list" style="max-height: 400px; overflow-y: auto;">
+                    {% for product in items %}
+                        <div class="product-item p-3 border-bottom" data-id="{{ product.id }}" 
+                             data-name="{{ product.Name }}" data-stock="{{ product.Stock }}">
+                            <div class="d-flex justify-content-between align-items-center">
+                                <div>
+                                    <h6 class="mb-1 fw-bold">{{ product.Name }}</h6>
+                                    <small class="text-muted">Stock disponible: <span class="fw-semibold">{{ product.Stock }}</span></small>
+                                </div>
+                                <button type="button" class="btn btn-sm btn-success select-product-btn">
+                                    <i class="bi bi-check-lg me-1"></i>Seleccionar
+                                </button>
+                            </div>
+                        </div>
+                    {% empty %}
+                        <div class="text-center py-5">
+                            <i class="bi bi-inbox display-4 text-muted"></i>
+                            <p class="mt-2 text-muted">No hay productos disponibles.</p>
+                        </div>
+                    {% endfor %}
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    const productSearch = document.getElementById('productSearch');
+    const productItems = document.querySelectorAll('.product-item');
+    const selectedProductId = document.getElementById('selectedProductId');
+    const selectedProductName = document.getElementById('selectedProductName');
+    const productModal = new bootstrap.Modal(document.getElementById('productModal'));
+
+    // Función de búsqueda
+    productSearch.addEventListener('input', function() {
+        const searchTerm = this.value.toLowerCase().trim();
+        
+        productItems.forEach(item => {
+            const productName = item.dataset.name.toLowerCase();
+            if (productName.includes(searchTerm)) {
+                item.style.display = 'block';
+            } else {
+                item.style.display = 'none';
+            }
+        });
+    });
+
+    // Selección de producto
+    document.querySelectorAll('.select-product-btn').forEach(btn => {
+        btn.addEventListener('click', function() {
+            const productItem = this.closest('.product-item');
+            const productId = productItem.dataset.id;
+            const productName = productItem.dataset.name;
+            const productStock = productItem.dataset.stock;
+            
+            selectedProductId.value = productId;
+            selectedProductName.value = `${productName} (Stock: ${productStock})`;
+            
+            productModal.hide();
+            productSearch.value = '';
+            
+            // Mostrar todos los productos cuando se cierre el modal
+            productItems.forEach(item => {
+                item.style.display = 'block';
+            });
+        });
+    });
+
+    // Limpiar búsqueda cuando se abre el modal
+    document.getElementById('productModal').addEventListener('show.bs.modal', function() {
+        productSearch.value = '';
+        productItems.forEach(item => {
+            item.style.display = 'block';
+        });
+        setTimeout(() => productSearch.focus(), 300);
+    });
+
+    // Permitir selección con Enter en la búsqueda
+    productSearch.addEventListener('keydown', function(e) {
+        if (e.key === 'Enter') {
+            const visibleItems = Array.from(productItems).filter(item => 
+                item.style.display !== 'none'
+            );
+            if (visibleItems.length > 0) {
+                visibleItems[0].querySelector('.select-product-btn').click();
+            }
+        }
+    });
+});
+</script>
+
+<style>
+.product-item {
+    cursor: pointer;
+    transition: all 0.3s ease;
+}
+
+.product-item:hover {
+    background: var(--light-green);
+    transform: translateX(5px);
+}
+
+.product-item:last-child {
+    border-bottom: none !important;
+}
+
+.modal-content {
+    box-shadow: 0 20px 60px rgba(0, 0, 0, 0.2);
+    border: none;
+}
+
+.input-group-text {
+    border-radius: 10px 0 0 10px;
+}
+
+#productSearch {
+    border-radius: 0 10px 10px 0;
+    font-size: 0.95rem;
+    padding: 0.75rem;
+}
+
+#productSearch:focus {
+    box-shadow: 0 0 0 3px rgba(16, 185, 129, 0.1);
+    border-color: var(--primary-green);
+}
+
+.select-product-btn {
+    background: var(--gradient-primary);
+    border: none;
+    border-radius: 8px;
+    font-size: 0.85rem;
+    transition: all 0.3s ease;
+}
+
+.select-product-btn:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 8px 20px rgba(16, 185, 129, 0.3);
+}
+
+.btn-outline-success {
+    border-color: var(--primary-green);
+    color: var(--primary-green);
+    border-radius: 0 12px 12px 0;
+    border-left: none;
+    transition: all 0.3s ease;
+}
+
+.btn-outline-success:hover {
+    background: var(--primary-green);
+    border-color: var(--primary-green);
+    transform: translateY(-1px);
+}
+
+#selectedProductName {
+    border-radius: 12px 0 0 12px;
+    cursor: pointer;
+}
+
+.product-list::-webkit-scrollbar {
+    width: 8px;
+}
+
+.product-list::-webkit-scrollbar-track {
+    background: #f1f1f1;
+    border-radius: 10px;
+}
+
+.product-list::-webkit-scrollbar-thumb {
+    background: var(--primary-green);
+    border-radius: 10px;
+}
+
+.product-list::-webkit-scrollbar-thumb:hover {
+    background: var(--primary-green-dark);
+}
+</style>
+{% endblock %}

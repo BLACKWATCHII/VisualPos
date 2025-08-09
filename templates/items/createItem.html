@@ -2,75 +2,472 @@
 {% load static %}
 
 {% block content %}
-<link rel="stylesheet" href="{% static 'css/Inventory/createItem.css' %}">
+<style>
+:root {
+    --primary-green: #10b981;
+    --primary-green-dark: #047857;
+    --secondary-green: #d1fae5;
+    --accent-green: #34d399;
+    --light-green: #ecfdf5;
+    --dark-green: #064e3b;
+    --gradient-primary: linear-gradient(135deg, #10b981 0%, #047857 100%);
+    --gradient-light: linear-gradient(135deg, #ecfdf5 0%, #d1fae5 100%);
+    --shadow-primary: 0 10px 25px rgba(16, 185, 129, 0.15);
+    --shadow-card: 0 8px 32px rgba(0, 0, 0, 0.1);
+    --border-radius: 15px;
+}
+
+body {
+    background: linear-gradient(135deg, #f0fdf4 0%, #ecfdf5 100%);
+    min-height: 100vh;
+    font-family: 'Inter', -apple-system, BlinkMacSystemFont, sans-serif;
+}
+
+.modern-container {
+    max-width: 1200px;
+    margin: 2rem auto;
+    padding: 0 1rem;
+}
+
+.modern-card {
+    background: rgba(255, 255, 255, 0.95);
+    backdrop-filter: blur(15px);
+    border: 1px solid rgba(16, 185, 129, 0.1);
+    border-radius: var(--border-radius);
+    box-shadow: var(--shadow-card);
+    overflow: hidden;
+    animation: fadeInUp 0.6s ease-out;
+}
+
+.modern-header {
+    background: var(--gradient-primary);
+    padding: 2rem;
+    position: relative;
+    overflow: hidden;
+}
+
+.modern-header::before {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    background: linear-gradient(45deg, rgba(255, 255, 255, 0.1) 25%, transparent 25%),
+                linear-gradient(-45deg, rgba(255, 255, 255, 0.1) 25%, transparent 25%);
+    background-size: 30px 30px;
+    background-position: 0 0, 15px 15px;
+    opacity: 0.3;
+}
+
+.header-content {
+    position: relative;
+    z-index: 1;
+}
+
+.header-title {
+    color: white;
+    font-size: 2rem;
+    font-weight: 700;
+    margin: 0 0 0.5rem 0;
+    text-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+}
+
+.header-subtitle {
+    color: rgba(255, 255, 255, 0.9);
+    font-size: 1rem;
+    margin: 0;
+    text-transform: uppercase;
+    letter-spacing: 1px;
+    font-weight: 500;
+}
+
+.form-container {
+    padding: 2.5rem;
+}
+
+.horizontal-form {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+    gap: 2rem;
+    margin-bottom: 2rem;
+}
+
+.form-section {
+    background: var(--gradient-light);
+    border-radius: var(--border-radius);
+    padding: 1.5rem;
+    border: 1px solid rgba(16, 185, 129, 0.1);
+}
+
+.section-title {
+    color: var(--dark-green);
+    font-size: 0.9rem;
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: 1px;
+    margin-bottom: 1.5rem;
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+}
+
+.form-group {
+    margin-bottom: 1.5rem;
+}
+
+.form-group:last-child {
+    margin-bottom: 0;
+}
+
+.form-label {
+    display: block;
+    color: var(--dark-green);
+    font-weight: 600;
+    margin-bottom: 0.5rem;
+    font-size: 0.9rem;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+}
+
+.modern-input, .modern-select, .modern-textarea {
+    width: 100%;
+    border: 2px solid #e5e7eb;
+    border-radius: 12px;
+    padding: 0.875rem 1rem;
+    background: rgba(255, 255, 255, 0.8);
+    transition: all 0.3s ease;
+    font-size: 0.95rem;
+    font-family: inherit;
+}
+
+.modern-input:focus, .modern-select:focus, .modern-textarea:focus {
+    outline: none;
+    border-color: var(--primary-green);
+    box-shadow: 0 0 0 4px rgba(16, 185, 129, 0.1);
+    background: white;
+    transform: translateY(-2px);
+}
+
+.modern-input:hover, .modern-select:hover, .modern-textarea:hover {
+    border-color: var(--accent-green);
+    background: white;
+}
+
+.modern-textarea {
+    resize: vertical;
+    min-height: 100px;
+}
+
+.radio-group {
+    background: white;
+    border-radius: 12px;
+    padding: 1rem;
+    border: 2px solid #e5e7eb;
+    transition: all 0.3s ease;
+}
+
+.radio-group:hover {
+    border-color: var(--accent-green);
+}
+
+.radio-options {
+    display: flex;
+    gap: 2rem;
+    justify-content: center;
+    align-items: center;
+}
+
+.radio-option {
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+    cursor: pointer;
+    transition: all 0.3s ease;
+}
+
+.radio-option:hover {
+    color: var(--primary-green);
+}
+
+.modern-radio {
+    width: 20px;
+    height: 20px;
+    border: 2px solid #d1d5db;
+    border-radius: 50%;
+    position: relative;
+    cursor: pointer;
+    transition: all 0.3s ease;
+}
+
+.modern-radio:checked {
+    border-color: var(--primary-green);
+    background: var(--primary-green);
+}
+
+.modern-radio:checked::after {
+    content: '';
+    position: absolute;
+    top: 50%;
+    left: 50%;
+    width: 8px;
+    height: 8px;
+    border-radius: 50%;
+    background: white;
+    transform: translate(-50%, -50%);
+}
+
+.radio-label {
+    font-weight: 600;
+    color: var(--dark-green);
+    cursor: pointer;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+    font-size: 0.85rem;
+}
+
+.button-section {
+    text-align: center;
+    padding: 2rem;
+    border-top: 1px solid rgba(16, 185, 129, 0.1);
+    background: rgba(16, 185, 129, 0.02);
+}
+
+.modern-btn {
+    background: var(--gradient-primary);
+    border: none;
+    border-radius: 12px;
+    padding: 1rem 3rem;
+    color: white;
+    font-weight: 700;
+    font-size: 1rem;
+    text-transform: uppercase;
+    letter-spacing: 1px;
+    cursor: pointer;
+    transition: all 0.3s ease;
+    box-shadow: var(--shadow-primary);
+    position: relative;
+    overflow: hidden;
+    min-width: 200px;
+}
+
+.modern-btn::before {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: -100%;
+    width: 100%;
+    height: 100%;
+    background: linear-gradient(90deg, transparent, rgba(255, 255, 255, 0.2), transparent);
+    transition: left 0.5s;
+}
+
+.modern-btn:hover::before {
+    left: 100%;
+}
+
+.modern-btn:hover {
+    transform: translateY(-3px);
+    box-shadow: 0 15px 35px rgba(16, 185, 129, 0.4);
+}
+
+.modern-btn:active {
+    transform: translateY(-1px);
+    box-shadow: 0 8px 20px rgba(16, 185, 129, 0.3);
+}
+
+@keyframes fadeInUp {
+    from {
+        opacity: 0;
+        transform: translateY(30px);
+    }
+    to {
+        opacity: 1;
+        transform: translateY(0);
+    }
+}
+
+/* Responsive Design */
+@media (max-width: 1024px) {
+    .horizontal-form {
+        grid-template-columns: 1fr;
+    }
+}
+
+@media (max-width: 768px) {
+    .modern-container {
+        margin: 1rem auto;
+        padding: 0 0.5rem;
+    }
+    
+    .modern-header {
+        padding: 1.5rem;
+    }
+    
+    .header-title {
+        font-size: 1.5rem;
+    }
+    
+    .form-container {
+        padding: 1.5rem;
+    }
+    
+    .radio-options {
+        flex-direction: column;
+        gap: 1rem;
+    }
+    
+    .modern-btn {
+        padding: 0.875rem 2rem;
+        font-size: 0.9rem;
+        min-width: 160px;
+    }
+}
+
+/* Currency field styling */
+#currency-field {
+    font-family: 'Courier New', monospace;
+    font-weight: 600;
+    color: var(--dark-green);
+}
+
+#currency-field::placeholder {
+    color: #9ca3af;
+    font-weight: normal;
+}
+</style>
+
 <script src="https://cdn.jsdelivr.net/npm/sweetalert2@10"></script>
 
+<br>
+<br>
 
-<div class="card-container">
-    <div class="card">
-        <div class="card-header">
-            Productos
+<div class="modern-container">
+    <div class="modern-card">
+        <div class="modern-header">
+            <div class="header-content">
+                <h1 class="header-title">
+                    <i class="bi bi-plus-circle me-3"></i>Nuevo Producto
+                </h1>
+                <p class="header-subtitle">Información del Producto</p>
+            </div>
         </div>
-        <div class="section-header">INFORMACIÓN DEL PRODUCTO</div>
-        <form method="post" action="{% url 'createItem' %}"  id="create-item-form">
+        
+        <form method="post" action="{% url 'createItem' %}" id="create-item-form">
             {% csrf_token %}
-            <div class="form-group">
-                <label for="Name">Nombre</label>
-                <input type="text" id="Name" name="Name" required>
-            </div>
-            <div class="form-group">
-                <label for="Referents">Referencias</label>
-                <input id="Referents" name="Referents" required>
-            </div>
-            <div class="form-group">
-                <label for="Description">Descripción</label>
-                <textarea id="Description" name="Description" required></textarea>
-            </div>
-            <div class="form-group">
-                <label for="Precio">Precio</label>
-                <input type="text" name="Price" id="currency-field" placeholder="$1,000,000.00">
-            </div>
-            <div class="form-group">
-                <label for="Stock">Cantidad</label>
-                <input type="number" id="Stock" name="Stock" required>
-            </div>
-            <div class="form-group">
-                <label for="Taxes">Impuestos</label>
-                <select id="Taxes" name="Taxes" class="form-select">
-                    {% for tax in taxes %}
-                        <option value="{{ tax.id }}">{{ tax.name }}</option>
-                    {% endfor %}
-                </select> 
-            </div>
-            <div class="form-group" style="margin-left: 30%; margin-top: 30px;">
-                <input class="form-check-input small-radio" type="radio" name="active" id="inlineRadio1" value="True" required>
-                <label class="form-check-label" for="inlineRadio1" style="margin-right: 50px;">activado</label><br>
-                <input class="form-check-input small-radio" type="radio" name="active" id="inlineRadio2" value="False">
-                <label class="form-check-label" for="inlineRadio2">desactivado</label>
+            <div class="form-container">
+                <div class="horizontal-form">
+                    <!-- Información Básica -->
+                    <div class="form-section">
+                        <div class="section-title">
+                            <i class="bi bi-info-circle"></i>
+                            Información Básica
+                        </div>
+                        
+                        <div class="form-group">
+                            <label for="Name" class="form-label">
+                                <i class="bi bi-tag me-1"></i>Nombre
+                            </label>
+                            <input type="text" id="Name" name="Name" class="modern-input" required>
+                        </div>
+                        
+                        <div class="form-group">
+                            <label for="Referents" class="form-label">
+                                <i class="bi bi-hash me-1"></i>Referencias
+                            </label>
+                            <input id="Referents" name="Referents" class="modern-input" required>
+                        </div>
+                        
+                        <div class="form-group">
+                            <label for="Description" class="form-label">
+                                <i class="bi bi-file-text me-1"></i>Descripción
+                            </label>
+                            <textarea id="Description" name="Description" class="modern-textarea" required></textarea>
+                        </div>
+                    </div>
+
+                    <!-- Datos Comerciales -->
+                    <div class="form-section">
+                        <div class="section-title">
+                            <i class="bi bi-currency-dollar"></i>
+                            Datos Comerciales
+                        </div>
+                        
+                        <div class="form-group">
+                            <label for="currency-field" class="form-label">
+                                <i class="bi bi-cash me-1"></i>Precio
+                            </label>
+                            <input type="text" name="Price" id="currency-field" class="modern-input" 
+                                   placeholder="$1,000,000.00">
+                        </div>
+                        
+                        <div class="form-group">
+                            <label for="Stock" class="form-label">
+                                <i class="bi bi-boxes me-1"></i>Cantidad
+                            </label>
+                            <input type="number" id="Stock" name="Stock" class="modern-input" required>
+                        </div>
+                        
+                        <div class="form-group">
+                            <label for="Taxes" class="form-label">
+                                <i class="bi bi-percent me-1"></i>Impuestos
+                            </label>
+                            <select id="Taxes" name="Taxes" class="modern-select">
+                                {% for tax in taxes %}
+                                    <option value="{{ tax.id }}">{{ tax.name }}</option>
+                                {% endfor %}
+                            </select> 
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Estado del Producto -->
+                <div class="form-section" style="margin-bottom: 0;">
+                    <div class="section-title">
+                        <i class="bi bi-toggle-on"></i>
+                        Estado del Producto
+                    </div>
+                    
+                    <div class="radio-group">
+                        <div class="radio-options">
+                            <div class="radio-option">
+                                <input class="modern-radio" type="radio" name="active" id="inlineRadio1" value="True" required>
+                                <label class="radio-label" for="inlineRadio1">
+                                    <i class="bi bi-check-circle me-1"></i>Activado
+                                </label>
+                            </div>
+                            <div class="radio-option">
+                                <input class="modern-radio" type="radio" name="active" id="inlineRadio2" value="False">
+                                <label class="radio-label" for="inlineRadio2">
+                                    <i class="bi bi-x-circle me-1"></i>Desactivado
+                                </label>
+                            </div>
+                        </div>
+                    </div>
+                </div>
             </div>
             
-            <div class="form-group">
-                <button type="submit" id="saveForm">Guardar</button>
+            <div class="button-section">
+                <button type="submit" id="saveForm" class="modern-btn">
+                    <i class="bi bi-save me-2"></i>Guardar Producto
+                </button>
             </div>
         </form>
     </div>
 </div>
 
 <script>
-    
-    document.getElementById('currency-field').addEventListener('input', function (e) {
-        let value = e.target.value.replace(/\D/g, '');
-        if (value) {
-            e.target.value = value.replace(/\B(?=(\d{3})+(?!\d))/g, ".");
-        } else {
-            e.target.value = '';
-        }
-    });
+document.getElementById('currency-field').addEventListener('input', function (e) {
+    let value = e.target.value.replace(/\D/g, '');
+    if (value) {
+        e.target.value = value.replace(/\B(?=(\d{3})+(?!\d))/g, ".");
+    } else {
+        e.target.value = '';
+    }
+});
 </script>
 
 <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
 <script src="{% static 'js/Inventory/createItem.js' %}"></script>
-
-
 
 {% endblock %}
