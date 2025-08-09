@@ -24,6 +24,10 @@ Berserker is a sales software designed to optimize and streamline the commercial
 
 ## 📌 Installation and Setup
 
+:::warning
+Vesion python ---> 3.11.0
+:::
+
 1. Clone the repository:
    ```sh
    git clone https://github.com/user/berserker.git
