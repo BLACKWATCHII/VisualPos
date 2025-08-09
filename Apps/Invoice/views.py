@@ -532,6 +532,11 @@ def cancel_invoice_ajax(request, invoice_id):
         invoice.status = 'Anulada'
         invoice.save()
 
+        for detail in invoice.items.all():
+            item = detail.item
+            item.Stock += detail.quantity
+            item.save()
+
         
         canceled = CanceledInvoice.objects.create(
             original_invoice=invoice,
