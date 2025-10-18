@@ -775,81 +775,111 @@ def send_invoice_simple(request, invoice_id):
                 <meta name="viewport" content="width=device-width, initial-scale=1.0">
                 <title>Factura #{invoice.invoice_number}</title>
             </head>
-            <body style="margin: 0; padding: 0; font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); min-height: 100vh;">
-                <div style="max-width: 600px; margin: 0 auto; padding: 40px 20px;">
-                    <!-- Header con gradiente -->
-                    <div style="background: linear-gradient(135deg, #4facfe 0%, #00f2fe 100%); border-radius: 20px 20px 0 0; padding: 40px; text-align: center; box-shadow: 0 10px 30px rgba(0,0,0,0.1);">
-                        <div style="background: rgba(255,255,255,0.2); border-radius: 50%; width: 80px; height: 80px; margin: 0 auto 20px; display: flex; align-items: center; justify-content: center; backdrop-filter: blur(10px);">
-                            <span style="font-size: 36px; color: white;">📧</span>
-                        </div>
-                        <h1 style="color: white; margin: 0; font-size: 28px; font-weight: 300; text-shadow: 0 2px 4px rgba(0,0,0,0.1);">
-                            Nueva Factura Disponible
+            <body style="margin: 0; padding: 0; font-family: 'Segoe UI', -apple-system, BlinkMacSystemFont, sans-serif; background-color: #f5f7fa;">
+                <div style="max-width: 650px; margin: 0 auto; padding: 40px 20px;">
+                    
+                    <!-- Header con Logo -->
+                    <div style="background: #ffffff; border-radius: 16px 16px 0 0; padding: 40px 30px; text-align: center; border-bottom: 3px solid #2563eb;">
+                        <img src="https://raw.githubusercontent.com/Kevin25DC/celupro-assets/refs/heads/main/logo%20de%20prueba%20dos.png" alt="Logo" style="max-width: 180px; height: auto; margin-bottom: 25px;">
+                        <h1 style="color: #1e293b; margin: 0; font-size: 28px; font-weight: 600; letter-spacing: -0.5px;">
+                            Factura Electrónica
                         </h1>
-                        <p style="color: rgba(255,255,255,0.9); margin: 10px 0 0; font-size: 16px; font-weight: 300;">
-                            Factura #{invoice.invoice_number}
+                        <p style="color: #64748b; margin: 10px 0 0; font-size: 16px;">
+                            N° {invoice.invoice_number}
                         </p>
                     </div>
                     
-                    <!-- Contenido principal -->
-                    <div style="background: white; padding: 40px; border-radius: 0 0 20px 20px; box-shadow: 0 10px 30px rgba(0,0,0,0.1);">
-                        <div style="text-align: center; margin-bottom: 30px;">
-                            <h2 style="color: #2c3e50; font-size: 24px; margin: 0 0 10px; font-weight: 600;">
-                                ¡Hola {invoice.customer.name}! 👋
-                            </h2>
-                            <div style="width: 60px; height: 3px; background: linear-gradient(90deg, #4facfe, #00f2fe); margin: 0 auto; border-radius: 2px;"></div>
-                        </div>
+                    <!-- Contenido Principal -->
+                    <div style="background: #ffffff; padding: 40px 30px;">
                         
-                        <div style="background: linear-gradient(135deg, #f093fb 0%, #f5576c 100%); border-radius: 15px; padding: 25px; margin: 25px 0; text-align: center; color: white; position: relative; overflow: hidden;">
-                            <div style="position: absolute; top: -20px; right: -20px; width: 100px; height: 100px; background: rgba(255,255,255,0.1); border-radius: 50%; opacity: 0.3;"></div>
-                            <div style="position: absolute; bottom: -30px; left: -30px; width: 80px; height: 80px; background: rgba(255,255,255,0.1); border-radius: 50%; opacity: 0.3;"></div>
-                            <div style="position: relative; z-index: 2;">
-                                <h3 style="margin: 0 0 15px; font-size: 20px; font-weight: 600;">
-                                    📎 Factura Adjunta
-                                </h3>
-                                <p style="margin: 0; font-size: 16px; line-height: 1.5; opacity: 0.95;">
-                                    Tu factura está adjunta a este correo y lista para descargar
-                                </p>
-                            </div>
-                        </div>
-                        
-                        <div style="text-align: center; margin: 30px 0;">
-                            <p style="color: #555; font-size: 16px; line-height: 1.6; margin: 0 0 20px;">
-                                Gracias por confiar en nosotros. Tu compra ha sido procesada exitosamente y aquí tienes todos los detalles.
+                        <!-- Saludo -->
+                        <div style="margin-bottom: 30px;">
+                            <p style="color: #334155; font-size: 18px; margin: 0 0 8px; font-weight: 500;">
+                                Estimado/a {invoice.customer.name},
                             </p>
-                            
-                            <div style="background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); color: white; padding: 15px 30px; border-radius: 50px; display: inline-block; font-weight: 600; text-decoration: none; box-shadow: 0 8px 20px rgba(102, 126, 234, 0.3); transform: translateY(0); transition: all 0.3s ease;">
-                                ✨ ¡Transacción Completada!
-                            </div>
+                            <p style="color: #64748b; font-size: 15px; line-height: 1.6; margin: 0;">
+                                Le enviamos su factura correspondiente a la compra realizada. Puede encontrarla adjunta a este correo en formato PDF.
+                            </p>
                         </div>
                         
-                        <!-- Información adicional -->
-                        <div style="background: #f8f9ff; border-radius: 12px; padding: 20px; margin: 25px 0; border-left: 4px solid #4facfe;">
-                            <h4 style="color: #2c3e50; margin: 0 0 10px; font-size: 16px; font-weight: 600;">
-                                💡 Información Importante
-                            </h4>
-                            <p style="color: #666; font-size: 14px; line-height: 1.5; margin: 0;">
-                                Conserva esta factura para tus registros. Si tienes alguna pregunta, no dudes en contactarnos.
+                        <!-- Card de Factura -->
+                        <div style="background: linear-gradient(135deg, #2563eb 0%, #1e40af 100%); border-radius: 12px; padding: 30px; margin: 30px 0; box-shadow: 0 4px 6px rgba(37, 99, 235, 0.15);">
+                            <table width="100%" cellpadding="0" cellspacing="0">
+                                <tr>
+                                    <td style="text-align: center;">
+                                        <div style="background: rgba(255,255,255,0.15); border-radius: 50%; width: 60px; height: 60px; margin: 0 auto 20px; display: inline-flex; align-items: center; justify-content: center;">
+                                            <span style="font-size: 28px;">📄</span>
+                                        </div>
+                                        <h2 style="color: #ffffff; margin: 0 0 10px; font-size: 22px; font-weight: 600;">
+                                            Factura Adjunta
+                                        </h2>
+                                        <p style="color: rgba(255,255,255,0.9); margin: 0; font-size: 15px;">
+                                            Su documento está listo para descargar
+                                        </p>
+                                    </td>
+                                </tr>
+                            </table>
+                        </div>
+                        
+                        <!-- Información Adicional -->
+                        <div style="background: #f8fafc; border-left: 4px solid #2563eb; border-radius: 8px; padding: 20px 24px; margin: 30px 0;">
+                            <table width="100%" cellpadding="0" cellspacing="0">
+                                <tr>
+                                    <td>
+                                        <p style="color: #334155; margin: 0 0 12px; font-size: 15px; font-weight: 600;">
+                                            📌 Información Importante
+                                        </p>
+                                        <p style="color: #64748b; font-size: 14px; line-height: 1.6; margin: 0;">
+                                            • Conserve esta factura para sus registros contables<br>
+                                            • El documento adjunto tiene validez fiscal<br>
+                                            • Ante cualquier consulta, estamos a su disposición
+                                        </p>
+                                    </td>
+                                </tr>
+                            </table>
+                        </div>
+                        
+                        <!-- Agradecimiento -->
+                        <div style="text-align: center; margin: 35px 0 25px;">
+                            <p style="color: #334155; font-size: 15px; line-height: 1.6; margin: 0;">
+                                Gracias por confiar en nosotros.<br>
+                                Valoramos su preferencia y quedamos a su disposición.
+                                https://celuproco.com.co/
+                            </p>
+                        </div>
+                        
+                        <!-- Divisor -->
+                        <div style="height: 1px; background: linear-gradient(90deg, transparent, #e2e8f0, transparent); margin: 30px 0;"></div>
+                        
+                        <!-- Contacto -->
+                        <div style="text-align: center;">
+                            <p style="color: #64748b; font-size: 14px; margin: 0 0 15px; font-weight: 500;">
+                                ¿Necesita ayuda?
+                            </p>
+                            <p style="color: #94a3b8; font-size: 13px; line-height: 1.6; margin: 0;">
+                                Contáctenos en cualquier momento<br>
+                                Estamos disponibles para atenderle 
                             </p>
                         </div>
                     </div>
                     
                     <!-- Footer -->
-                    <div style="text-align: center; padding: 30px 20px; color: rgba(255,255,255,0.8);">
-                        <div style="background: rgba(255,255,255,0.1); border-radius: 10px; padding: 20px; backdrop-filter: blur(10px);">
-                            <p style="margin: 0; font-size: 14px; line-height: 1.5;">
-                                Este correo fue generado automáticamente<br>
-                                <span style="opacity: 0.7;">📧 Sistema de Facturación Inteligente</span>
-                            </p>
-                        </div>
-                        
-                        <div style="margin-top: 20px; font-size: 12px; opacity: 0.6;">
-                            <p style="margin: 5px 0;">© 2025 - Todos los derechos reservados</p>
-                        </div>
+                    <div style="background: #1e293b; border-radius: 0 0 16px 16px; padding: 30px; text-align: center;">
+                        <p style="color: #94a3b8; font-size: 13px; line-height: 1.6; margin: 0 0 12px;">
+                            Este correo fue generado automáticamente por nuestro sistema de facturación.<br>
+                            Por favor, no responda a este mensaje.
+                        </p>
+                        <div style="height: 1px; background: rgba(148, 163, 184, 0.2); margin: 20px auto; max-width: 200px;"></div>
+                        <p style="color: #64748b; font-size: 12px; margin: 0;">
+                            © 2025 Todos los derechos reservados - BerserkerDev - http://www.berserkerdev.com/
+                        </p>
                     </div>
+                    
                 </div>
             </body>
             </html>
             """
+            
             asunto = f"Factura #{invoice.invoice_number} - {invoice.customer.name} {invoice.customer.lastname}"
             success = send_email_with_attachment(
                 destinatario=invoice.customer.email,
@@ -858,6 +888,7 @@ def send_invoice_simple(request, invoice_id):
                 contenido_html=email_content,
                 attachment_path=pdf_path
             )
+            
             if success:
                 return JsonResponse({
                     'success': True,
@@ -867,6 +898,7 @@ def send_invoice_simple(request, invoice_id):
                 import traceback
                 print(traceback.format_exc())
                 return JsonResponse({'success': False, 'message': 'Error al enviar el correo electrónico.'})
+                
         except Exception as email_error:
             return JsonResponse({'success': False, 'message': f'Error enviando email: {str(email_error)}'})
         finally:
