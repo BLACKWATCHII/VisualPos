@@ -280,6 +280,22 @@
                 </div>
             </div>
         </div>
+        <div class="row mb-4">
+            <div class="col-md-3">
+                <div class="form-check" style="padding-top: 1rem;">
+                    <input class="form-check-input" type="checkbox" id="has_delivery" name="has_delivery">
+                    <label class="form-check-label" for="has_delivery">
+                        ¿Incluye domicilio?
+                    </label>
+                </div>
+            </div>
+            <div class="col-md-3" id="delivery-amount-container" style="display: none;">
+                <div class="form-floating">
+                    <input type="number" id="delivery_amount" name="delivery_amount" class="form-control" placeholder="0" min="0" step="1000">
+                    <label>Valor del domicilio</label>
+                </div>
+            </div>
+        </div>
 
         <!-- Opciones de crédito -->
         <div class="credit-options" id="credit-options" style="display: none;">
@@ -491,6 +507,22 @@ $(document).ready(function(){
         }
     });
 
+    // Mostrar/ocultar campo de valor de domicilio
+    $('#has_delivery').on('change', function() {
+        if ($(this).is(':checked')) {
+            $('#delivery-amount-container').slideDown();
+        } else {
+            $('#delivery-amount-container').slideUp();
+            $('#delivery_amount').val('0');
+            calculateTotals(); // Recalcular totales al desactivar
+        }
+    });
+
+    // Recalcular cuando cambie el valor del domicilio
+    $('#delivery_amount').on('input change', function() {
+        calculateTotals();
+    });
+
     // Redireccionamiento al enviar el formulario
     $('#invoice-form').on('submit', function(){
         $('<input>').attr({
@@ -537,19 +569,35 @@ $(document).ready(function(){
             }
         });
 
-        $('#subtotal').text('$' + subtotal.toLocaleString('es-CO', { minimumFractionDigits: 2 }));
+        // Agregar valor del domicilio al subtotal
+        var deliveryAmount = 0;
+        if ($('#has_delivery').is(':checked')) {
+            deliveryAmount = parseFloat($('#delivery_amount').val()) || 0;
+        }
+        
+        var subtotalWithDelivery = subtotal + deliveryAmount;
+
+        $('#subtotal').text('$' + subtotalWithDelivery.toLocaleString('es-CO', { minimumFractionDigits: 2 }));
+
+        // Mostrar u ocultar línea de domicilio en los totales (opcional)
+        if ($('#has_delivery').is(':checked') && deliveryAmount > 0) {
+            $('#delivery-preview').show();
+            $('#delivery-total').text('$' + deliveryAmount.toLocaleString('es-CO', { minimumFractionDigits: 2 }));
+        } else {
+            $('#delivery-preview').hide();
+        }
 
         // Aplicar descuento general si existe
         if($('#add_discount').is(':checked')){
             var discountPercent = parseFloat($('#discount-percent').val()) || 0;
-            var discountAmount = subtotal * (discountPercent / 100);
-            var total = subtotal - discountAmount;
+            var discountAmount = subtotalWithDelivery * (discountPercent / 100);
+            var total = subtotalWithDelivery - discountAmount;
             $('#discount-preview').show();
             $('#discount-amount').text('-$' + discountAmount.toLocaleString('es-CO', { minimumFractionDigits: 2 }));
             $('#total').text('$' + total.toLocaleString('es-CO', { minimumFractionDigits: 2 }));
         } else {
             $('#discount-preview').hide();
-            $('#total').text('$' + subtotal.toLocaleString('es-CO', { minimumFractionDigits: 2 }));
+            $('#total').text('$' + subtotalWithDelivery.toLocaleString('es-CO', { minimumFractionDigits: 2 }));
         }
     }
 
