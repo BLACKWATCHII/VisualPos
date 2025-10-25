@@ -187,7 +187,13 @@ def create_invoice(request):
                 notes = request.POST.get('notes')
                 status = request.POST.get('status') or 'Pagada'
 
-                print("frecuencia de pago: " + payment_frequency)
+                print("frecuencia de pago: " + str(payment_frequency))
+                
+                # 🚚 Campos nuevos de domicilio
+                has_delivery = request.POST.get('has_delivery')
+                delivery_amount = request.POST.get('delivery_amount')
+                delivery_value = float(delivery_amount) if has_delivery and delivery_amount else 0.0
+
                 # Calcular subtotal
                 sub_total = sum([
                     float(price.replace(',', '').replace('$', ''))
@@ -202,7 +208,7 @@ def create_invoice(request):
                 invoice.notes = notes
                 invoice.user = request.user
                 invoice.quotas = int(quotas) if quotas else 0
-                invoice.payment_frequency = payment_frequency  # Guardar frecuencia si el modelo lo permite
+                invoice.payment_frequency = payment_frequency
 
                 # Calcular total con descuento
                 total = 0
@@ -216,6 +222,10 @@ def create_invoice(request):
                     invoice.discount = discount_percent
                 else:
                     invoice.discount = 0
+
+                # 🚚 Sumar el valor del domicilio al total final
+                total += delivery_value
+                invoice.delivery_amount = delivery_value
 
                 invoice.total = total
 
@@ -266,7 +276,7 @@ def create_invoice(request):
 
                 return redirect('home')
         else:
-            pass  # Puedes agregar manejo de errores aquí si lo deseas
+            pass
     else:
         form = InvoiceForm()
 
@@ -279,6 +289,7 @@ def create_invoice(request):
         'sub_total': sub_total,
         'transaction_types': transaction_types,
     })
+
 
 @login_required
 def invoices_report(request):

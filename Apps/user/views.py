@@ -15,6 +15,8 @@ from .form import UserUpdateForm, CustomPasswordChangeForm
 from django.contrib.auth import update_session_auth_hash
 from datetime import datetime
 from django.db.models.functions import TruncMonth
+from django.db.models import F, Sum, Count
+from django.db.models.functions import TruncMonth
 import calendar
 
 # Login and register
@@ -85,10 +87,14 @@ def Dashboard(request):
     )
 
     # Totales por estado
-    Total = Invoice.objects.filter(status='Pagada').aggregate(result=Sum('total'))
+    Total = Invoice.objects.filter(status='Pagada').aggregate(
+        result=Sum(F('total') - F('delivery_amount'))
+    )
     Total_Payment = float(Total.get('result') or 0)
 
-    Total_credit = Invoice.objects.filter(status='Credito').aggregate(result=Sum('total'))
+    Total_credit = Invoice.objects.filter(status='Credito').aggregate(
+        result=Sum(F('total') - F('delivery_amount'))
+    )
     Total_Payment_credit = float(Total_credit.get('result') or 0)
 
     # Datos para gráficos

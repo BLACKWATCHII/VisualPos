@@ -235,7 +235,7 @@
                                                     </button>
                                                     <!-- Botón de Preview -->
                                                     <button class="btn btn-outline-primary btn-sm action-btn" 
-                                                            onclick="showDetails('{{invoice.customer_full_name }}', '#{{ invoice.invoice_number }}', '{{ invoice.quotas }}', '{{ invoice.total }}', '{{ invoice.date }}', '{{ invoice.id }}')">
+                                                            onclick="showDetails('{{invoice.customer_full_name }}', '#{{ invoice.invoice_number }}', '{{ invoice.quotas }}','{{ invoice.delivery_amount }}' ,'{{ invoice.total }}', '{{ invoice.date }}', '{{ invoice.id }}')">
                                                         <i class="bi bi-eye"></i>
                                                     </button>
                                                     
@@ -277,6 +277,7 @@
                             <li><strong>Cliente:</strong> <span id="detailCustomer"></span></li>
                             <li><strong>Cuota:</strong> <span id="detailQuota"></span></li>
                             <li><strong>Fecha:</strong> <span id="detailDate"></span></li>
+                            <li><strong>Valor domicilio:</strong> <span id="delivery"></span></li>
                         </ul>
 
                         <div class="custom-total">
@@ -312,10 +313,11 @@
 
 <script>
 $(document).ready(function () {
-    window.showDetails = function(cliente, factura, cuota, importe, fecha, invoiceId) {
+    window.showDetails = function(cliente, factura, cuota, delivery, importe, fecha, invoiceId) {
         document.getElementById('detailCustomer').textContent = cliente;
         document.getElementById('detailInvoiceNumber').textContent = factura;
         document.getElementById('detailQuota').textContent = cuota;
+        document.getElementById('delivery').textContent = delivery;
         document.getElementById('detailAmount').textContent = "$" + parseFloat(importe).toLocaleString('es-ES', {
             minimumFractionDigits: 2,
             maximumFractionDigits: 2
