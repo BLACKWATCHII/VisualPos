@@ -408,9 +408,23 @@ def invoices_report(request):
 def invoice_pdf(request, invoice_id):
     try:
         invoice = Invoice.objects.get(pk=invoice_id)
+
+        total_factura = float(invoice.total or 0)
+        delivery = float(invoice.delivery_amount or 0)
+        initial_fee = float(invoice.initial_fee or 0)
+
+        if invoice.payment_method == 'Credito':
+            total_restante = total_factura - delivery - initial_fee
+        else:
+            total_restante = total_factura
+
     except Invoice.DoesNotExist:
         raise Http404("Invoice not found")
-    return render_pdf_with_puppeteer('invoice/receipt_pdf.html', {'invoice': invoice},filename=f"Factura_{invoice.invoice_number}.pdf")
+    return render_pdf_with_puppeteer('invoice/receipt_pdf.html', {'invoice': invoice,
+                                                                  'total_restante': total_restante,
+                                                                  'sub_total': invoice.total - (invoice.delivery_amount or 0),   
+                                                                  'delivery_amount': delivery
+                                                                  },filename=f"Factura_{invoice.invoice_number}.pdf")
 
 
 def allow_iframe(view_func):
