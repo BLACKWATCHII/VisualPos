@@ -430,7 +430,11 @@
         </div>
         <div class="grand-total-box">
           <div class="grand-total-label">Gran Total</div>
-          <div class="grand-total-amount">${{ invoice.total|intcomma }}</div>
+          {% if invoice.payment_method == "Credito" %}
+            <span class="grand-total-amount">${{ total_restante|intcomma }}</span>
+          {% else %}
+            <span class="grand-total-amount">${{ invoice.total|intcomma }}</span>
+          {% endif %}
         </div>
       </div>
 
@@ -448,6 +452,18 @@
         <div class="meta-item">
           <div class="meta-label">Cuotas</div>
           <div class="meta-value">{{ invoice.Quotas }}</div>
+        </div>
+        {% endif %}
+        {% if invoice.payment_method == 'Credito' and invoice.initial_fee and invoice.initial_fee > 1 %}
+        <div class="meta-item">
+          <div class="meta-label">Cuota Inicial</div>
+          <div class="meta-value">${{ invoice.initial_fee|intcomma }}</div>
+        </div>
+        {% endif %}
+        {% if  invoice.delivery_amount and invoice.delivery_amount > 1 %}
+        <div class="meta-item">
+          <div class="meta-label">Domicilio</div>
+          <div class="meta-value">${{ invoice.delivery_amount|intcomma }}</div>
         </div>
         {% endif %}
       </div>
@@ -477,33 +493,63 @@
         </table>
       </div>
 
-      <!-- Totales -->
-      <div class="totals-section">
-        <div class="totals-box">
-          <div class="total-row">
-            <span class="total-label">Subtotal</span>
-            <span class="total-value">${{ sub_total|intcomma }}</span>
-          </div>
-          <div class="total-row">
-            <span class="total-label">Impuesto</span>
-            <span class="total-value">{{ invoice.tax|intcomma }}%</span>
-          </div>
-          <div class="total-row">
-            <span class="total-label">Descuento</span>
-            <span class="total-value">-{{ invoice.discount }}%</span>
-          </div>
-            {% if invoice.delivery_amount and invoice.delivery_amount > 1 %}
-            <div class="total-row">
-              <span class="total-label">Domicilio</span>
-              <span class="total-value">${{ invoice.delivery_amount|intcomma }}</span>
-            </div>
-            {% endif %}
-          <div class="total-row final">
-            <span class="total-label">Gran Total</span>
-            <span class="total-value">${{ invoice.total|intcomma }}</span>
-          </div>
-        </div>
+<!-- Totales -->
+ <div class="totals-section">
+  <div class="totals-box">
+    <div class="total-row">
+      <span class="total-label">Subtotal</span>
+      <span class="total-value">${{ sub_total|intcomma }}</span>
+    </div>
+
+    <div class="total-row">
+      <span class="total-label">Impuesto</span>
+      <span class="total-value">{{ invoice.tax|intcomma }}%</span>
+    </div>
+
+    <div class="total-row">
+      <span class="total-label">Descuento</span>
+      <span class="total-value">-{{ invoice.discount }}%</span>
+    </div>
+
+    {% if invoice.delivery_amount and invoice.delivery_amount > 1 %}
+      <div class="total-row">
+        <span class="total-label">Domicilio</span>
+        {% if invoice.payment_method == "Credito" %}
+          <span class="total-value" style="color: red;">-${{ invoice.delivery_amount|intcomma }}</span>
+        {% else %}
+          <span class="total-value">${{ invoice.delivery_amount|intcomma }}</span>
+        {% endif %}
       </div>
+    {% endif %}
+
+    {% if invoice.initial_fee and invoice.initial_fee > 1 %}
+      <div class="total-row">
+        <span class="total-label">Cuota Inicial</span>
+        {% if invoice.payment_method == "Credito" %}
+          <span class="total-value" style="color: red;">-${{ invoice.initial_fee|intcomma }}</span>
+        {% else %}
+          <span class="total-value">${{ invoice.initial_fee|intcomma }}</span>
+        {% endif %}
+      </div>
+    {% endif %}
+
+    <div class="total-row">
+      <span class="total-label">Total restante</span>
+      <span class="total-value">${{ total_restante|intcomma }}</span>
+    </div>
+
+    <div class="total-row final">
+      <span class="total-label">Gran Total</span>
+      {% if invoice.payment_method == "Credito" %}
+        <span class="total-value">${{ total_restante|intcomma }}</span>
+      {% else %}
+        <span class="total-value">${{ invoice.total|intcomma }}</span>
+      {% endif %}
+    </div>
+  </div>
+</div>
+
+
 
       <!-- Footer -->
       <div class="invoice-footer">

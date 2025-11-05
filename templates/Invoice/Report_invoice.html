@@ -199,7 +199,11 @@
                                             <td class="invoice-date">{{ invoice.date }}</td>
                                             <td>#{{ invoice.invoice_number }}</td>
                                             <td>{{ invoice.customer_full_name }}</td>
-                                            <td>${{ invoice.total|intcomma }}</td>
+                                            {% if invoice.payment_method == "Credito" %}
+                                                <td>${{ invoice.total_restante|intcomma }}</td>
+                                            {% else %}
+                                                <td>${{ invoice.total|intcomma }}</td>
+                                            {% endif %}
                                             <td>
                                                 {% if invoice.status == 'Pagada' %}
                                                     <span class="badge bg-success">Pagada</span>
@@ -235,7 +239,17 @@
                                                     </button>
                                                     <!-- Botón de Preview -->
                                                     <button class="btn btn-outline-primary btn-sm action-btn" 
-                                                            onclick="showDetails('{{invoice.customer_full_name }}', '#{{ invoice.invoice_number }}', '{{ invoice.quotas }}','{{ invoice.delivery_amount }}' ,'{{ invoice.total }}', '{{ invoice.date }}', '{{ invoice.id }}')">
+                                                        onclick="showDetails(
+                                                            '{{ invoice.customer_full_name }}',
+                                                            '#{{ invoice.invoice_number }}',
+                                                            '{{ invoice.quotas }}',
+                                                            '{{ invoice.delivery_amount|intcomma|default:0 }}',
+                                                            '{% if invoice.payment_method == "Credito" %}{{ invoice.total_restante }}{% else %}{{ invoice.total }}{% endif %}',
+                                                            '{{ invoice.date }}',
+                                                            '{{ invoice.id }}',
+                                                            '{{ invoice.payment_method }}',
+                                                            '{{ invoice.initial_fee|default:0 }}'
+                                                        )">
                                                         <i class="bi bi-eye"></i>
                                                     </button>
                                                     
@@ -275,13 +289,18 @@
 
                         <ul class="custom-list">
                             <li><strong>Cliente:</strong> <span id="detailCustomer"></span></li>
-                            <li><strong>Cuota:</strong> <span id="detailQuota"></span></li>
                             <li><strong>Fecha:</strong> <span id="detailDate"></span></li>
                             <li><strong>Valor domicilio:</strong> <span id="delivery"></span></li>
+
+                            <!-- Campos que solo aparecerán si es crédito -->
+                            <div id="creditDetails" style="display: none;">
+                                <li><strong>Cuota inicial:</strong> <span id="initialQuota"></span></li>
+                                <li><strong>Cuotas restantes:</strong> <span id="detailQuota"></span></li>
+                            </div>
                         </ul>
 
                         <div class="custom-total">
-                            <span>Total:</span> <span><span id="detailAmount"></span></span>
+                            <span>Total:</span> <span id="detailAmount"></span>
                         </div>
 
                         <a href="#" class="see-details-btn" id="btnPreviewInvoice" data-invoice-id="">Ver más detalles</a>
@@ -289,6 +308,7 @@
                 </div> 
             </div>
         </div>
+
         <div class="modal fade" id="previewInvoiceModal" tabindex="-1" aria-labelledby="previewInvoiceLabel" aria-hidden="true">
             <div class="modal-dialog modal-xl modal-dialog-centered modal-fullscreen-sm-down">
                 <div class="modal-content" style="height: 90vh;">
@@ -313,15 +333,42 @@
 
 <script>
 $(document).ready(function () {
-    window.showDetails = function(cliente, factura, cuota, delivery, importe, fecha, invoiceId) {
+    window.showDetails = function(cliente, factura, cuota, delivery, importe, fecha, invoiceId, metodoPago, cuotaInicial) {
         document.getElementById('detailCustomer').textContent = cliente;
         document.getElementById('detailInvoiceNumber').textContent = factura;
-        document.getElementById('detailQuota').textContent = cuota;
         document.getElementById('delivery').textContent = delivery;
-        document.getElementById('detailAmount').textContent = "$" + parseFloat(importe).toLocaleString('es-ES', {
-            minimumFractionDigits: 2,
-            maximumFractionDigits: 2
-        });
+        document.getElementById('detailDate').textContent = fecha;
+
+        // Asignar invoice ID al botón de preview
+        document.getElementById('btnPreviewInvoice').setAttribute('data-invoice-id', invoiceId);
+
+        // Si es crédito, mostramos cuota inicial y cuotas restantes
+        if (metodoPago === "Credito") {
+            document.getElementById('creditDetails').style.display = "block";
+
+            // Mostrar valores de cuotas
+            document.getElementById('initialQuota').textContent = "$" + parseFloat(cuotaInicial || 0).toLocaleString('es-ES', {
+                minimumFractionDigits: 2,
+                maximumFractionDigits: 2
+            });
+            document.getElementById('detailQuota').textContent = cuota;
+
+            document.getElementById('detailAmount').textContent = 
+                "$" + parseFloat(importe).toLocaleString('es-ES', {
+                    minimumFractionDigits: 2,
+                    maximumFractionDigits: 2
+                });
+        } else {
+            // Ocultar detalles de crédito
+            document.getElementById('creditDetails').style.display = "none";
+
+            // Mostrar total normal
+            document.getElementById('detailAmount').textContent = 
+                "$" + parseFloat(importe).toLocaleString('es-ES', {
+                    minimumFractionDigits: 2,
+                    maximumFractionDigits: 2
+                });
+        }
         document.getElementById('detailDate').textContent = fecha;
         
         // Asignar invoice ID al botón de preview
@@ -337,6 +384,7 @@ $(document).ready(function () {
         lengthChange: true,
         pageLength: 10,
         deferRender: true,
+
         initComplete: function () {
             this.api().columns().every(function () {
                 var that = this;
@@ -357,6 +405,7 @@ $(document).ready(function () {
             }
         }
     });
+
 
 
     window.filterStatus = function(status) {

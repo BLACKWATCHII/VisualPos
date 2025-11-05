@@ -133,9 +133,30 @@ def delete_type_transaction(request, transaction_id):
     messages.success(request, "Transacción eliminada correctamente.")
     return redirect('create_transaction')
 
-def calcular_fechas_cuotas(start_date, cuotas, frecuencia):
+def calcular_fechas_cuotas(start_date, cuotas, frecuencia, tiene_cuota_inicial=False):
+    """
+    Calcula las fechas de pago de las cuotas según la frecuencia.
+    Si tiene_cuota_inicial=True, la primera cuota financiada comienza
+    en el siguiente período de pago (mensual, quincenal o semanal).
+    """
     fechas = []
 
+    # Si ya se pagó una cuota inicial, mover la fecha de inicio al próximo período
+    if tiene_cuota_inicial:
+        if frecuencia == 'Mensual':
+            start_date += relativedelta(months=1)
+        elif frecuencia == 'Quincenal':
+            # Si hoy es antes del 15, empezar el 15; si ya pasó, ir al fin de mes
+            if start_date.day <= 15:
+                start_date = start_date.replace(day=15)
+            else:
+                # Ir al último día del mes
+                next_month = (start_date.replace(day=1) + relativedelta(months=1))
+                start_date = next_month - timedelta(days=1)
+        elif frecuencia == 'Semanal':
+            start_date += timedelta(weeks=1)
+
+    # Calcular fechas según frecuencia
     if frecuencia == 'Mensual':
         for i in range(cuotas):
             fechas.append(start_date + relativedelta(months=i))
@@ -146,10 +167,7 @@ def calcular_fechas_cuotas(start_date, cuotas, frecuencia):
             dia = current.day
             if dia <= 15:
                 quincena = current.replace(day=15)
-                if current.day > 15:
-                    quincena += relativedelta(months=1)
             else:
-                # Último día del mes
                 quincena = (current.replace(day=1) + relativedelta(months=1)) - timedelta(days=1)
             fechas.append(quincena)
             current = quincena + timedelta(days=1)
@@ -174,7 +192,6 @@ def create_invoice(request):
             with transaction.atomic():
                 invoice = form.save(commit=False)
 
-                # Extraer datos del formulario
                 items = request.POST.getlist('item_id')
                 quantities = request.POST.getlist('quantity')
                 prices = request.POST.getlist('price')
@@ -189,12 +206,17 @@ def create_invoice(request):
 
                 print("frecuencia de pago: " + str(payment_frequency))
                 
-                # 🚚 Campos nuevos de domicilio
+                #  Campos nuevos de domicilio
                 has_delivery = request.POST.get('has_delivery')
                 delivery_amount = request.POST.get('delivery_amount')
                 delivery_value = float(delivery_amount) if has_delivery and delivery_amount else 0.0
 
-                # Calcular subtotal
+                #  Campo de cuota inicial
+                initial_quota_amount = request.POST.get('initial_quota_amount')
+                initial_quota_value = float(initial_quota_amount) if initial_quota_amount else 0.0
+                print("Valor cuota inicial: " + str(initial_quota_value))
+
+                # Calcular subtotal (productos)
                 sub_total = sum([
                     float(price.replace(',', '').replace('$', ''))
                     for price in prices if price
@@ -209,6 +231,7 @@ def create_invoice(request):
                 invoice.user = request.user
                 invoice.quotas = int(quotas) if quotas else 0
                 invoice.payment_frequency = payment_frequency
+                invoice.initial_fee = initial_quota_value
 
                 # Calcular total con descuento
                 total = 0
@@ -223,11 +246,21 @@ def create_invoice(request):
                 else:
                     invoice.discount = 0
 
-                # 🚚 Sumar el valor del domicilio al total final
-                total += delivery_value
-                invoice.delivery_amount = delivery_value
+                #  Domicilio:
+                # - Si es contado: se suma al total.
+                # - Si es crédito: se paga con la cuota inicial, NO se financia.
+                if payment_method == 'Credito':
+                    invoice.delivery_amount = delivery_value
+                    # No sumamos el domicilio al total a financiar
+                    total_final = total + delivery_value  # El total general sí lo incluye
+                else:
+                    total += delivery_value
+                    invoice.delivery_amount = delivery_value
+                    total_final = total
 
-                invoice.total = total
+                # Guardar total completo de la venta
+                invoice.total = total_final
+                invoice.initial_quota_amount = initial_quota_value
 
                 # Relacionar con tipo de transacción y actualizar consecutivo
                 transaction_type = get_object_or_404(TransactionType, id=transaction_type_id)
@@ -238,12 +271,17 @@ def create_invoice(request):
 
                 invoice.save()
 
-                # Crear cuotas si aplica
-                if payment_method == 'Credito' and invoice.quotas > 1:
-                    cuota_valor = invoice.total / invoice.quotas
-                    start_date = invoice.date or date.today()
-                    fechas = calcular_fechas_cuotas(start_date, invoice.quotas, payment_frequency)
+                # Crear cuotas si aplica (solo crédito)
+                if payment_method == 'Credito' and invoice.quotas > 0:
+                    # 💰 Monto a financiar = total - cuota inicial (sin incluir domicilio)
+                    total_financiar = total - initial_quota_value
+                    cuotas_restantes = invoice.quotas
+                    cuota_valor = total_financiar / cuotas_restantes
 
+                    start_date = invoice.date or date.today()
+                    fechas = calcular_fechas_cuotas(start_date, cuotas_restantes, payment_frequency,tiene_cuota_inicial=(initial_quota_value > 0))
+
+                    # Crear cuotas financiadas
                     for i, fecha in enumerate(fechas):
                         PaymentQuota.objects.create(
                             invoice=invoice,
@@ -251,6 +289,17 @@ def create_invoice(request):
                             amount=cuota_valor,
                             payment_date=fecha,
                             is_paid=False
+                        )
+
+                    #  Registrar cuota inicial (incluyendo el domicilio)
+                    initial_payment_total = initial_quota_value + delivery_value
+                    if initial_payment_total > 0:
+                        PaymentQuota.objects.create(
+                            invoice=invoice,
+                            number=0,
+                            amount=initial_payment_total,
+                            payment_date=date.today(),
+                            is_paid=True
                         )
 
                 # Crear items y actualizar stock
@@ -270,7 +319,10 @@ def create_invoice(request):
                 if request.POST.get('download') == 'pdf':
                     return render_pdf_with_puppeteer(
                         'invoice/receipt_pdf.html',
-                        {'invoice': invoice},
+                        {'invoice': invoice,
+                        'sub_total': sub_total,
+                        'total_restante': invoice.total - (invoice.delivery_amount or 0) - (invoice.initial_fee or 0),
+                         },
                         filename=f"Factura_{invoice.invoice_number}.pdf"
                     )
 
@@ -289,7 +341,6 @@ def create_invoice(request):
         'sub_total': sub_total,
         'transaction_types': transaction_types,
     })
-
 
 @login_required
 def invoices_report(request):
@@ -310,12 +361,22 @@ def invoices_report(request):
         email = customer.email if customer else ''
         full_name = f"{customer.name} {customer.lastname}" if customer else ''
 
+        total_factura = float(invoice.total or 0)
+        delivery = float(invoice.delivery_amount or 0)
+        initial_fee = float(invoice.initial_fee or 0)
+
+        if invoice.payment_method == 'Credito':
+            total_restante = total_factura - delivery - initial_fee
+        else:
+            total_restante = total_factura
+
+        print(f"Factura {invoice.invoice_number} - Total: {total_factura} - Restante: {total_restante}")
+
         # Verificar si hay cuotas pagas
         has_unpaid_quotas = invoice.payment_quotas.filter(is_paid=False).exists()
-
         invoice_list.append({
             'id': invoice.id,
-            'date': invoice.date.strftime('%Y-%m-%d %I:%M %p'),
+            'date': invoice.date.strftime('%Y-%m-%d'),
             'invoice_number': invoice.invoice_number,
             'customer_name': customer.name if customer else '',
             'customer_last_name': customer.lastname if customer else '',
@@ -329,6 +390,9 @@ def invoices_report(request):
             'notes': invoice.notes,
             'quotas': invoice.quotas,
             'has_unpaid_quotas': has_unpaid_quotas,
+            'total_restante': total_restante,
+            'delivery_amount': delivery,
+            'initial_fee': initial_fee,
         })
 
     return render(request, 'Invoice/Report_invoice.html', {
@@ -344,9 +408,23 @@ def invoices_report(request):
 def invoice_pdf(request, invoice_id):
     try:
         invoice = Invoice.objects.get(pk=invoice_id)
+
+        total_factura = float(invoice.total or 0)
+        delivery = float(invoice.delivery_amount or 0)
+        initial_fee = float(invoice.initial_fee or 0)
+
+        if invoice.payment_method == 'Credito':
+            total_restante = total_factura - delivery - initial_fee
+        else:
+            total_restante = total_factura
+
     except Invoice.DoesNotExist:
         raise Http404("Invoice not found")
-    return render_pdf_with_puppeteer('invoice/receipt_pdf.html', {'invoice': invoice},filename=f"Factura_{invoice.invoice_number}.pdf")
+    return render_pdf_with_puppeteer('invoice/receipt_pdf.html', {'invoice': invoice,
+                                                                  'total_restante': total_restante,
+                                                                  'sub_total': invoice.total - (invoice.delivery_amount or 0),   
+                                                                  'delivery_amount': delivery
+                                                                  },filename=f"Factura_{invoice.invoice_number}.pdf")
 
 
 def allow_iframe(view_func):
@@ -362,7 +440,9 @@ def allow_iframe(view_func):
 @allow_iframe
 def preview_invoice(request, invoice_id):
     invoice = get_object_or_404(Invoice, pk=invoice_id)
-    return render(request, 'invoice/receipt_pdf.html', {'invoice': invoice})
+    return render(request, 'invoice/receipt_pdf.html', {'invoice': invoice, 
+                                                        'total_restante': invoice.total - (invoice.delivery_amount or 0) - (invoice.initial_fee or 0),
+                                                        'sub_total': invoice.total - (invoice.delivery_amount or 0)})
 
 
 @login_required
@@ -916,13 +996,13 @@ def send_invoice_simple(request, invoice_id):
             if pdf_path and os.path.exists(pdf_path):
                 try:
                     os.remove(pdf_path)
-                    print("🗑️ PDF temporal eliminado")
+                    print(" PDF temporal eliminado")
                 except:
-                    print("⚠️ No se pudo eliminar el PDF temporal")
+                    print("No se pudo eliminar el PDF temporal")
 
     except Exception as e:
         import traceback
-        print(f"❌ Error general: {str(e)}")
+        print(f" Error general: {str(e)}")
         print(traceback.format_exc())
         return JsonResponse({'success': False, 'message': f'Error interno: {str(e)}'})
     finally:
@@ -948,20 +1028,16 @@ def generate_temp_invoice_pdf_safe(invoice):
     print(f"📄 PDF path: {pdf_path}")
     
     try:
-        # Renderizar HTML
-        print("🎨 Renderizando HTML...")
         html_content = render_to_string('invoice/receipt_pdf.html', {'invoice': invoice})
         
         with open(html_path, "w", encoding="utf-8") as f:
             f.write(html_content)
-        print(f"✅ HTML creado ({len(html_content)} caracteres)")
         
-        # Verificar script de PDF
         script_path = os.path.join(settings.BASE_DIR, "pdfgen", "generate_pdf.js")
         if not os.path.exists(script_path):
             raise Exception(f"Script PDF no encontrado: {script_path}")
         
-        print(f"🔧 Script path: {script_path}")
+        print(f" Script path: {script_path}")
         
         # Ejecutar script
         print("⚙️ Ejecutando script de PDF...")
@@ -972,11 +1048,11 @@ def generate_temp_invoice_pdf_safe(invoice):
             timeout=25  
         )
         
-        print(f"📊 Return code: {result.returncode}")
+        print(f"Return code: {result.returncode}")
         if result.stdout:
-            print(f"📤 STDOUT: {result.stdout}")
+            print(f" STDOUT: {result.stdout}")
         if result.stderr:
-            print(f"📥 STDERR: {result.stderr}")
+            print(f" STDERR: {result.stderr}")
         
         if result.returncode != 0:
             raise Exception(f"Error en script PDF: {result.stderr.strip()}")
@@ -985,7 +1061,7 @@ def generate_temp_invoice_pdf_safe(invoice):
             raise Exception("PDF no se generó correctamente")
         
         pdf_size = os.path.getsize(pdf_path)
-        print(f"✅ PDF generado correctamente ({pdf_size} bytes)")
+        print(f" PDF generado correctamente ({pdf_size} bytes)")
         
         # Limpiar HTML
         if os.path.exists(html_path):
@@ -994,7 +1070,6 @@ def generate_temp_invoice_pdf_safe(invoice):
         return pdf_path
         
     except subprocess.TimeoutExpired:
-        print("❌ Timeout en generación de PDF")
         # Limpieza
         if os.path.exists(html_path):
             os.remove(html_path)
@@ -1003,7 +1078,6 @@ def generate_temp_invoice_pdf_safe(invoice):
         raise Exception("Timeout generando PDF")
         
     except Exception as e:
-        print(f"❌ Error en PDF: {e}")
         # Limpieza en caso de error
         if os.path.exists(html_path):
             os.remove(html_path)
