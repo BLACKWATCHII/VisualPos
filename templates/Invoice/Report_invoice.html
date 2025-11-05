@@ -199,7 +199,7 @@
                                             <td class="invoice-date">{{ invoice.date }}</td>
                                             <td>#{{ invoice.invoice_number }}</td>
                                             <td>{{ invoice.customer_full_name }}</td>
-                                            {% if invoice.payment_method == "Credito" %}
+                                            {% if invoice.payment_method == "Credito" and invoice.initial_fee > 1 %}
                                                 <td>${{ invoice.total_restante|intcomma }}</td>
                                             {% else %}
                                                 <td>${{ invoice.total|intcomma }}</td>

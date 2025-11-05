@@ -430,7 +430,7 @@
         </div>
         <div class="grand-total-box">
           <div class="grand-total-label">Gran Total</div>
-          {% if invoice.payment_method == "Credito" %}
+          {% if invoice.payment_method == "Credito" and invoice.initial_fee > 1 %}
             <span class="grand-total-amount">${{ total_restante|intcomma }}</span>
           {% else %}
             <span class="grand-total-amount">${{ invoice.total|intcomma }}</span>
@@ -514,7 +514,7 @@
     {% if invoice.delivery_amount and invoice.delivery_amount > 1 %}
       <div class="total-row">
         <span class="total-label">Domicilio</span>
-        {% if invoice.payment_method == "Credito" %}
+        {% if invoice.payment_method == "Credito" and invoice.initial_fee > 1 %}
           <span class="total-value" style="color: red;">-${{ invoice.delivery_amount|intcomma }}</span>
         {% else %}
           <span class="total-value">${{ invoice.delivery_amount|intcomma }}</span>
@@ -540,7 +540,7 @@
 
     <div class="total-row final">
       <span class="total-label">Gran Total</span>
-      {% if invoice.payment_method == "Credito" %}
+      {% if invoice.payment_method == "Credito" and invoice.initial_fee > 1 %}
         <span class="total-value">${{ total_restante|intcomma }}</span>
       {% else %}
         <span class="total-value">${{ invoice.total|intcomma }}</span>
