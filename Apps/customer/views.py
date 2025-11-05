@@ -18,8 +18,8 @@ def Customer_create_view(request):
         if form.is_valid():
             customer = form.save()
             destinatario = customer.email 
-            asunto = '¡Bienvenido a Berserker!'
-            contenido_texto = f'Hola {customer}, ¡gracias por registrarte!'
+            asunto = '¡Bienvenido a Celupro Co! 🎉'
+            contenido_texto = f'Hola {customer}, ¡gracias por unirte a nuestra familia tecnológica!'
             
             contenido_html = f"""
             <!DOCTYPE html>
@@ -27,88 +27,159 @@ def Customer_create_view(request):
             <head>
                 <meta charset="UTF-8">
                 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-                <title>Bienvenido a Berserker</title>
+                <title>Bienvenido a Celupro Co</title>
             </head>
-            <body style="margin: 0; padding: 0; font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; background-color: #f8f9fa;">
-                <div style="width: 100%; background-color: #f8f9fa; padding: 40px 0;">
-                    <div style="max-width: 600px; margin: 0 auto; background-color: #ffffff; border-radius: 12px; box-shadow: 0 4px 12px rgba(0,0,0,0.1); overflow: hidden;">
+            <body style="margin: 0; padding: 0; font-family: 'Segoe UI', -apple-system, BlinkMacSystemFont, sans-serif; background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);">
+                <div style="width: 100%; padding: 40px 20px;">
+                    <div style="max-width: 650px; margin: 0 auto; background-color: #ffffff; border-radius: 16px; box-shadow: 0 10px 40px rgba(0,0,0,0.2); overflow: hidden;">
                         
-                        <!-- Header con logo -->
-                        <div style="background: linear-gradient(135deg, #28a745 0%, #20c997 100%); padding: 40px 20px; text-align: center;">
-                            <div style="background-color: rgba(255,255,255,0.15); display: inline-block; padding: 15px 25px; border-radius: 8px; margin-bottom: 20px;">
-                                <h1 style="margin: 0; color: #ffffff; font-size: 32px; font-weight: 700; letter-spacing: 1px;">⚡ BERSERKER</h1>
-                            </div>
-                            <h2 style="margin: 0; color: #ffffff; font-size: 28px; font-weight: 300;">Libera tu potencial</h2>
+                        <!-- Header con Logo -->
+                        <div style="background: linear-gradient(135deg, #1e3a8a 0%, #3b82f6 50%, #60a5fa 100%); padding: 40px 30px; text-align: center; position: relative;">
+                            <img src="https://raw.githubusercontent.com/Kevin25DC/celupro-assets/refs/heads/main/logo%20de%20prueba%20dos.png" 
+                                 alt="Celupro Co Logo" 
+                                 style="max-width: 180px; height: auto; margin-bottom: 20px; background: white; padding: 15px; border-radius: 12px; box-shadow: 0 4px 12px rgba(0,0,0,0.15);">
+                            <h1 style="margin: 0; color: #ffffff; font-size: 32px; font-weight: 700; text-shadow: 0 2px 4px rgba(0,0,0,0.1);">
+                                ¡Bienvenido a Celupro Co!
+                            </h1>
+                            <p style="margin: 10px 0 0; color: rgba(255,255,255,0.95); font-size: 16px; font-weight: 300;">
+                                Tu destino tecnológico #1
+                            </p>
                         </div>
                         
-                        <!-- Contenido principal -->
+                        <!-- Contenido Principal -->
                         <div style="padding: 40px 30px;">
+                            
+                            <!-- Icono de Bienvenida -->
                             <div style="text-align: center; margin-bottom: 30px;">
-                                <!-- Icono de usuario -->
-                                <div style="width: 80px; height: 80px; background: linear-gradient(135deg, #28a745 0%, #20c997 100%); border-radius: 50%; margin: 0 auto 20px; display: flex; align-items: center; justify-content: center;">
-                                    <span style="color: white; font-size: 36px;">👤</span>
+                                <div style="width: 90px; height: 90px; background: linear-gradient(135deg, #fbbf24 0%, #f59e0b 100%); border-radius: 50%; margin: 0 auto; display: inline-flex; align-items: center; justify-content: center; box-shadow: 0 8px 20px rgba(251, 191, 36, 0.3);">
+                                    <span style="font-size: 45px;">🎉</span>
                                 </div>
                             </div>
                             
-                            <h3 style="color: #2c3e50; font-size: 24px; text-align: center; margin-bottom: 20px; font-weight: 600;">¡Hola {customer.nombre if hasattr(customer, 'nombre') else customer}!</h3>
+                            <!-- Saludo -->
+                            <h2 style="color: #1e293b; font-size: 26px; text-align: center; margin-bottom: 20px; font-weight: 700;">
+                                ¡Hola, {customer.name if hasattr(customer, 'name') else customer}!
+                            </h2>
                             
-                            <p style="color: #5a6c7d; font-size: 16px; line-height: 1.6; text-align: center; margin-bottom: 25px;">
-                                ¡Bienvenido a <strong>Berserker</strong>! Has sido registrado exitosamente en nuestra plataforma. 
-                                Si quieres disfrutar de nuestros servicios premium y desbloquear todo tu potencial, 
-                                te invitamos a explorar todas las funcionalidades que tenemos preparadas para ti.
+                            <p style="color: #475569; font-size: 16px; line-height: 1.8; text-align: center; margin-bottom: 25px;">
+                                Nos emociona darte la bienvenida a <strong style="color: #1e3a8a;">Celupro Co</strong>, 
+                                tu tienda de confianza para todo lo relacionado con <strong>tecnología, celulares, relojes inteligentes</strong> 
+                                y los últimos accesorios del mercado.
                             </p>
                             
-                            <!-- Botón principal -->
+                            <!-- Cards de Beneficios -->
+                            <div style="background: linear-gradient(135deg, #f0f9ff 0%, #e0f2fe 100%); border-radius: 12px; padding: 25px; margin: 30px 0; border-left: 4px solid #3b82f6;">
+                                <h3 style="color: #1e3a8a; font-size: 18px; margin: 0 0 15px; font-weight: 700;">
+                                    🎁 ¿Qué puedes esperar?
+                                </h3>
+                                <ul style="margin: 0; padding-left: 20px; color: #475569; font-size: 14px; line-height: 1.8;">
+                                    <li style="margin-bottom: 8px;">📱 <strong>Últimos modelos</strong> en smartphones y tablets</li>
+                                    <li style="margin-bottom: 8px;">⌚ <strong>Relojes inteligentes</strong> de las mejores marcas</li>
+                                    <li style="margin-bottom: 8px;">🎧 <strong>Accesorios premium</strong> y tecnología de punta</li>
+                                    <li style="margin-bottom: 8px;">🚚 <strong>Envíos rápidos</strong> y seguros a todo el país</li>
+                                    <li>💎 <strong>Precios competitivos</strong> y ofertas exclusivas</li>
+                                </ul>
+                            </div>
+                            
+                            <!-- Botón CTA -->
                             <div style="text-align: center; margin: 35px 0;">
-                                <a href="https://berserker.com" 
-                                   style="display: inline-block; background: linear-gradient(135deg, #28a745 0%, #20c997 100%); 
-                                          color: #ffffff; text-decoration: none; padding: 15px 35px; 
-                                          border-radius: 8px; font-weight: 600; font-size: 16px; 
-                                          box-shadow: 0 4px 12px rgba(40, 167, 69, 0.3);
-                                          transition: transform 0.2s;">
-                                    Comenzar ahora
+                                <a href="https://celuproco.com.co/" 
+                                   style="display: inline-block; 
+                                          background: linear-gradient(135deg, #3b82f6 0%, #1e40af 100%); 
+                                          color: #ffffff; 
+                                          text-decoration: none; 
+                                          padding: 18px 45px; 
+                                          border-radius: 50px; 
+                                          font-weight: 700; 
+                                          font-size: 17px; 
+                                          box-shadow: 0 8px 20px rgba(59, 130, 246, 0.4);
+                                          letter-spacing: 0.5px;">
+                                    🛒 Explorar Productos
                                 </a>
                             </div>
                             
+                            <!-- Sección de Destacados -->
+                            <div style="background: #f8fafc; border-radius: 12px; padding: 25px; margin: 30px 0;">
+                                <div style="text-align: center; margin-bottom: 20px;">
+                                    <h3 style="color: #1e293b; font-size: 20px; margin: 0 0 10px; font-weight: 700;">
+                                        ⭐ Categorías Destacadas
+                                    </h3>
+                                </div>
+                                <div style="display: grid; grid-template-columns: repeat(2, 1fr); gap: 15px; text-align: center;">
+                                    <div style="background: white; padding: 20px; border-radius: 10px; box-shadow: 0 2px 8px rgba(0,0,0,0.05);">
+                                        <span style="font-size: 32px; display: block; margin-bottom: 8px;">📱</span>
+                                        <strong style="color: #1e293b; font-size: 14px;">Smartphones</strong>
+                                    </div>
+                                    <div style="background: white; padding: 20px; border-radius: 10px; box-shadow: 0 2px 8px rgba(0,0,0,0.05);">
+                                        <span style="font-size: 32px; display: block; margin-bottom: 8px;">⌚</span>
+                                        <strong style="color: #1e293b; font-size: 14px;">Smartwatches</strong>
+                                    </div>
+                                    <div style="background: white; padding: 20px; border-radius: 10px; box-shadow: 0 2px 8px rgba(0,0,0,0.05);">
+                                        <span style="font-size: 32px; display: block; margin-bottom: 8px;">🎧</span>
+                                        <strong style="color: #1e293b; font-size: 14px;">Audio</strong>
+                                    </div>
+                                    <div style="background: white; padding: 20px; border-radius: 10px; box-shadow: 0 2px 8px rgba(0,0,0,0.05);">
+                                        <span style="font-size: 32px; display: block; margin-bottom: 8px;">💻</span>
+                                        <strong style="color: #1e293b; font-size: 14px;">Tech & Más</strong>
+                                    </div>
+                                </div>
+                            </div>
                             
-                            <p style="color: #5a6c7d; font-size: 14px; text-align: center; margin: 30px 0 10px;">
-                                Si tienes alguna pregunta, no dudes en 
-                                <a href="mailto:soporte@berserker.com" style="color: #28a745; text-decoration: none;">contactarnos</a>. 
-                                Siempre estamos felices de ayudar.
+                            <!-- Contacto -->
+                            <div style="text-align: center; margin: 30px 0 20px; padding: 20px; background: linear-gradient(135deg, #fef3c7 0%, #fde68a 100%); border-radius: 10px;">
+                                <p style="color: #78350f; font-size: 15px; margin: 0; line-height: 1.6;">
+                                    <strong>¿Necesitas ayuda?</strong><br>
+                                    Nuestro equipo está listo para atenderte<br>
+                                    📞 <strong>Contáctanos</strong> en cualquier momento
+                                </p>
+                            </div>
+                            
+                            <p style="color: #64748b; font-size: 14px; text-align: center; margin: 25px 0 0; line-height: 1.6;">
+                                Gracias por confiar en nosotros. Estamos comprometidos en brindarte 
+                                la mejor experiencia de compra y los productos de más alta calidad.
                             </p>
                         </div>
                         
                         <!-- Footer -->
-                        <div style="background-color: #2c3e50; padding: 30px 20px; text-align: center;">
-                            <p style="color: #ecf0f1; margin: 0 0 15px; font-size: 16px; font-weight: 500;">
-                                ¡Saludos!<br>
-                                <span style="color: #20c997;">El equipo de Berserker</span>
+                        <div style="background: linear-gradient(135deg, #1e293b 0%, #334155 100%); padding: 35px 30px; text-align: center;">
+                            <p style="color: #e2e8f0; margin: 0 0 20px; font-size: 16px; font-weight: 600;">
+                                ¡Bienvenido a la familia Celupro Co! 🎊
                             </p>
                             
-                            <!-- Enlaces del footer -->
-                            <div style="margin: 20px 0;">
-                                <a href="https://berserker.com/privacidad" style="color: #95a5a6; text-decoration: none; margin: 0 15px; font-size: 12px;">Política de Privacidad</a>
-                                <span style="color: #95a5a6;">•</span>
-                                <a href="https://berserker.com/contacto" style="color: #95a5a6; text-decoration: none; margin: 0 15px; font-size: 12px;">Contáctanos</a>
-                                <span style="color: #95a5a6;">•</span>
-                                <a href="https://berserker.com/blog" style="color: #95a5a6; text-decoration: none; margin: 0 15px; font-size: 12px;">Blog</a>
+                            <!-- Redes Sociales -->
+                            <div style="margin: 25px 0;">
+                                <a href="#" style="display: inline-block; margin: 0 8px; width: 40px; height: 40px; background: linear-gradient(135deg, #3b82f6, #1e40af); border-radius: 50%; text-align: center; line-height: 40px; color: white; text-decoration: none; font-size: 18px; box-shadow: 0 4px 8px rgba(0,0,0,0.2);">f</a>
+                                <a href="#" style="display: inline-block; margin: 0 8px; width: 40px; height: 40px; background: linear-gradient(135deg, #ec4899, #be185d); border-radius: 50%; text-align: center; line-height: 40px; color: white; text-decoration: none; font-size: 18px; box-shadow: 0 4px 8px rgba(0,0,0,0.2);">📷</a>
+                                <a href="#" style="display: inline-block; margin: 0 8px; width: 40px; height: 40px; background: linear-gradient(135deg, #10b981, #059669); border-radius: 50%; text-align: center; line-height: 40px; color: white; text-decoration: none; font-size: 18px; box-shadow: 0 4px 8px rgba(0,0,0,0.2);">💬</a>
                             </div>
                             
-                            <!-- Redes sociales -->
+                            <!-- Divisor -->
+                            <div style="height: 1px; background: rgba(255,255,255,0.1); margin: 25px auto; max-width: 300px;"></div>
+                            
+                            <!-- Links del footer -->
                             <div style="margin: 20px 0;">
-                                <a href="#" style="display: inline-block; margin: 0 10px; width: 36px; height: 36px; background-color: #3b5998; border-radius: 50%; text-align: center; line-height: 36px; color: white; text-decoration: none;">f</a>
-                                <a href="#" style="display: inline-block; margin: 0 10px; width: 36px; height: 36px; background-color: #0077b5; border-radius: 50%; text-align: center; line-height: 36px; color: white; text-decoration: none;">in</a>
-                                <a href="#" style="display: inline-block; margin: 0 10px; width: 36px; height: 36px; background-color: #1da1f2; border-radius: 50%; text-align: center; line-height: 36px; color: white; text-decoration: none;">@</a>
+                                <a href="https://celuproco.com.co/" style="color: #94a3b8; text-decoration: none; margin: 0 12px; font-size: 12px; transition: color 0.3s;">Tienda</a>
+                                <span style="color: #475569;">•</span>
+                                <a href="https://celuproco.com.co/" style="color: #94a3b8; text-decoration: none; margin: 0 12px; font-size: 12px;">Política de Privacidad</a>
+                                <span style="color: #475569;">•</span>
+                                <a href="https://celuproco.com.co/" style="color: #94a3b8; text-decoration: none; margin: 0 12px; font-size: 12px;">Contáctanos</a>
                             </div>
                             
-                            <p style="color: #95a5a6; font-size: 12px; margin: 20px 0 0; line-height: 1.4;">
-                                Copyright © 2025 Berserker. Todos los derechos reservados.<br>
-                                Soledad,Atlantico, Colombia.<br>
+                            <p style="color: #64748b; font-size: 11px; margin: 20px 0 0; line-height: 1.6;">
+                                Este correo fue generado automáticamente por nuestro sistema.<br>
+                                Por favor, no respondas a este mensaje.
                             </p>
                             
-                            <!-- Logo pequeño del footer -->
-                            <div style="margin-top: 20px;">
-                                <span style="color: #20c997; font-size: 18px; font-weight: 700;">⚡ BERSERKER</span>
+                            <p style="color: #64748b; font-size: 11px; margin: 15px 0 0; line-height: 1.6;">
+                                © 2025 <a href="https://berserkerdev.com/" style="color: #3b82f6; text-decoration: none; font-weight: 600;">BerserkerDev</a> - Todos los derechos reservados<br>
+                                Soledad, Atlántico, Colombia
+                            </p>
+                            
+                            <!-- Logo pequeño -->
+                            <div style="margin-top: 20px; opacity: 0.7;">
+                                <img src="https://raw.githubusercontent.com/Kevin25DC/celupro-assets/refs/heads/main/logo%20de%20prueba%20dos.png" 
+                                     alt="Logo" 
+                                     style="max-width: 80px; height: auto;">
                             </div>
                         </div>
                     </div>

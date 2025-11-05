@@ -64,6 +64,8 @@ class Invoice(models.Model):
     invoice_number = models.IntegerField()
     notes = models.TextField(blank=True, null=True)
     quotas = models.PositiveIntegerField(null=True, blank=True)
+    delivery_amount = models.DecimalField(max_digits=10,decimal_places=2,default=0,help_text="Valor del domicilio (0 si no aplica)")
+    initial_fee = models.DecimalField(max_digits=10, decimal_places=2, default=0.0)
     user = models.ForeignKey(User, on_delete=models.CASCADE, related_name='Invoice')
 
     def __str__(self):

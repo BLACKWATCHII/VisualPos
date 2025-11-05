@@ -133,9 +133,30 @@ def delete_type_transaction(request, transaction_id):
     messages.success(request, "Transacción eliminada correctamente.")
     return redirect('create_transaction')
 
-def calcular_fechas_cuotas(start_date, cuotas, frecuencia):
+def calcular_fechas_cuotas(start_date, cuotas, frecuencia, tiene_cuota_inicial=False):
+    """
+    Calcula las fechas de pago de las cuotas según la frecuencia.
+    Si tiene_cuota_inicial=True, la primera cuota financiada comienza
+    en el siguiente período de pago (mensual, quincenal o semanal).
+    """
     fechas = []
 
+    # Si ya se pagó una cuota inicial, mover la fecha de inicio al próximo período
+    if tiene_cuota_inicial:
+        if frecuencia == 'Mensual':
+            start_date += relativedelta(months=1)
+        elif frecuencia == 'Quincenal':
+            # Si hoy es antes del 15, empezar el 15; si ya pasó, ir al fin de mes
+            if start_date.day <= 15:
+                start_date = start_date.replace(day=15)
+            else:
+                # Ir al último día del mes
+                next_month = (start_date.replace(day=1) + relativedelta(months=1))
+                start_date = next_month - timedelta(days=1)
+        elif frecuencia == 'Semanal':
+            start_date += timedelta(weeks=1)
+
+    # Calcular fechas según frecuencia
     if frecuencia == 'Mensual':
         for i in range(cuotas):
             fechas.append(start_date + relativedelta(months=i))
@@ -146,10 +167,7 @@ def calcular_fechas_cuotas(start_date, cuotas, frecuencia):
             dia = current.day
             if dia <= 15:
                 quincena = current.replace(day=15)
-                if current.day > 15:
-                    quincena += relativedelta(months=1)
             else:
-                # Último día del mes
                 quincena = (current.replace(day=1) + relativedelta(months=1)) - timedelta(days=1)
             fechas.append(quincena)
             current = quincena + timedelta(days=1)
@@ -174,7 +192,6 @@ def create_invoice(request):
             with transaction.atomic():
                 invoice = form.save(commit=False)
 
-                # Extraer datos del formulario
                 items = request.POST.getlist('item_id')
                 quantities = request.POST.getlist('quantity')
                 prices = request.POST.getlist('price')
@@ -187,8 +204,19 @@ def create_invoice(request):
                 notes = request.POST.get('notes')
                 status = request.POST.get('status') or 'Pagada'
 
-                print("frecuencia de pago: " + payment_frequency)
-                # Calcular subtotal
+                print("frecuencia de pago: " + str(payment_frequency))
+                
+                #  Campos nuevos de domicilio
+                has_delivery = request.POST.get('has_delivery')
+                delivery_amount = request.POST.get('delivery_amount')
+                delivery_value = float(delivery_amount) if has_delivery and delivery_amount else 0.0
+
+                #  Campo de cuota inicial
+                initial_quota_amount = request.POST.get('initial_quota_amount')
+                initial_quota_value = float(initial_quota_amount) if initial_quota_amount else 0.0
+                print("Valor cuota inicial: " + str(initial_quota_value))
+
+                # Calcular subtotal (productos)
                 sub_total = sum([
                     float(price.replace(',', '').replace('$', ''))
                     for price in prices if price
@@ -202,7 +230,8 @@ def create_invoice(request):
                 invoice.notes = notes
                 invoice.user = request.user
                 invoice.quotas = int(quotas) if quotas else 0
-                invoice.payment_frequency = payment_frequency  # Guardar frecuencia si el modelo lo permite
+                invoice.payment_frequency = payment_frequency
+                invoice.initial_fee = initial_quota_value
 
                 # Calcular total con descuento
                 total = 0
@@ -217,7 +246,21 @@ def create_invoice(request):
                 else:
                     invoice.discount = 0
 
-                invoice.total = total
+                #  Domicilio:
+                # - Si es contado: se suma al total.
+                # - Si es crédito: se paga con la cuota inicial, NO se financia.
+                if payment_method == 'Credito':
+                    invoice.delivery_amount = delivery_value
+                    # No sumamos el domicilio al total a financiar
+                    total_final = total + delivery_value  # El total general sí lo incluye
+                else:
+                    total += delivery_value
+                    invoice.delivery_amount = delivery_value
+                    total_final = total
+
+                # Guardar total completo de la venta
+                invoice.total = total_final
+                invoice.initial_quota_amount = initial_quota_value
 
                 # Relacionar con tipo de transacción y actualizar consecutivo
                 transaction_type = get_object_or_404(TransactionType, id=transaction_type_id)
@@ -228,12 +271,17 @@ def create_invoice(request):
 
                 invoice.save()
 
-                # Crear cuotas si aplica
-                if payment_method == 'Credito' and invoice.quotas > 1:
-                    cuota_valor = invoice.total / invoice.quotas
-                    start_date = invoice.date or date.today()
-                    fechas = calcular_fechas_cuotas(start_date, invoice.quotas, payment_frequency)
+                # Crear cuotas si aplica (solo crédito)
+                if payment_method == 'Credito' and invoice.quotas > 0:
+                    # 💰 Monto a financiar = total - cuota inicial (sin incluir domicilio)
+                    total_financiar = total - initial_quota_value
+                    cuotas_restantes = invoice.quotas
+                    cuota_valor = total_financiar / cuotas_restantes
 
+                    start_date = invoice.date or date.today()
+                    fechas = calcular_fechas_cuotas(start_date, cuotas_restantes, payment_frequency,tiene_cuota_inicial=(initial_quota_value > 0))
+
+                    # Crear cuotas financiadas
                     for i, fecha in enumerate(fechas):
                         PaymentQuota.objects.create(
                             invoice=invoice,
@@ -241,6 +289,17 @@ def create_invoice(request):
                             amount=cuota_valor,
                             payment_date=fecha,
                             is_paid=False
+                        )
+
+                    #  Registrar cuota inicial (incluyendo el domicilio)
+                    initial_payment_total = initial_quota_value + delivery_value
+                    if initial_payment_total > 0:
+                        PaymentQuota.objects.create(
+                            invoice=invoice,
+                            number=0,
+                            amount=initial_payment_total,
+                            payment_date=date.today(),
+                            is_paid=True
                         )
 
                 # Crear items y actualizar stock
@@ -260,13 +319,16 @@ def create_invoice(request):
                 if request.POST.get('download') == 'pdf':
                     return render_pdf_with_puppeteer(
                         'invoice/receipt_pdf.html',
-                        {'invoice': invoice},
+                        {'invoice': invoice,
+                        'sub_total': sub_total,
+                        'total_restante': invoice.total - (invoice.delivery_amount or 0) - (invoice.initial_fee or 0),
+                         },
                         filename=f"Factura_{invoice.invoice_number}.pdf"
                     )
 
                 return redirect('home')
         else:
-            pass  # Puedes agregar manejo de errores aquí si lo deseas
+            pass
     else:
         form = InvoiceForm()
 
@@ -299,12 +361,22 @@ def invoices_report(request):
         email = customer.email if customer else ''
         full_name = f"{customer.name} {customer.lastname}" if customer else ''
 
+        total_factura = float(invoice.total or 0)
+        delivery = float(invoice.delivery_amount or 0)
+        initial_fee = float(invoice.initial_fee or 0)
+
+        if invoice.payment_method == 'Credito':
+            total_restante = total_factura - delivery - initial_fee
+        else:
+            total_restante = total_factura
+
+        print(f"Factura {invoice.invoice_number} - Total: {total_factura} - Restante: {total_restante}")
+
         # Verificar si hay cuotas pagas
         has_unpaid_quotas = invoice.payment_quotas.filter(is_paid=False).exists()
-
         invoice_list.append({
             'id': invoice.id,
-            'date': invoice.date.strftime('%Y-%m-%d %I:%M %p'),
+            'date': invoice.date.strftime('%Y-%m-%d'),
             'invoice_number': invoice.invoice_number,
             'customer_name': customer.name if customer else '',
             'customer_last_name': customer.lastname if customer else '',
@@ -318,6 +390,9 @@ def invoices_report(request):
             'notes': invoice.notes,
             'quotas': invoice.quotas,
             'has_unpaid_quotas': has_unpaid_quotas,
+            'total_restante': total_restante,
+            'delivery_amount': delivery,
+            'initial_fee': initial_fee,
         })
 
     return render(request, 'Invoice/Report_invoice.html', {
@@ -351,7 +426,9 @@ def allow_iframe(view_func):
 @allow_iframe
 def preview_invoice(request, invoice_id):
     invoice = get_object_or_404(Invoice, pk=invoice_id)
-    return render(request, 'invoice/receipt_pdf.html', {'invoice': invoice})
+    return render(request, 'invoice/receipt_pdf.html', {'invoice': invoice, 
+                                                        'total_restante': invoice.total - (invoice.delivery_amount or 0) - (invoice.initial_fee or 0),
+                                                        'sub_total': invoice.total - (invoice.delivery_amount or 0)})
 
 
 @login_required
@@ -775,81 +852,111 @@ def send_invoice_simple(request, invoice_id):
                 <meta name="viewport" content="width=device-width, initial-scale=1.0">
                 <title>Factura #{invoice.invoice_number}</title>
             </head>
-            <body style="margin: 0; padding: 0; font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); min-height: 100vh;">
-                <div style="max-width: 600px; margin: 0 auto; padding: 40px 20px;">
-                    <!-- Header con gradiente -->
-                    <div style="background: linear-gradient(135deg, #4facfe 0%, #00f2fe 100%); border-radius: 20px 20px 0 0; padding: 40px; text-align: center; box-shadow: 0 10px 30px rgba(0,0,0,0.1);">
-                        <div style="background: rgba(255,255,255,0.2); border-radius: 50%; width: 80px; height: 80px; margin: 0 auto 20px; display: flex; align-items: center; justify-content: center; backdrop-filter: blur(10px);">
-                            <span style="font-size: 36px; color: white;">📧</span>
-                        </div>
-                        <h1 style="color: white; margin: 0; font-size: 28px; font-weight: 300; text-shadow: 0 2px 4px rgba(0,0,0,0.1);">
-                            Nueva Factura Disponible
+            <body style="margin: 0; padding: 0; font-family: 'Segoe UI', -apple-system, BlinkMacSystemFont, sans-serif; background-color: #f5f7fa;">
+                <div style="max-width: 650px; margin: 0 auto; padding: 40px 20px;">
+                    
+                    <!-- Header con Logo -->
+                    <div style="background: #ffffff; border-radius: 16px 16px 0 0; padding: 40px 30px; text-align: center; border-bottom: 3px solid #2563eb;">
+                        <img src="https://raw.githubusercontent.com/Kevin25DC/celupro-assets/refs/heads/main/logo%20de%20prueba%20dos.png" alt="Logo" style="max-width: 180px; height: auto; margin-bottom: 25px;">
+                        <h1 style="color: #1e293b; margin: 0; font-size: 28px; font-weight: 600; letter-spacing: -0.5px;">
+                            Factura Electrónica
                         </h1>
-                        <p style="color: rgba(255,255,255,0.9); margin: 10px 0 0; font-size: 16px; font-weight: 300;">
-                            Factura #{invoice.invoice_number}
+                        <p style="color: #64748b; margin: 10px 0 0; font-size: 16px;">
+                            N° {invoice.invoice_number}
                         </p>
                     </div>
                     
-                    <!-- Contenido principal -->
-                    <div style="background: white; padding: 40px; border-radius: 0 0 20px 20px; box-shadow: 0 10px 30px rgba(0,0,0,0.1);">
-                        <div style="text-align: center; margin-bottom: 30px;">
-                            <h2 style="color: #2c3e50; font-size: 24px; margin: 0 0 10px; font-weight: 600;">
-                                ¡Hola {invoice.customer.name}! 👋
-                            </h2>
-                            <div style="width: 60px; height: 3px; background: linear-gradient(90deg, #4facfe, #00f2fe); margin: 0 auto; border-radius: 2px;"></div>
-                        </div>
+                    <!-- Contenido Principal -->
+                    <div style="background: #ffffff; padding: 40px 30px;">
                         
-                        <div style="background: linear-gradient(135deg, #f093fb 0%, #f5576c 100%); border-radius: 15px; padding: 25px; margin: 25px 0; text-align: center; color: white; position: relative; overflow: hidden;">
-                            <div style="position: absolute; top: -20px; right: -20px; width: 100px; height: 100px; background: rgba(255,255,255,0.1); border-radius: 50%; opacity: 0.3;"></div>
-                            <div style="position: absolute; bottom: -30px; left: -30px; width: 80px; height: 80px; background: rgba(255,255,255,0.1); border-radius: 50%; opacity: 0.3;"></div>
-                            <div style="position: relative; z-index: 2;">
-                                <h3 style="margin: 0 0 15px; font-size: 20px; font-weight: 600;">
-                                    📎 Factura Adjunta
-                                </h3>
-                                <p style="margin: 0; font-size: 16px; line-height: 1.5; opacity: 0.95;">
-                                    Tu factura está adjunta a este correo y lista para descargar
-                                </p>
-                            </div>
-                        </div>
-                        
-                        <div style="text-align: center; margin: 30px 0;">
-                            <p style="color: #555; font-size: 16px; line-height: 1.6; margin: 0 0 20px;">
-                                Gracias por confiar en nosotros. Tu compra ha sido procesada exitosamente y aquí tienes todos los detalles.
+                        <!-- Saludo -->
+                        <div style="margin-bottom: 30px;">
+                            <p style="color: #334155; font-size: 18px; margin: 0 0 8px; font-weight: 500;">
+                                Estimado/a {invoice.customer.name},
                             </p>
-                            
-                            <div style="background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); color: white; padding: 15px 30px; border-radius: 50px; display: inline-block; font-weight: 600; text-decoration: none; box-shadow: 0 8px 20px rgba(102, 126, 234, 0.3); transform: translateY(0); transition: all 0.3s ease;">
-                                ✨ ¡Transacción Completada!
-                            </div>
+                            <p style="color: #64748b; font-size: 15px; line-height: 1.6; margin: 0;">
+                                Le enviamos su factura correspondiente a la compra realizada. Puede encontrarla adjunta a este correo en formato PDF.
+                            </p>
                         </div>
                         
-                        <!-- Información adicional -->
-                        <div style="background: #f8f9ff; border-radius: 12px; padding: 20px; margin: 25px 0; border-left: 4px solid #4facfe;">
-                            <h4 style="color: #2c3e50; margin: 0 0 10px; font-size: 16px; font-weight: 600;">
-                                💡 Información Importante
-                            </h4>
-                            <p style="color: #666; font-size: 14px; line-height: 1.5; margin: 0;">
-                                Conserva esta factura para tus registros. Si tienes alguna pregunta, no dudes en contactarnos.
+                        <!-- Card de Factura -->
+                        <div style="background: linear-gradient(135deg, #2563eb 0%, #1e40af 100%); border-radius: 12px; padding: 30px; margin: 30px 0; box-shadow: 0 4px 6px rgba(37, 99, 235, 0.15);">
+                            <table width="100%" cellpadding="0" cellspacing="0">
+                                <tr>
+                                    <td style="text-align: center;">
+                                        <div style="background: rgba(255,255,255,0.15); border-radius: 50%; width: 60px; height: 60px; margin: 0 auto 20px; display: inline-flex; align-items: center; justify-content: center;">
+                                            <span style="font-size: 28px;">📄</span>
+                                        </div>
+                                        <h2 style="color: #ffffff; margin: 0 0 10px; font-size: 22px; font-weight: 600;">
+                                            Factura Adjunta
+                                        </h2>
+                                        <p style="color: rgba(255,255,255,0.9); margin: 0; font-size: 15px;">
+                                            Su documento está listo para descargar
+                                        </p>
+                                    </td>
+                                </tr>
+                            </table>
+                        </div>
+                        
+                        <!-- Información Adicional -->
+                        <div style="background: #f8fafc; border-left: 4px solid #2563eb; border-radius: 8px; padding: 20px 24px; margin: 30px 0;">
+                            <table width="100%" cellpadding="0" cellspacing="0">
+                                <tr>
+                                    <td>
+                                        <p style="color: #334155; margin: 0 0 12px; font-size: 15px; font-weight: 600;">
+                                            📌 Información Importante
+                                        </p>
+                                        <p style="color: #64748b; font-size: 14px; line-height: 1.6; margin: 0;">
+                                            • Conserve esta factura para sus registros contables<br>
+                                            • El documento adjunto tiene validez fiscal<br>
+                                            • Ante cualquier consulta, estamos a su disposición
+                                        </p>
+                                    </td>
+                                </tr>
+                            </table>
+                        </div>
+                        
+                        <!-- Agradecimiento -->
+                        <div style="text-align: center; margin: 35px 0 25px;">
+                            <p style="color: #334155; font-size: 15px; line-height: 1.6; margin: 0;">
+                                Gracias por confiar en nosotros.<br>
+                                Valoramos su preferencia y quedamos a su disposición.
+                                https://celuproco.com.co/
+                            </p>
+                        </div>
+                        
+                        <!-- Divisor -->
+                        <div style="height: 1px; background: linear-gradient(90deg, transparent, #e2e8f0, transparent); margin: 30px 0;"></div>
+                        
+                        <!-- Contacto -->
+                        <div style="text-align: center;">
+                            <p style="color: #64748b; font-size: 14px; margin: 0 0 15px; font-weight: 500;">
+                                ¿Necesita ayuda?
+                            </p>
+                            <p style="color: #94a3b8; font-size: 13px; line-height: 1.6; margin: 0;">
+                                Contáctenos en cualquier momento<br>
+                                Estamos disponibles para atenderle 
                             </p>
                         </div>
                     </div>
                     
                     <!-- Footer -->
-                    <div style="text-align: center; padding: 30px 20px; color: rgba(255,255,255,0.8);">
-                        <div style="background: rgba(255,255,255,0.1); border-radius: 10px; padding: 20px; backdrop-filter: blur(10px);">
-                            <p style="margin: 0; font-size: 14px; line-height: 1.5;">
-                                Este correo fue generado automáticamente<br>
-                                <span style="opacity: 0.7;">📧 Sistema de Facturación Inteligente</span>
-                            </p>
-                        </div>
-                        
-                        <div style="margin-top: 20px; font-size: 12px; opacity: 0.6;">
-                            <p style="margin: 5px 0;">© 2025 - Todos los derechos reservados</p>
-                        </div>
+                    <div style="background: #1e293b; border-radius: 0 0 16px 16px; padding: 30px; text-align: center;">
+                        <p style="color: #94a3b8; font-size: 13px; line-height: 1.6; margin: 0 0 12px;">
+                            Este correo fue generado automáticamente por nuestro sistema de facturación.<br>
+                            Por favor, no responda a este mensaje.
+                        </p>
+                        <div style="height: 1px; background: rgba(148, 163, 184, 0.2); margin: 20px auto; max-width: 200px;"></div>
+                        <p style="color: #64748b; font-size: 12px; margin: 0;">
+                            © 2025 Todos los derechos reservados - BerserkerDev - http://www.berserkerdev.com/
+                        </p>
                     </div>
+                    
                 </div>
             </body>
             </html>
             """
+            
             asunto = f"Factura #{invoice.invoice_number} - {invoice.customer.name} {invoice.customer.lastname}"
             success = send_email_with_attachment(
                 destinatario=invoice.customer.email,
@@ -858,6 +965,7 @@ def send_invoice_simple(request, invoice_id):
                 contenido_html=email_content,
                 attachment_path=pdf_path
             )
+            
             if success:
                 return JsonResponse({
                     'success': True,
@@ -867,19 +975,20 @@ def send_invoice_simple(request, invoice_id):
                 import traceback
                 print(traceback.format_exc())
                 return JsonResponse({'success': False, 'message': 'Error al enviar el correo electrónico.'})
+                
         except Exception as email_error:
             return JsonResponse({'success': False, 'message': f'Error enviando email: {str(email_error)}'})
         finally:
             if pdf_path and os.path.exists(pdf_path):
                 try:
                     os.remove(pdf_path)
-                    print("🗑️ PDF temporal eliminado")
+                    print(" PDF temporal eliminado")
                 except:
-                    print("⚠️ No se pudo eliminar el PDF temporal")
+                    print("No se pudo eliminar el PDF temporal")
 
     except Exception as e:
         import traceback
-        print(f"❌ Error general: {str(e)}")
+        print(f" Error general: {str(e)}")
         print(traceback.format_exc())
         return JsonResponse({'success': False, 'message': f'Error interno: {str(e)}'})
     finally:
@@ -905,20 +1014,16 @@ def generate_temp_invoice_pdf_safe(invoice):
     print(f"📄 PDF path: {pdf_path}")
     
     try:
-        # Renderizar HTML
-        print("🎨 Renderizando HTML...")
         html_content = render_to_string('invoice/receipt_pdf.html', {'invoice': invoice})
         
         with open(html_path, "w", encoding="utf-8") as f:
             f.write(html_content)
-        print(f"✅ HTML creado ({len(html_content)} caracteres)")
         
-        # Verificar script de PDF
         script_path = os.path.join(settings.BASE_DIR, "pdfgen", "generate_pdf.js")
         if not os.path.exists(script_path):
             raise Exception(f"Script PDF no encontrado: {script_path}")
         
-        print(f"🔧 Script path: {script_path}")
+        print(f" Script path: {script_path}")
         
         # Ejecutar script
         print("⚙️ Ejecutando script de PDF...")
@@ -929,11 +1034,11 @@ def generate_temp_invoice_pdf_safe(invoice):
             timeout=25  
         )
         
-        print(f"📊 Return code: {result.returncode}")
+        print(f"Return code: {result.returncode}")
         if result.stdout:
-            print(f"📤 STDOUT: {result.stdout}")
+            print(f" STDOUT: {result.stdout}")
         if result.stderr:
-            print(f"📥 STDERR: {result.stderr}")
+            print(f" STDERR: {result.stderr}")
         
         if result.returncode != 0:
             raise Exception(f"Error en script PDF: {result.stderr.strip()}")
@@ -942,7 +1047,7 @@ def generate_temp_invoice_pdf_safe(invoice):
             raise Exception("PDF no se generó correctamente")
         
         pdf_size = os.path.getsize(pdf_path)
-        print(f"✅ PDF generado correctamente ({pdf_size} bytes)")
+        print(f" PDF generado correctamente ({pdf_size} bytes)")
         
         # Limpiar HTML
         if os.path.exists(html_path):
@@ -951,7 +1056,6 @@ def generate_temp_invoice_pdf_safe(invoice):
         return pdf_path
         
     except subprocess.TimeoutExpired:
-        print("❌ Timeout en generación de PDF")
         # Limpieza
         if os.path.exists(html_path):
             os.remove(html_path)
@@ -960,7 +1064,6 @@ def generate_temp_invoice_pdf_safe(invoice):
         raise Exception("Timeout generando PDF")
         
     except Exception as e:
-        print(f"❌ Error en PDF: {e}")
         # Limpieza en caso de error
         if os.path.exists(html_path):
             os.remove(html_path)

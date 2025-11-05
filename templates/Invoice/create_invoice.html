@@ -273,14 +273,45 @@
                         <option value="Tarjeta débito">Tarjeta débito</option>
                         <option value="Transferencia bancaria">Transferencia</option>
                         <option value="Efectivo">Efectivo</option>
-                        <option value="Credito">Crédito</option>
+                        <option value="Credito">Credito</option>
                         <option value="Otro">Otro</option>
                     </select>
                     <label>Método de pago</label>
                 </div>
             </div>
         </div>
-
+        <div class="row mb-4">
+            <div class="col-md-3">
+                <div class="form-check" style="padding-top: 1rem;">
+                    <input class="form-check-input" type="checkbox" id="has_delivery" name="has_delivery">
+                    <label class="form-check-label" for="has_delivery">
+                        ¿Incluye domicilio?
+                    </label>
+                </div>
+            </div>
+            <div class="col-md-3" id="delivery-amount-container" style="display: none;">
+                <div class="form-floating">
+                    <input type="number" id="delivery_amount" name="delivery_amount" class="form-control" placeholder="0" min="0" step="1000">
+                    <label>Valor del domicilio</label>
+                </div>
+            </div>
+        </div>
+        <div class="row mb-4" id="initial-fee-container" style="display: none;">
+            <div class="col-md-3">
+                <div class="form-check" style="padding-top: 1rem;">
+                    <input class="form-check-input" type="checkbox" id="has_initial_fee">
+                    <label class="form-check-label" for="has_initial_fee">
+                        ¿Incluye cuota inicial?
+                    </label>
+                </div>
+            </div>
+            <div class="col-md-3" id="initial-fee-field" style="display: none;">
+                <div class="form-floating">
+                    <input type="number" id="initial_fee_value" name="initial_quota_amount" class="form-control" placeholder="0" min="0" step="0.01">
+                    <label>Valor de cuota inicial</label>
+                </div>
+            </div>
+        </div>
         <!-- Opciones de crédito -->
         <div class="credit-options" id="credit-options" style="display: none;">
             <div class="row">
@@ -386,6 +417,10 @@
             <div class="col-md-8"></div>
             <div class="col-md-4">
                 <div class="totals-section">
+                    <div id="initial-fee-preview" style="display:none;">
+                        <strong>Cuota inicial:</strong>
+                        <span id="initial-fee-amount"></span>
+                    </div>
                     <div class="d-flex justify-content-between mb-2">
                         <span>Subtotal:</span>
                         <span id="subtotal">$0.00</span>
@@ -407,8 +442,6 @@
         <div class="action-buttons">
             <input type="hidden" name="download" value="pdf">
             <button type="button" class="btn btn-cancel">Cancelar</button>
-            <button type="button" class="btn btn-send">Valor pagaré</button>
-            <button type="button" class="btn btn-send">Guardar y crear nuevo</button>
             <button type="submit" class="btn btn-save">Guardar</button>
         </div>
     </form>
@@ -486,9 +519,47 @@ $(document).ready(function(){
     $('#payment_method_select').on('change', function() {
         if ($(this).val() === 'Credito') {
             $('#credit-options').slideDown();
+            $('#initial-fee-container').slideDown(); // 👈 Mostrar bloque de cuota inicial
         } else {
             $('#credit-options').slideUp();
+            $('#initial-fee-container').slideUp();
+            $('#has_initial_fee').prop('checked', false);
+            $('#initial-fee-field').hide();
+            $('#initial_fee_value').val('0');
+            calculateTotals();
         }
+    });
+
+    // 💰 Mostrar/ocultar campo de valor de cuota inicial
+    $('#has_initial_fee').on('change', function() {
+        if ($(this).is(':checked')) {
+            $('#initial-fee-field').slideDown();
+        } else {
+            $('#initial-fee-field').slideUp();
+            $('#initial_fee_value').val('0');
+            calculateTotals();
+        }
+    });
+
+    // 💰 Recalcular totales cuando cambie el valor de la cuota inicial
+    $('#initial_fee_value').on('input change', function() {
+        calculateTotals();
+    });
+
+    // Mostrar/ocultar campo de valor de domicilio
+    $('#has_delivery').on('change', function() {
+        if ($(this).is(':checked')) {
+            $('#delivery-amount-container').slideDown();
+        } else {
+            $('#delivery-amount-container').slideUp();
+            $('#delivery_amount').val('0');
+            calculateTotals(); // Recalcular totales al desactivar
+        }
+    });
+
+    // Recalcular cuando cambie el valor del domicilio
+    $('#delivery_amount').on('input change', function() {
+        calculateTotals();
     });
 
     // Redireccionamiento al enviar el formulario
@@ -537,19 +608,50 @@ $(document).ready(function(){
             }
         });
 
-        $('#subtotal').text('$' + subtotal.toLocaleString('es-CO', { minimumFractionDigits: 2 }));
+        // Agregar valor del domicilio al subtotal
+        var deliveryAmount = 0;
+        if ($('#has_delivery').is(':checked')) {
+            deliveryAmount = parseFloat($('#delivery_amount').val()) || 0;
+        }
+        
+        var subtotalWithDelivery = subtotal + deliveryAmount;
+
+        // 💰 Aplicar cuota inicial (solo si es crédito y está marcada)
+        var initialFee = 0;
+        if ($('#payment_method_select').val() === 'Credito' && $('#has_initial_fee').is(':checked')) {
+            initialFee = parseFloat($('#initial_fee_value').val()) || 0;
+            subtotalWithDelivery -= initialFee;
+            if (initialFee > 0) {
+                $('#initial-fee-preview').show();
+                $('#initial-fee-amount').text('-$' + initialFee.toLocaleString('es-CO', { minimumFractionDigits: 2 }));
+            } else {
+                $('#initial-fee-preview').hide();
+            }
+        } else {
+            $('#initial-fee-preview').hide();
+        }
+
+        $('#subtotal').text('$' + subtotalWithDelivery.toLocaleString('es-CO', { minimumFractionDigits: 2 }));
+
+        // Mostrar u ocultar línea de domicilio en los totales (opcional)
+        if ($('#has_delivery').is(':checked') && deliveryAmount > 0) {
+            $('#delivery-preview').show();
+            $('#delivery-total').text('$' + deliveryAmount.toLocaleString('es-CO', { minimumFractionDigits: 2 }));
+        } else {
+            $('#delivery-preview').hide();
+        }
 
         // Aplicar descuento general si existe
         if($('#add_discount').is(':checked')){
             var discountPercent = parseFloat($('#discount-percent').val()) || 0;
-            var discountAmount = subtotal * (discountPercent / 100);
-            var total = subtotal - discountAmount;
+            var discountAmount = subtotalWithDelivery * (discountPercent / 100);
+            var total = subtotalWithDelivery - discountAmount;
             $('#discount-preview').show();
             $('#discount-amount').text('-$' + discountAmount.toLocaleString('es-CO', { minimumFractionDigits: 2 }));
             $('#total').text('$' + total.toLocaleString('es-CO', { minimumFractionDigits: 2 }));
         } else {
             $('#discount-preview').hide();
-            $('#total').text('$' + subtotal.toLocaleString('es-CO', { minimumFractionDigits: 2 }));
+            $('#total').text('$' + subtotalWithDelivery.toLocaleString('es-CO', { minimumFractionDigits: 2 }));
         }
     }
 
