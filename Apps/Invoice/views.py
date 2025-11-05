@@ -133,9 +133,30 @@ def delete_type_transaction(request, transaction_id):
     messages.success(request, "Transacción eliminada correctamente.")
     return redirect('create_transaction')
 
-def calcular_fechas_cuotas(start_date, cuotas, frecuencia):
+def calcular_fechas_cuotas(start_date, cuotas, frecuencia, tiene_cuota_inicial=False):
+    """
+    Calcula las fechas de pago de las cuotas según la frecuencia.
+    Si tiene_cuota_inicial=True, la primera cuota financiada comienza
+    en el siguiente período de pago (mensual, quincenal o semanal).
+    """
     fechas = []
 
+    # Si ya se pagó una cuota inicial, mover la fecha de inicio al próximo período
+    if tiene_cuota_inicial:
+        if frecuencia == 'Mensual':
+            start_date += relativedelta(months=1)
+        elif frecuencia == 'Quincenal':
+            # Si hoy es antes del 15, empezar el 15; si ya pasó, ir al fin de mes
+            if start_date.day <= 15:
+                start_date = start_date.replace(day=15)
+            else:
+                # Ir al último día del mes
+                next_month = (start_date.replace(day=1) + relativedelta(months=1))
+                start_date = next_month - timedelta(days=1)
+        elif frecuencia == 'Semanal':
+            start_date += timedelta(weeks=1)
+
+    # Calcular fechas según frecuencia
     if frecuencia == 'Mensual':
         for i in range(cuotas):
             fechas.append(start_date + relativedelta(months=i))
@@ -146,10 +167,7 @@ def calcular_fechas_cuotas(start_date, cuotas, frecuencia):
             dia = current.day
             if dia <= 15:
                 quincena = current.replace(day=15)
-                if current.day > 15:
-                    quincena += relativedelta(months=1)
             else:
-                # Último día del mes
                 quincena = (current.replace(day=1) + relativedelta(months=1)) - timedelta(days=1)
             fechas.append(quincena)
             current = quincena + timedelta(days=1)
@@ -261,7 +279,7 @@ def create_invoice(request):
                     cuota_valor = total_financiar / cuotas_restantes
 
                     start_date = invoice.date or date.today()
-                    fechas = calcular_fechas_cuotas(start_date, cuotas_restantes, payment_frequency)
+                    fechas = calcular_fechas_cuotas(start_date, cuotas_restantes, payment_frequency,tiene_cuota_inicial=(initial_quota_value > 0))
 
                     # Crear cuotas financiadas
                     for i, fecha in enumerate(fechas):
@@ -301,7 +319,10 @@ def create_invoice(request):
                 if request.POST.get('download') == 'pdf':
                     return render_pdf_with_puppeteer(
                         'invoice/receipt_pdf.html',
-                        {'invoice': invoice},
+                        {'invoice': invoice,
+                        'sub_total': sub_total,
+                        'total_restante': invoice.total - (invoice.delivery_amount or 0) - (invoice.initial_fee or 0),
+                         },
                         filename=f"Factura_{invoice.invoice_number}.pdf"
                     )
 
@@ -340,12 +361,22 @@ def invoices_report(request):
         email = customer.email if customer else ''
         full_name = f"{customer.name} {customer.lastname}" if customer else ''
 
+        total_factura = float(invoice.total or 0)
+        delivery = float(invoice.delivery_amount or 0)
+        initial_fee = float(invoice.initial_fee or 0)
+
+        if invoice.payment_method == 'Credito':
+            total_restante = total_factura - delivery - initial_fee
+        else:
+            total_restante = total_factura
+
+        print(f"Factura {invoice.invoice_number} - Total: {total_factura} - Restante: {total_restante}")
+
         # Verificar si hay cuotas pagas
         has_unpaid_quotas = invoice.payment_quotas.filter(is_paid=False).exists()
-
         invoice_list.append({
             'id': invoice.id,
-            'date': invoice.date.strftime('%Y-%m-%d %I:%M %p'),
+            'date': invoice.date.strftime('%Y-%m-%d'),
             'invoice_number': invoice.invoice_number,
             'customer_name': customer.name if customer else '',
             'customer_last_name': customer.lastname if customer else '',
@@ -359,6 +390,9 @@ def invoices_report(request):
             'notes': invoice.notes,
             'quotas': invoice.quotas,
             'has_unpaid_quotas': has_unpaid_quotas,
+            'total_restante': total_restante,
+            'delivery_amount': delivery,
+            'initial_fee': initial_fee,
         })
 
     return render(request, 'Invoice/Report_invoice.html', {
@@ -392,7 +426,9 @@ def allow_iframe(view_func):
 @allow_iframe
 def preview_invoice(request, invoice_id):
     invoice = get_object_or_404(Invoice, pk=invoice_id)
-    return render(request, 'invoice/receipt_pdf.html', {'invoice': invoice})
+    return render(request, 'invoice/receipt_pdf.html', {'invoice': invoice, 
+                                                        'total_restante': invoice.total - (invoice.delivery_amount or 0) - (invoice.initial_fee or 0),
+                                                        'sub_total': invoice.total - (invoice.delivery_amount or 0)})
 
 
 @login_required
