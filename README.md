@@ -45,11 +45,19 @@ Vesion python ---> 3.11.0
    pip install -r requirements.txt
    ```
 5. Configure the environment in the `.env` file.
-6. Apply migrations:
+
+6. Makemigrations
+   - python manage.py makemigrations customer
+   - python manage.py makemigrations inventory
+   - python manage.py makemigrations Invoice
+   - python manage.py makemigrations item
+   - python manage.py makemigrations tax
+   - python manage.py makemigrations user
+7. Apply migrations:
    ```sh
    python manage.py migrate
    ```
-7. Start the server:
+8. Start the server:
    ```sh
    python manage.py runserver
    ```

@@ -273,7 +273,7 @@ def create_invoice(request):
 
                 # Crear cuotas si aplica (solo crédito)
                 if payment_method == 'Credito' and invoice.quotas > 0:
-                    # 💰 Monto a financiar = total - cuota inicial (sin incluir domicilio)
+                    #  Monto a financiar = total - cuota inicial (sin incluir domicilio)
                     total_financiar = total - initial_quota_value
                     cuotas_restantes = invoice.quotas
                     cuota_valor = total_financiar / cuotas_restantes
@@ -595,7 +595,7 @@ def pay_quota(request, quota_id):
 
         send_email_with_attachment(
             destinatario=quota.invoice.customer.email,
-            asunto="✅ Confirmación de pago - Recibo incluido",
+            asunto=" Confirmación de pago - Recibo incluido",
             contenido_texto=f"""
         Hola {quota.invoice.customer.name},
 
@@ -613,7 +613,7 @@ def pay_quota(request, quota_id):
         ¡Gracias por tu confianza!
 
         Saludos cordiales,
-        El equipo de [Nombre de tu empresa]
+        El equipo de Celupro co
             """.strip(),
             contenido_html=f"""
             <div style="font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; max-width: 600px; margin: 0 auto; background-color: #f8f9fa;">
@@ -833,7 +833,6 @@ def cancel_invoice_ajax(request, invoice_id):
 
 @login_required
 def send_invoice_simple(request, invoice_id):
-    print(f"🎯 === INICIO ENVÍO FACTURA ID: {invoice_id} ===")
     
     if request.method != 'POST':
         return JsonResponse({'success': False, 'message': 'Método no permitido'}, status=405)
@@ -847,13 +846,12 @@ def send_invoice_simple(request, invoice_id):
         if not invoice.customer.email:
             return JsonResponse({'success': False, 'message': 'El cliente no tiene un correo electrónico registrado.'})
         
-        print("📄 Generando PDF...")
         pdf_path = None
         try:
             pdf_path = generate_temp_invoice_pdf_safe(invoice)
-            print(f"✅ PDF generado: {pdf_path}")
+            print(f"PDF generado: {pdf_path}")
         except Exception as pdf_error:
-            print(f"❌ Error generando PDF: {pdf_error}")
+            print(f" Error generando PDF: {pdf_error}")
             return JsonResponse({'success': False, 'message': f'Error generando PDF: {str(pdf_error)}'})
         
         print("📧 Enviando email...")
@@ -1006,26 +1004,18 @@ def send_invoice_simple(request, invoice_id):
         print(traceback.format_exc())
         return JsonResponse({'success': False, 'message': f'Error interno: {str(e)}'})
     finally:
-        print("🏁 === FIN ENVÍO FACTURA ===")
+        print("=== FIN ENVÍO FACTURA ===")
 
 def generate_temp_invoice_pdf_safe(invoice):
-    """
-    Versión segura de generación de PDF
-    """
-    print("📄 Iniciando generación de PDF...")
     
     # Crear directorio tmp
     tmp_dir = os.path.join(settings.BASE_DIR, "tmp")
     os.makedirs(tmp_dir, exist_ok=True)
-    print(f"📁 Directorio tmp: {tmp_dir}")
     
     # Generar nombres únicos
     html_id = str(uuid.uuid4())
     html_path = os.path.join(tmp_dir, f"{html_id}.html")
     pdf_path = os.path.join(tmp_dir, f"{html_id}.pdf")
-    
-    print(f"📝 HTML path: {html_path}")
-    print(f"📄 PDF path: {pdf_path}")
     
     try:
         html_content = render_to_string('invoice/receipt_pdf.html', {'invoice': invoice})
@@ -1040,7 +1030,6 @@ def generate_temp_invoice_pdf_safe(invoice):
         print(f" Script path: {script_path}")
         
         # Ejecutar script
-        print("⚙️ Ejecutando script de PDF...")
         result = subprocess.run(
             ["node", script_path, html_path, pdf_path],
             capture_output=True,

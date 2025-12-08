@@ -67,7 +67,7 @@ def Dashboard(request):
         .order_by('record_date')
     )
 
-    # ✅ Ventas mensuales
+
     monthly_sales = (
         Invoice.objects
         .annotate(month=TruncMonth('date'))

@@ -36,11 +36,11 @@ def send_email_with_attachment(destinatario, asunto="", contenido_texto="", cont
         password = os.getenv("EMAIL_PASS")
 
         if not remitente_real or not password:
-            print("❌ Credenciales SMTP no configuradas.")
+            print("Credenciales SMTP no configuradas.")
             return False
 
         if not destinatario:
-            print("❌ Destinatario no especificado.")
+            print(" Destinatario no especificado.")
             return False
 
         mensaje = EmailMessage()
@@ -53,7 +53,7 @@ def send_email_with_attachment(destinatario, asunto="", contenido_texto="", cont
         if contenido_html:
             mensaje.add_alternative(contenido_html, subtype="html")
 
-        # 📎 Adjuntar archivo correctamente
+        # Adjuntar archivo correctamente
         if attachment_path and os.path.exists(attachment_path):
             nombre_archivo = attachment_name or os.path.basename(attachment_path)
             ctype, encoding = mimetypes.guess_type(attachment_path)
@@ -66,19 +66,18 @@ def send_email_with_attachment(destinatario, asunto="", contenido_texto="", cont
                     subtype=subtype,
                     filename=nombre_archivo
                 )
-            print(f"📎 Archivo adjunto agregado: {nombre_archivo}")
+            print(f" Archivo adjunto agregado: {nombre_archivo}")
         elif attachment_path:
-            print(f"⚠️ El archivo especificado no existe: {attachment_path}")
+            print(f"El archivo especificado no existe: {attachment_path}")
 
-        # ✅ Enviar por SMTP seguro
         with smtplib.SMTP_SSL("smtp.zoho.com", 465) as smtp:
             smtp.login(remitente_real, password)
             smtp.send_message(mensaje)
-            print(f"✅ Correo enviado a: {destinatario}")
+            print(f"Correo enviado a: {destinatario}")
             return True
 
     except Exception as e:
-        print(f"❌ Error enviando email: {str(e)}")
+        print(f" Error enviando email: {str(e)}")
         import traceback
         print(traceback.format_exc())
         return False
