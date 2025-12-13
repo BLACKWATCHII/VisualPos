@@ -101,36 +101,27 @@ def UpdateItem(request, item_id):
         referents = request.POST.get('Referents')
         description = request.POST.get('Description')
         price = request.POST.get('Price')
-        stock = request.POST.get('Stock')
         active = request.POST.get('active')
         tax_id = request.POST.get('Taxes')
-
-
-        if not (name and referents and description and price and stock and active and tax_id):
+        print("entrando aqui")
+        if not (name and referents and description and price and active):
             return JsonResponse({'error': 'Todos los campos son obligatorios.'}, status=400)
 
         try:
             price = float(price)
-            stock = float(stock)
-        except (ValueError, TypeError):
-            return JsonResponse({'error': 'Precio y Cantidad deben ser números válidos.'}, status=400)
+        except ValueError:
+            return JsonResponse({'error': 'Precio inválido.'}, status=400)
 
-        try:
-            tax = Tax.objects.get(id=tax_id)
-        except Tax.DoesNotExist:
-            return JsonResponse({'error': 'El impuesto seleccionado no existe.'}, status=400)
-        
         itemID.Name = name
         itemID.Referents = referents
         itemID.Description = description
         itemID.Price = price
-        itemID.Stock = stock
         itemID.active = (active == 'True')
-        itemID.Taxes = tax
+        itemID.Taxes = Tax.objects.get(id=tax_id) if tax_id else None
         itemID.save()
 
         return JsonResponse({'redirect': reverse('viewItem')})
-
+    
     return render(request, 'items/UpdateItem.html', {'item': itemID, 'taxes': taxes})
 
 @login_required
