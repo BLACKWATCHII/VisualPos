@@ -27,6 +27,7 @@ import os
 from functools import wraps
 from customer.sendEmail import send_email_with_attachment
 from dateutil.relativedelta import relativedelta
+from .utils import get_total_pagado, get_total_financiar, get_valor_cuota, get_saldo_pendiente
 
 def render_to_pdf(template_src, context_dict={}):
     template = get_template(template_src)
@@ -189,144 +190,11 @@ def create_invoice(request):
     if request.method == 'POST':
         form = InvoiceForm(request.POST)
         if form.is_valid():
-            with transaction.atomic():
-                invoice = form.save(commit=False)
-
-                items = request.POST.getlist('item_id')
-                quantities = request.POST.getlist('quantity')
-                prices = request.POST.getlist('price')
-
-                payment_method = request.POST.get('payment_method')
-                payment_frequency = request.POST.get('payment_frequency')
-                quotas = request.POST.get('quotas')
-                discount_percent = request.POST.get('discount-percent')
-                transaction_type_id = request.POST.get('transaction_type')
-                notes = request.POST.get('notes')
-                status = request.POST.get('status') or 'Pagada'
-
-                print("frecuencia de pago: " + str(payment_frequency))
-                
-                #  Campos nuevos de domicilio
-                has_delivery = request.POST.get('has_delivery')
-                delivery_amount = request.POST.get('delivery_amount')
-                delivery_value = float(delivery_amount) if has_delivery and delivery_amount else 0.0
-
-                #  Campo de cuota inicial
-                initial_quota_amount = request.POST.get('initial_quota_amount')
-                initial_quota_value = float(initial_quota_amount) if initial_quota_amount else 0.0
-                print("Valor cuota inicial: " + str(initial_quota_value))
-
-                # Calcular subtotal (productos)
-                sub_total = sum([
-                    float(price.replace(',', '').replace('$', ''))
-                    for price in prices if price
-                ])
-
-                if payment_method == 'Credito':
-                    status = 'Credito'
-
-                invoice.payment_method = payment_method
-                invoice.status = status
-                invoice.notes = notes
-                invoice.user = request.user
-                invoice.quotas = int(quotas) if quotas else 0
-                invoice.payment_frequency = payment_frequency
-                invoice.initial_fee = initial_quota_value
-
-                # Calcular total con descuento
-                total = 0
-                for qty, price in zip(quantities, prices):
-                    if qty and price:
-                        total += int(qty) * float(price)
-
-                if discount_percent:
-                    discount_percent = float(discount_percent)
-                    total -= total * (discount_percent / 100)
-                    invoice.discount = discount_percent
-                else:
-                    invoice.discount = 0
-
-                #  Domicilio:
-                # - Si es contado: se suma al total.
-                # - Si es crédito: se paga con la cuota inicial, NO se financia.
-                if payment_method == 'Credito':
-                    invoice.delivery_amount = delivery_value
-                    # No sumamos el domicilio al total a financiar
-                    total_final = total + delivery_value  # El total general sí lo incluye
-                else:
-                    total += delivery_value
-                    invoice.delivery_amount = delivery_value
-                    total_final = total
-
-                # Guardar total completo de la venta
-                invoice.total = total_final
-                invoice.initial_quota_amount = initial_quota_value
-
-                # Relacionar con tipo de transacción y actualizar consecutivo
-                transaction_type = get_object_or_404(TransactionType, id=transaction_type_id)
-                invoice.invoice_number = transaction_type.consecutive
-                invoice.transaction_type = transaction_type
-                transaction_type.consecutive += 1
-                transaction_type.save()
-
-                invoice.save()
-
-                # Crear cuotas si aplica (solo crédito)
-                if payment_method == 'Credito' and invoice.quotas > 0:
-                    #  Monto a financiar = total - cuota inicial (sin incluir domicilio)
-                    total_financiar = total - initial_quota_value
-                    cuotas_restantes = invoice.quotas
-                    cuota_valor = total_financiar / cuotas_restantes
-
-                    start_date = invoice.date or date.today()
-                    fechas = calcular_fechas_cuotas(start_date, cuotas_restantes, payment_frequency,tiene_cuota_inicial=(initial_quota_value > 0))
-
-                    # Crear cuotas financiadas
-                    for i, fecha in enumerate(fechas):
-                        PaymentQuota.objects.create(
-                            invoice=invoice,
-                            number=i + 1,
-                            amount=cuota_valor,
-                            payment_date=fecha,
-                            is_paid=False
-                        )
-
-                    #  Registrar cuota inicial (incluyendo el domicilio)
-                    initial_payment_total = initial_quota_value + delivery_value
-                    if initial_payment_total > 0:
-                        PaymentQuota.objects.create(
-                            invoice=invoice,
-                            number=0,
-                            amount=initial_payment_total,
-                            payment_date=date.today(),
-                            is_paid=True
-                        )
-
-                # Crear items y actualizar stock
-                for item_id, qty, price in zip(items, quantities, prices):
-                    if item_id and qty and price:
-                        item = Item.objects.get(id=item_id)
-                        InvoiceItem.objects.create(
-                            invoice=invoice,
-                            item=item,
-                            quantity=int(qty),
-                            price=float(price),
-                        )
-                        item.Stock -= int(qty)
-                        item.save()
-
-                # Generar PDF si se pidió
-                if request.POST.get('download') == 'pdf':
-                    return render_pdf_with_puppeteer(
-                        'invoice/receipt_pdf.html',
-                        {'invoice': invoice,
-                        'sub_total': sub_total,
-                        'total_restante': invoice.total - (invoice.delivery_amount or 0) - (invoice.initial_fee or 0),
-                         },
-                        filename=f"Factura_{invoice.invoice_number}.pdf"
-                    )
-
-                return redirect('home')
+            payment_method = request.POST.get('payment_method')
+            if payment_method == 'Credito':
+                return create_invoice_credit(request, form)
+            else: 
+                return create_invoice_cash(request, form)
         else:
             pass
     else:
@@ -342,67 +210,348 @@ def create_invoice(request):
         'transaction_types': transaction_types,
     })
 
+
+def create_invoice_credit(request, form):
+    """Maneja la creación de facturas a crédito (lógica financiera correcta)"""
+
+    sub_total = Decimal('0.00')
+
+    with transaction.atomic():
+        invoice = form.save(commit=False)
+
+        items = request.POST.getlist('item_id')
+        quantities = request.POST.getlist('quantity')
+        prices = request.POST.getlist('price')
+
+        payment_frequency = request.POST.get('payment_frequency')
+        quotas = request.POST.get('quotas')
+        discount_percent = request.POST.get('discount-percent')
+        transaction_type_id = request.POST.get('transaction_type')
+        notes = request.POST.get('notes')
+
+        # =============================
+        # DOMICILIO
+        # =============================
+        has_delivery = request.POST.get('has_delivery')
+        delivery_amount = request.POST.get('delivery_amount')
+        delivery_value = Decimal(delivery_amount) if has_delivery and delivery_amount else Decimal('0.00')
+
+        # =============================
+        # CUOTA INICIAL
+        # =============================
+        initial_quota_amount = request.POST.get('initial_quota_amount')
+        initial_quota_value = Decimal(initial_quota_amount) if initial_quota_amount else Decimal('0.00')
+
+        # =============================
+        # SUBTOTAL PRODUCTOS
+        # =============================
+        for qty, price in zip(quantities, prices):
+            if qty and price:
+                sub_total += Decimal(qty) * Decimal(price)
+
+        # =============================
+        # CONFIG FACTURA
+        # =============================
+        invoice.payment_method = 'Credito'
+        invoice.status = 'Credito'
+        invoice.notes = notes
+        invoice.user = request.user
+        invoice.quotas = int(quotas) if quotas else 0
+        invoice.payment_frequency = payment_frequency
+        invoice.initial_fee = initial_quota_value
+        invoice.delivery_amount = delivery_value
+
+        # =============================
+        # DESCUENTO
+        # =============================
+        total = sub_total
+
+        if discount_percent:
+            discount_percent = Decimal(discount_percent)
+            total -= total * (discount_percent / Decimal('100'))
+            invoice.discount = discount_percent
+        else:
+            invoice.discount = Decimal('0.00')
+
+        # =============================
+        # TOTAL A FINANCIAR (REAL)
+        # =============================
+        total_financiar = total - (initial_quota_value + delivery_value)
+
+        if total_financiar < 0:
+            total_financiar = Decimal('0.00')
+
+        # Total visible de la factura (informativo)
+        invoice.total = total + delivery_value
+
+        # =============================
+        # TRANSACCIÓN / CONSECUTIVO
+        # =============================
+        transaction_type = get_object_or_404(TransactionType, id=transaction_type_id)
+        invoice.invoice_number = transaction_type.consecutive
+        invoice.transaction_type = transaction_type
+        transaction_type.consecutive += 1
+        transaction_type.save()
+
+        invoice.save()
+
+        # =============================
+        # CREAR CUOTAS FINANCIADAS
+        # =============================
+        cuota_valor = Decimal('0.00')
+
+        if invoice.quotas > 0 and total_financiar > 0:
+            cuota_valor = (total_financiar / invoice.quotas).quantize(Decimal('0.01'))
+
+            start_date = invoice.date or date.today()
+            fechas = calcular_fechas_cuotas(
+                start_date,
+                invoice.quotas,
+                payment_frequency,
+                tiene_cuota_inicial=(initial_quota_value > 0)
+            )
+
+            for i, fecha in enumerate(fechas):
+                PaymentQuota.objects.create(
+                    invoice=invoice,
+                    number=i + 1,
+                    amount=cuota_valor,
+                    payment_date=fecha,
+                    is_paid=False
+                )
+
+        # =============================
+        # REGISTRAR PAGO INICIAL (CUOTA 0)
+        # =============================
+        pago_inicial_total = initial_quota_value + delivery_value
+
+        if pago_inicial_total > 0:
+            PaymentQuota.objects.create(
+                invoice=invoice,
+                number=0,
+                amount=pago_inicial_total,
+                payment_date=date.today(),
+                is_paid=True
+            )
+
+        # =============================
+        # ITEMS Y STOCK
+        # =============================
+        for item_id, qty, price in zip(items, quantities, prices):
+            if item_id and qty and price:
+                item = Item.objects.get(id=item_id)
+                InvoiceItem.objects.create(
+                    invoice=invoice,
+                    item=item,
+                    quantity=int(qty),
+                    price=Decimal(price),
+                )
+                item.Stock -= int(qty)
+                item.save()
+
+        # =============================
+        # PDF
+        # =============================
+        if request.POST.get('download') == 'pdf':
+            return render_pdf_with_puppeteer(
+                'invoice/receipt_credit_pdf.html',
+                {
+                    'invoice': invoice,
+                    'sub_total': sub_total,
+                    'total_financiar': total_financiar,
+                    'total_pagado_hoy': pago_inicial_total,
+                    'cuota_valor': cuota_valor,
+                },
+                filename=f"Factura_Credito_{invoice.invoice_number}.pdf"
+            )
+
+        return redirect('home')
+
+
+def create_invoice_cash(request, form):
+    """Maneja la creación de facturas de contado"""
+    sub_total = 0
+    
+    with transaction.atomic():
+        invoice = form.save(commit=False)
+
+        items = request.POST.getlist('item_id')
+        quantities = request.POST.getlist('quantity')
+        prices = request.POST.getlist('price')
+
+        discount_percent = request.POST.get('discount-percent')
+        transaction_type_id = request.POST.get('transaction_type')
+        notes = request.POST.get('notes')
+        status = request.POST.get('status') or 'Pagada'
+        
+        # Campos de domicilio
+        has_delivery = request.POST.get('has_delivery')
+        delivery_amount = request.POST.get('delivery_amount')
+        delivery_value = float(delivery_amount) if has_delivery and delivery_amount else 0.0
+
+        # Calcular subtotal (productos)
+        sub_total = sum([
+            float(price.replace(',', '').replace('$', ''))
+            for price in prices if price
+        ])
+
+        invoice.payment_method = 'Contado'
+        invoice.status = status
+        invoice.notes = notes
+        invoice.user = request.user
+
+        # Calcular total con descuento
+        total = 0
+        for qty, price in zip(quantities, prices):
+            if qty and price:
+                total += int(qty) * float(price)
+
+        if discount_percent:
+            discount_percent = float(discount_percent)
+            total -= total * (discount_percent / 100)
+            invoice.discount = discount_percent
+        else:
+            invoice.discount = 0
+
+        # Para contado, el domicilio se suma al total
+        total += delivery_value
+        invoice.delivery_amount = delivery_value
+        invoice.total = total
+
+        # Relacionar con tipo de transacción y actualizar consecutivo
+        transaction_type = get_object_or_404(TransactionType, id=transaction_type_id)
+        invoice.invoice_number = transaction_type.consecutive
+        invoice.transaction_type = transaction_type
+        transaction_type.consecutive += 1
+        transaction_type.save()
+
+        invoice.save()
+
+        # Crear items y actualizar stock
+        for item_id, qty, price in zip(items, quantities, prices):
+            if item_id and qty and price:
+                item = Item.objects.get(id=item_id)
+                InvoiceItem.objects.create(
+                    invoice=invoice,
+                    item=item,
+                    quantity=int(qty),
+                    price=float(price),
+                )
+                item.Stock -= int(qty)
+                item.save()
+
+        # Generar PDF si se pidió
+        if request.POST.get('download') == 'pdf':
+            return render_pdf_with_puppeteer(
+                'invoice/receipt_pdf.html',
+                {
+                    'invoice': invoice,
+                    'sub_total': sub_total,
+                    'total_restante': invoice.total - (invoice.delivery_amount or 0),
+                },
+                filename=f"Factura_Contado_{invoice.invoice_number}.pdf"
+            )
+
+        return redirect('home')
+
+from django.contrib.auth.decorators import login_required
+from django.db.models import Sum
+from decimal import Decimal
+import json
+
 @login_required
 def invoices_report(request):
-    invoices = Invoice.objects.select_related('customer').all()
+    invoices = (
+        Invoice.objects
+        .select_related('customer')
+        .prefetch_related('payment_quotas')
+        .all()
+    )
 
-    # Totales y contadores
-    total_credit = Invoice.objects.filter(payment_method='Credito').aggregate(result_credit=Sum('total'))
-    total = Invoice.objects.filter(status='Pagada').aggregate(result=Sum('total'))
+    # Totales generales
+    total_credit = Invoice.objects.filter(payment_method='Credito').aggregate(
+        result=Sum('total')
+    )['result'] or Decimal('0')
+
+    total_pagado = Invoice.objects.filter(status='Pagada').aggregate(
+        result=Sum('total')
+    )['result'] or Decimal('0')
+
     cont_credit = Invoice.objects.filter(payment_method='Credito').count()
     cont_pay = Invoice.objects.filter(status='Pagada').count()
 
-    total_credit = float(total_credit.get('result_credit') or 0)
-    total_payment = float(total.get('result') or 0)
-
     invoice_list = []
+
     for invoice in invoices:
         customer = invoice.customer
-        email = customer.email if customer else ''
-        full_name = f"{customer.name} {customer.lastname}" if customer else ''
 
+        # TOTAL FIJO DE LA FACTURA
         total_factura = float(invoice.total or 0)
-        delivery = float(invoice.delivery_amount or 0)
-        initial_fee = float(invoice.initial_fee or 0)
 
-        if invoice.payment_method == 'Credito':
-            total_restante = total_factura - delivery - initial_fee
-        else:
-            total_restante = total_factura
+        # ===============================
+        # CALCULAR MONTO PAGADO
+        # ===============================
+        cuota_inicial = float(invoice.initial_fee or 0)
+        domicilio = float(invoice.delivery_amount or 0)
 
-        print(f"Factura {invoice.invoice_number} - Total: {total_factura} - Restante: {total_restante}")
+        cuotas_pagadas = sum(
+            float(q.amount) for q in invoice.payment_quotas.filter(is_paid=True)
+        )
 
-        # Verificar si hay cuotas pagas
+        total_pagado_factura = round(
+            cuota_inicial + domicilio + cuotas_pagadas, 2
+        )
+
+        # ===============================
+        # SALDO PENDIENTE
+        # ===============================
+        saldo_pendiente = round(
+            total_factura - total_pagado_factura, 2
+        )
+
+        # ===============================
+        # VALIDAR ESTADO
+        # ===============================
         has_unpaid_quotas = invoice.payment_quotas.filter(is_paid=False).exists()
+
+        # ===============================
+        # DATA PARA LA VISTA
+        # ===============================
         invoice_list.append({
             'id': invoice.id,
-            'date': invoice.date.strftime('%Y-%m-%d'),
+            'date': invoice.date.strftime('%Y-%m-%d') if invoice.date else '',
             'invoice_number': invoice.invoice_number,
             'customer_name': customer.name if customer else '',
             'customer_last_name': customer.lastname if customer else '',
-            'customer_full_name': full_name,
-            'customer_email': email,
+            'customer_full_name': f"{customer.name} {customer.lastname}" if customer else '',
+            'customer_email': customer.email if customer else '',
             'customer_id': customer.id if customer else '',
-            'total': float(invoice.total) if isinstance(invoice.total, Decimal) else invoice.total,
+
+            # IMPORTANTE
+            'total': total_factura,                # 🔒 FIJO
+            'pagado': total_pagado_factura,         # 💰 ABONOS
+            'saldo_pendiente': saldo_pendiente,     # ⏳ LO QUE FALTA
+
             'payment_method': invoice.payment_method,
             'status': invoice.status,
-            'discount': float(invoice.discount) if isinstance(invoice.discount, Decimal) else invoice.discount,
+            'discount': float(invoice.discount or 0),
             'notes': invoice.notes,
             'quotas': invoice.quotas,
             'has_unpaid_quotas': has_unpaid_quotas,
-            'total_restante': total_restante,
-            'delivery_amount': delivery,
-            'initial_fee': initial_fee,
+
+            'delivery_amount': domicilio,
+            'initial_fee': cuota_inicial,
         })
 
     return render(request, 'Invoice/Report_invoice.html', {
         'invoices': invoice_list,
-        'invoices_json': json.dumps(invoice_list),
-        'total_pagado': total_payment,
-        'total_credito': total_credit,
+        'invoices_json': json.dumps(invoice_list),  # ya sin Decimal
+        'total_pagado': float(total_pagado),
+        'total_credito': float(total_credit),
         'cont_pay': cont_pay,
         'cont_credit': cont_credit,
     })
+
 
 @login_required
 def invoice_pdf(request, invoice_id):
@@ -422,7 +571,7 @@ def invoice_pdf(request, invoice_id):
         raise Http404("Invoice not found")
     return render_pdf_with_puppeteer('invoice/receipt_pdf.html', {'invoice': invoice,
                                                                   'total_restante': total_restante,
-                                                                  'sub_total': invoice.total - (invoice.delivery_amount or 0),   
+                                                                  'sub_total': invoice.total  or 0,   
                                                                   'delivery_amount': delivery
                                                                   },filename=f"Factura_{invoice.invoice_number}.pdf")
 
@@ -440,11 +589,56 @@ def allow_iframe(view_func):
 @allow_iframe
 def preview_invoice(request, invoice_id):
     invoice = get_object_or_404(Invoice, pk=invoice_id)
-    return render(request, 'invoice/receipt_pdf.html', {'invoice': invoice, 
-                                                        'total_restante': invoice.total - (invoice.delivery_amount or 0) - (invoice.initial_fee or 0),
-                                                        'sub_total': invoice.total - (invoice.delivery_amount or 0)})
 
+    # Subtotal de productos
+    sub_total = round(
+        sum(item.subtotal() if callable(item.subtotal) else item.subtotal
+            for item in invoice.items.all()),
+        2
+    )
 
+    # =============================
+    # FACTURA A CRÉDITO
+    # =============================
+    if invoice.payment_method == 'Credito':
+
+        # 🔥 TOTAL A FINANCIAR REAL (solo cuotas > 0)
+        total_financiar = round(
+            sum(q.amount for q in invoice.payment_quotas.filter(number__gt=0)),
+            2
+        )
+
+        # Valor por cuota (tomamos la primera cuota real)
+        primera_cuota = invoice.payment_quotas.filter(number__gt=0).first()
+        cuota_valor = round(primera_cuota.amount, 2) if primera_cuota else 0
+
+        # Cuotas pagadas (incluye cuota inicial)
+        cuotas_pagadas = invoice.payment_quotas.filter(is_paid=True).count()
+        total_cuotas = invoice.payment_quotas.count()
+
+        return render(request, 'invoice/receipt_credit_pdf.html', {
+            'invoice': invoice,
+            'sub_total': sub_total,
+            'total_financiar': total_financiar,
+            'cuota_valor': cuota_valor,
+            'total_restante': total_financiar,
+            'cuotas_pagadas': cuotas_pagadas,
+            'total_cuotas': total_cuotas,
+        })
+
+    # =============================
+    # FACTURA DE CONTADO
+    # =============================
+    else:
+        total_restante = round(invoice.total, 2)
+
+        return render(request, 'invoice/receipt_pdf.html', {
+            'invoice': invoice,
+            'sub_total': sub_total,
+            'total_restante': total_restante
+        })
+
+    
 @login_required
 def View_quota(request):
     customer_id = request.GET.get('customer')
@@ -1007,69 +1201,59 @@ def send_invoice_simple(request, invoice_id):
         print("=== FIN ENVÍO FACTURA ===")
 
 def generate_temp_invoice_pdf_safe(invoice):
-    
-    # Crear directorio tmp
+
     tmp_dir = os.path.join(settings.BASE_DIR, "tmp")
     os.makedirs(tmp_dir, exist_ok=True)
-    
-    # Generar nombres únicos
-    html_id = str(uuid.uuid4())
-    html_path = os.path.join(tmp_dir, f"{html_id}.html")
-    pdf_path = os.path.join(tmp_dir, f"{html_id}.pdf")
-    
+
+    file_id = str(uuid.uuid4())
+    html_path = os.path.join(tmp_dir, f"{file_id}.html")
+    pdf_path = os.path.join(tmp_dir, f"{file_id}.pdf")
+
     try:
-        html_content = render_to_string('invoice/receipt_pdf.html', {'invoice': invoice})
-        
+        template = get_invoice_pdf_template(invoice)
+
+        # 🔥 CALCULAR TODO AQUÍ
+        total_financiar = get_total_financiar(invoice)
+        cuota_valor = get_valor_cuota(invoice)
+        saldo_pendiente = get_saldo_pendiente(invoice)
+
+        html_content = render_to_string(
+            template,
+            {
+                'invoice': invoice,
+                'is_credit': invoice.payment_method == 'Credito',
+                'total_financiar': total_financiar,
+                'cuota_valor': cuota_valor,
+                'saldo_pendiente': saldo_pendiente,
+            }
+        )
+
         with open(html_path, "w", encoding="utf-8") as f:
             f.write(html_content)
-        
+
         script_path = os.path.join(settings.BASE_DIR, "pdfgen", "generate_pdf.js")
-        if not os.path.exists(script_path):
-            raise Exception(f"Script PDF no encontrado: {script_path}")
-        
-        print(f" Script path: {script_path}")
-        
-        # Ejecutar script
+
         result = subprocess.run(
             ["node", script_path, html_path, pdf_path],
             capture_output=True,
             text=True,
-            timeout=25  
+            timeout=30
         )
-        
-        print(f"Return code: {result.returncode}")
-        if result.stdout:
-            print(f" STDOUT: {result.stdout}")
-        if result.stderr:
-            print(f" STDERR: {result.stderr}")
-        
+
         if result.returncode != 0:
-            raise Exception(f"Error en script PDF: {result.stderr.strip()}")
-        
+            raise Exception(result.stderr)
+
         if not os.path.exists(pdf_path):
-            raise Exception("PDF no se generó correctamente")
-        
-        pdf_size = os.path.getsize(pdf_path)
-        print(f" PDF generado correctamente ({pdf_size} bytes)")
-        
-        # Limpiar HTML
-        if os.path.exists(html_path):
-            os.remove(html_path)
-        
+            raise Exception("El PDF no fue generado")
+
         return pdf_path
-        
-    except subprocess.TimeoutExpired:
-        # Limpieza
+
+    finally:
         if os.path.exists(html_path):
             os.remove(html_path)
-        if os.path.exists(pdf_path):
-            os.remove(pdf_path)
-        raise Exception("Timeout generando PDF")
-        
-    except Exception as e:
-        # Limpieza en caso de error
-        if os.path.exists(html_path):
-            os.remove(html_path)
-        if os.path.exists(pdf_path):
-            os.remove(pdf_path)
-        raise e
+
+
+def get_invoice_pdf_template(invoice):
+    if invoice.payment_method == 'Credito':
+        return 'invoice/receipt_credit_pdf.html'
+    return 'invoice/receipt_pdf.html'

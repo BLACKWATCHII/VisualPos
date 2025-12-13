@@ -13,23 +13,121 @@
 
     body {
       font-family: 'Segoe UI', -apple-system, BlinkMacSystemFont, sans-serif;
-      background: white;
+      background: #f5f5f5;
       margin: 0;
-      padding: 0;
-      color: #2c3e50;
+      padding: 20px;
+      color: #333;
     }
 
     .invoice-wrapper {
       max-width: 210mm;
+      min-height: 277mm;
       margin: 0 auto;
       background: white;
+      box-shadow: 0 0 20px rgba(0,0,0,0.1);
+      position: relative;
+      overflow: hidden;
+      display: flex;
+      flex-direction: column;
     }
 
-    /* Header más compacto */
+    /* Figuras decorativas hexagonales */
+    .decorative-shapes {
+      position: absolute;
+      pointer-events: none;
+      z-index: 0;
+    }
+
+    /* Hexágono superior derecho */
+    .hex-top-right {
+      position: absolute;
+      top: -30px;
+      right: -30px;
+      width: 150px;
+      height: 150px;
+      background: linear-gradient(135deg, #b3e5fc 0%, #81d4fa 100%);
+      opacity: 0.3;
+      clip-path: polygon(50% 0%, 100% 25%, 100% 75%, 50% 100%, 0% 75%, 0% 25%);
+      transform: rotate(15deg);
+    }
+
+    /* Hexágono pequeño superior derecho */
+    .hex-small-top {
+      position: absolute;
+      top: 80px;
+      right: 120px;
+      width: 60px;
+      height: 60px;
+      background: linear-gradient(135deg, #e1f5fe 0%, #b3e5fc 100%);
+      opacity: 0.4;
+      clip-path: polygon(50% 0%, 100% 25%, 100% 75%, 50% 100%, 0% 75%, 0% 25%);
+      transform: rotate(-20deg);
+    }
+
+    /* Círculo superior izquierdo */
+    .circle-top-left {
+      position: absolute;
+      top: 120px;
+      left: -40px;
+      width: 100px;
+      height: 100px;
+      background: linear-gradient(135deg, #e1f5fe 0%, #b3e5fc 100%);
+      opacity: 0.25;
+      border-radius: 50%;
+    }
+
+    /* Hexágono inferior derecho grande */
+    .hex-bottom-right {
+      position: absolute;
+      bottom: -50px;
+      right: -50px;
+      width: 200px;
+      height: 200px;
+      background: linear-gradient(135deg, #4fc3f7 0%, #29b6f6 100%);
+      opacity: 0.35;
+      clip-path: polygon(50% 0%, 100% 25%, 100% 75%, 50% 100%, 0% 75%, 0% 25%);
+      transform: rotate(30deg);
+    }
+
+    /* Hexágono mediano inferior derecho */
+    .hex-medium-bottom {
+      position: absolute;
+      bottom: 100px;
+      right: 150px;
+      width: 90px;
+      height: 90px;
+      background: linear-gradient(135deg, #81d4fa 0%, #4fc3f7 100%);
+      opacity: 0.3;
+      clip-path: polygon(50% 0%, 100% 25%, 100% 75%, 50% 100%, 0% 75%, 0% 25%);
+      transform: rotate(-15deg);
+    }
+
+    /* Hexágono pequeño inferior izquierdo */
+    .hex-small-bottom-left {
+      position: absolute;
+      bottom: 200px;
+      left: 50px;
+      width: 70px;
+      height: 70px;
+      background: linear-gradient(135deg, #e1f5fe 0%, #b3e5fc 100%);
+      opacity: 0.25;
+      clip-path: polygon(50% 0%, 100% 25%, 100% 75%, 50% 100%, 0% 75%, 0% 25%);
+      transform: rotate(45deg);
+    }
+
+    /* Asegurar que el contenido esté sobre las figuras */
+    .invoice-header,
+    .invoice-body,
+    .invoice-footer {
+      position: relative;
+      z-index: 1;
+    }
+
+    /* Header con logo y compañía */
     .invoice-header {
-      background: linear-gradient(135deg, #d067af 0%, #ff94f3 50%, #ffb8db 100%);
-      padding: 15px 25px;
-      color: white;
+      background: linear-gradient(135deg, #e8f4f8 0%, #ffffff 100%);
+      padding: 30px 40px 20px 40px;
+      border-bottom: 3px solid #1e88e5;
       display: flex;
       justify-content: space-between;
       align-items: center;
@@ -38,290 +136,326 @@
     .company-section {
       display: flex;
       align-items: center;
-      gap: 12px;
+      gap: 0;
     }
 
     .company-logo {
-      width: 45px;
-      height: 45px;
-      background: white;
-      border-radius: 6px;
-      padding: 5px;
+      width: 300px;
+      height: 80px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      flex-shrink: 0;
     }
 
     .company-logo img {
-      width: 100%;
-      height: 100%;
-      object-fit: contain;
+      transform: translateX(20px) scale(0.2);
+      transform-origin: center;
     }
 
-    .company-info h1 {
-      font-size: 16px;
-      font-weight: 700;
-      margin-bottom: 2px;
+    .company-info {
+      display: none;
     }
 
-    .company-info p {
-      font-size: 10px;
-      opacity: 0.95;
-      line-height: 1.3;
-    }
-
-    .invoice-title-section {
+    /* Título FACTURA en línea con número */
+    .invoice-title {
       text-align: right;
     }
 
-    .invoice-badge {
-      background: rgba(255, 255, 255, 0.25);
-      backdrop-filter: blur(10px);
-      padding: 4px 12px;
-      border-radius: 15px;
-      display: inline-block;
-      font-size: 11px;
+    .invoice-title h2 {
+      font-size: 48px;
+      font-weight: 700;
+      color: #1e88e5;
+      letter-spacing: 3px;
+      line-height: 1;
+      margin-bottom: 5px;
+    }
+
+    .invoice-number {
+      font-size: 14px;
+      color: #666;
       font-weight: 600;
-      letter-spacing: 0.8px;
-      margin-bottom: 3px;
     }
 
-    .invoice-date {
-      font-size: 10px;
-      opacity: 0.9;
-    }
-
-    /* Contenido principal más compacto */
+    /* Contenido principal */
     .invoice-body {
-      padding: 18px 25px;
+      padding: 25px 40px;
+      flex: 1;
+      display: flex;
+      flex-direction: column;
     }
 
-    /* Grid más compacto */
-    .info-grid {
+    /* Grid de información superior */
+    .top-info-grid {
       display: grid;
-      grid-template-columns: 1.3fr 1fr;
-      gap: 15px;
-      margin-bottom: 15px;
-      padding: 15px;
-      background: linear-gradient(135deg, #f0f9ff 0%, #e0f2fe 100%);
-      border-radius: 6px;
-      border: 1px solid #bae6fd;
+      grid-template-columns: 1fr 1fr 1fr;
+      gap: 20px;
+      margin-bottom: 25px;
+      padding-bottom: 20px;
+      border-bottom: 2px solid #e0e0e0;
     }
 
-    .customer-section h3 {
-      font-size: 9px;
+    .info-block h3 {
+      font-size: 10px;
+      color: #1e88e5;
       text-transform: uppercase;
-      color: #1e3a8a;
       letter-spacing: 0.8px;
       margin-bottom: 6px;
       font-weight: 700;
     }
 
-    .customer-name {
-      font-size: 14px;
+    .info-block p {
+      font-size: 12px;
+      color: #333;
+      line-height: 1.5;
+      margin-bottom: 3px;
+    }
+
+    .info-block .highlight {
       font-weight: 700;
-      color: #1e293b;
-      margin-bottom: 4px;
+      color: #1e88e5;
+      font-size: 13px;
     }
 
-    .customer-section p {
-      font-size: 10px;
-      color: #64748b;
-      line-height: 1.4;
-      margin-bottom: 2px;
-    }
-
-    .grand-total-box {
-      background: linear-gradient(135deg, #7298ff 0%, #0b42f5 100%);
-      padding: 12px;
-      border-radius: 6px;
-      text-align: center;
-      box-shadow: 0 3px 10px rgba(245, 158, 11, 0.25);
+    /* Cliente y Total Due */
+    .client-total-section {
       display: flex;
-      flex-direction: column;
-      justify-content: center;
+      justify-content: space-between;
+      align-items: flex-start;
+      margin-bottom: 25px;
+      gap: 20px;
     }
 
-    .grand-total-label {
-      font-size: 9px;
+    .client-info {
+      flex: 1;
+    }
+
+    .client-info h3 {
+      font-size: 10px;
+      color: #1e88e5;
       text-transform: uppercase;
       letter-spacing: 0.8px;
-      color: #78350f;
-      margin-bottom: 4px;
+      margin-bottom: 6px;
       font-weight: 700;
     }
 
-    .grand-total-amount {
-      font-size: 24px;
+    .client-name {
+      font-size: 15px;
+      font-weight: 700;
+      color: #333;
+      margin-bottom: 6px;
+    }
+
+    .client-info p {
+      font-size: 12px;
+      color: #666;
+      line-height: 1.5;
+      margin-bottom: 3px;
+    }
+
+    /* Total Due Box */
+    .total-due-box {
+      background: linear-gradient(135deg, #1e88e5 0%, #1565c0 100%);
+      padding: 18px 28px;
+      border-radius: 6px;
+      text-align: right;
+      min-width: 220px;
+      box-shadow: 0 3px 12px rgba(30, 136, 229, 0.3);
+    }
+
+    .total-due-label {
+      font-size: 12px;
+      text-transform: uppercase;
+      letter-spacing: 1px;
+      color: rgba(255,255,255,0.9);
+      margin-bottom: 6px;
+      font-weight: 600;
+    }
+
+    .total-due-amount {
+      font-size: 30px;
       font-weight: 800;
       color: white;
-      text-shadow: 0 2px 4px rgba(0,0,0,0.2);
+      letter-spacing: 0.5px;
     }
 
-    /* Detalles de factura más compactos */
-    .invoice-meta {
-      display: grid;
-      grid-template-columns: repeat(auto-fit, minmax(140px, 1fr));
-      gap: 12px;
-      margin-bottom: 15px;
-      padding: 12px;
-      background: #f8fafc;
-      border-radius: 5px;
-      border-left: 3px solid #3b82f6;
-    }
-
-    .meta-item {
-      font-size: 11px;
-    }
-
-    .meta-label {
-      color: #64748b;
-      margin-bottom: 2px;
-      font-size: 9px;
-    }
-
-    .meta-value {
-      font-weight: 700;
-      color: #1e293b;
-      font-size: 12px;
-    }
-
-    /* Tabla más compacta */
-    .items-section {
-      margin-bottom: 15px;
-    }
-
-    .section-title {
-      font-size: 11px;
-      font-weight: 700;
-      color: #1e293b;
-      margin-bottom: 8px;
-      text-transform: uppercase;
-      letter-spacing: 0.4px;
-      padding-bottom: 6px;
-      border-bottom: 2px solid #3b82f6;
-    }
-
-    table {
+    /* Tabla de productos */
+    .items-table {
+      margin-bottom: 20px;
       width: 100%;
       border-collapse: collapse;
-      font-size: 10px;
     }
 
-    thead {
-      background: linear-gradient(135deg, #d067af 0%, #ff94f3 50%, #ffb8db 100%);
+    .items-table thead {
+      background: #37474f;
       color: white;
     }
 
-    th {
-      padding: 8px 6px;
+    .items-table th {
+      padding: 12px 10px;
       text-align: left;
       font-weight: 600;
-      font-size: 9px;
+      font-size: 10px;
       text-transform: uppercase;
-      letter-spacing: 0.3px;
+      letter-spacing: 0.5px;
     }
 
-    th:nth-child(2),
-    th:nth-child(3),
-    th:nth-child(4) {
+    .items-table th:nth-child(2),
+    .items-table th:nth-child(3),
+    .items-table th:nth-child(4),
+    .items-table th:nth-child(5) {
       text-align: center;
     }
 
-    tbody tr {
-      border-bottom: 1px solid #e2e8f0;
+    .items-table tbody tr {
+      border-bottom: 1px solid #e0e0e0;
+      background: white;
     }
 
-    tbody tr:last-child {
-      border-bottom: none;
+    .items-table tbody tr:nth-child(even) {
+      background: #f9f9f9;
     }
 
-    td {
-      padding: 8px 6px;
-      color: #475569;
+    .items-table td {
+      padding: 10px;
+      font-size: 12px;
+      color: #333;
     }
 
-    td:first-child {
+    .items-table td:first-child {
       font-weight: 600;
-      color: #1e293b;
     }
 
-    td:nth-child(2),
-    td:nth-child(3),
-    td:nth-child(4) {
+    .items-table td:nth-child(2),
+    .items-table td:nth-child(3),
+    .items-table td:nth-child(4),
+    .items-table td:nth-child(5) {
       text-align: center;
     }
 
-    td:nth-child(4) {
-      font-weight: 700;
-      color: #1e293b;
+    .item-description {
+      color: #666;
+      font-size: 10px;
+      display: block;
+      margin-top: 3px;
+      font-weight: 400;
     }
 
-    /* Totales más compactos */
-    .totals-section {
+    /* Sección de totales */
+    .totals-area {
       display: flex;
-      justify-content: flex-end;
-      margin-bottom: 15px;
+      justify-content: space-between;
+      align-items: flex-end;
+      margin-top: auto;
+      padding-top: 25px;
+      gap: 20px;
     }
 
+    .thank-you-section {
+      flex: 1;
+    }
+
+    .thank-you-section p {
+      font-size: 13px;
+      color: #666;
+      margin-bottom: 12px;
+    }
+
+    .signature-area {
+      margin-top: 20px;
+    }
+
+    .signature-line {
+      border-bottom: 2px solid #333;
+      width: 200px;
+      margin-bottom: 6px;
+      font-family: 'Brush Script MT', cursive;
+      font-size: 22px;
+      color: #1e88e5;
+      padding-bottom: 4px;
+    }
+
+    .signature-name {
+      font-weight: 700;
+      color: #1e88e5;
+      font-size: 13px;
+      text-transform: uppercase;
+      letter-spacing: 0.8px;
+    }
+
+    .signature-title {
+      font-size: 11px;
+      color: #666;
+    }
+
+    /* Totales a la derecha */
     .totals-box {
-      width: 260px;
-      background: #f8fafc;
-      border-radius: 6px;
-      padding: 12px;
-      border: 1px solid #e2e8f0;
+      min-width: 300px;
     }
 
     .total-row {
       display: flex;
       justify-content: space-between;
-      padding: 6px 0;
-      font-size: 11px;
-      color: #475569;
-    }
-
-    .total-row:not(:last-child) {
-      border-bottom: 1px solid #e2e8f0;
-    }
-
-    .total-row.final {
-      background: linear-gradient(135deg, #10b981 0%, #059669 100%);
-      color: white;
-      margin-top: 8px;
-      padding: 10px 12px;
-      border-radius: 5px;
+      padding: 10px 18px;
       font-size: 13px;
-      font-weight: 700;
-      box-shadow: 0 2px 6px rgba(16, 185, 129, 0.3);
+      background: #f5f5f5;
+      margin-bottom: 3px;
     }
 
-    .total-label {
+    .total-row .label {
       font-weight: 600;
-    }
-
-    .total-value {
-      font-weight: 700;
-    }
-
-    /* Footer más compacto */
-    .invoice-footer {
-      display: grid;
-      grid-template-columns: 1fr 1fr;
-      gap: 15px;
-      padding: 15px;
-      background: #f8fafc;
-      border-radius: 5px;
-    }
-
-    .footer-section h4 {
+      color: #666;
+      text-transform: uppercase;
       font-size: 11px;
-      font-weight: 700;
-      color: #1e293b;
-      margin-bottom: 6px;
+      letter-spacing: 0.5px;
     }
 
-    .footer-section p {
+    .total-row .value {
+      font-weight: 700;
+      color: #333;
+      font-size: 13px;
+    }
+
+    .total-row.grand-total {
+      background: linear-gradient(135deg, #1e88e5 0%, #1565c0 100%);
+      color: white;
+      padding: 14px 18px;
+      margin-top: 6px;
+      border-radius: 4px;
+      box-shadow: 0 2px 8px rgba(30, 136, 229, 0.3);
+    }
+
+    .total-row.grand-total .label {
+      color: white;
+      font-size: 12px;
+    }
+
+    .total-row.grand-total .value {
+      color: white;
+      font-size: 18px;
+    }
+
+    /* Footer */
+    .invoice-footer {
+      background: linear-gradient(135deg, #e8f4f8 0%, #ffffff 100%);
+      padding: 20px 40px;
+      border-top: 3px solid #1e88e5;
+      margin-top: auto;
+    }
+
+    .footer-title {
+      font-size: 11px;
+      color: #1e88e5;
+      text-transform: uppercase;
+      letter-spacing: 0.8px;
+      margin-bottom: 10px;
+      font-weight: 700;
+    }
+
+    .footer-content {
       font-size: 10px;
-      color: #64748b;
-      line-height: 1.5;
-      margin-bottom: 2px;
+      color: #666;
+      line-height: 1.7;
     }
 
     /* Estilos de impresión */
@@ -332,57 +466,38 @@
       }
 
       .invoice-wrapper {
+        box-shadow: none;
         max-width: 100%;
-        margin: 0;
+        min-height: 100vh;
       }
 
       .invoice-header {
-        padding: 12px 20px;
+        padding: 25px 35px 18px 35px;
       }
 
       .invoice-body {
-        padding: 15px 20px;
-      }
-
-      .info-grid {
-        page-break-inside: avoid;
-        margin-bottom: 12px;
-        padding: 12px;
-      }
-
-      .invoice-meta {
-        margin-bottom: 12px;
-        padding: 10px;
-      }
-
-      .items-section {
-        margin-bottom: 12px;
-      }
-
-      .totals-section {
-        margin-bottom: 12px;
+        padding: 22px 35px;
       }
 
       .invoice-footer {
-        padding: 12px;
+        padding: 18px 35px;
       }
 
-      table {
-        page-break-inside: auto;
+      .top-info-grid {
+        margin-bottom: 22px;
+        padding-bottom: 18px;
       }
 
-      tr {
-        page-break-inside: avoid;
-        page-break-after: auto;
+      .client-total-section {
+        margin-bottom: 22px;
       }
 
-      thead {
-        display: table-header-group;
+      .items-table {
+        margin-bottom: 18px;
       }
 
-      .totals-section,
-      .invoice-footer {
-        page-break-inside: avoid;
+      .totals-area {
+        padding-top: 22px;
       }
     }
 
@@ -395,176 +510,163 @@
 <body>
   <div class="invoice-wrapper">
     
+    <!-- Figuras decorativas -->
+    <div class="decorative-shapes">
+      <div class="hex-top-right"></div>
+      <div class="hex-small-top"></div>
+      <div class="circle-top-left"></div>
+      <div class="hex-bottom-right"></div>
+      <div class="hex-medium-bottom"></div>
+      <div class="hex-small-bottom-left"></div>
+    </div>
+
     <!-- Header -->
     <div class="invoice-header">
       <div class="company-section">
         <div class="company-logo">
-          <img src="https://raw.githubusercontent.com/Kevin25DC/celupro-assets/refs/heads/main/logo%20de%20prueba%20dos.png" alt="Logo">
-        </div>
-        <div class="company-info">
-          <h1>CELUPRO CO</h1>
-          <p>Inovacion en accion</p>
+          <img src="https://raw.githubusercontent.com/Kevin25DC/celupro-assets/refs/heads/main/logo%20de%20prueba%20dos.png" alt="CELUPRO CO Logo">
         </div>
       </div>
-      <div class="invoice-title-section">
-        <div class="invoice-badge">FACTURA</div>
-        <div class="invoice-date">Fecha: {{ invoice.date }}</div>
+
+      <div class="invoice-title">
+        <h2>FACTURA</h2>
+        <p class="invoice-number">NO. # {{ invoice.invoice_number }}</p>
       </div>
     </div>
 
     <!-- Body -->
     <div class="invoice-body">
       
-      <!-- Cliente y Gran Total -->
-      <div class="info-grid">
-        <div class="customer-section">
-          <h3>Factura Para:</h3>
-          <div class="customer-name">{{ invoice.customer }}</div>
-          <p>{{ invoice.customer_address }}</p>
-          {% if invoice.customer.email %}
-          <p>📧 {{ invoice.customer.email }}</p>
-          {% endif %}
-          {% if invoice.customer.phone %}
-          <p>📱 {{ invoice.customer.phone }}</p>
+      <!-- Información superior: Fechas, Dirección, Contacto -->
+      <div class="top-info-grid">
+        <div class="info-block">
+          <h3>Fecha de Factura</h3>
+          <p class="highlight">{{ invoice.date }}</p>
+          <h3 style="margin-top: 15px;">Método de Pago</h3>
+          <p>{{ invoice.payment_method }}</p>
+        </div>
+
+        <div class="info-block">
+          <h3>Dirección:</h3>
+          <p>{{ invoice.customer_address|default:"Barranquilla, Colombia" }}</p>
+          {% if invoice.delivery_amount and invoice.delivery_amount > 1 %}
+          <h3 style="margin-top: 15px;">Domicilio</h3>
+          <p class="highlight">${{ invoice.delivery_amount|intcomma }}</p>
           {% endif %}
         </div>
-        <div class="grand-total-box">
-          <div class="grand-total-label">Gran Total</div>
-          {% if invoice.payment_method == "Credito" and invoice.initial_fee > 1 %}
-            <span class="grand-total-amount">${{ total_restante|intcomma }}</span>
-          {% else %}
-            <span class="grand-total-amount">${{ invoice.total|intcomma }}</span>
-          {% endif %}
+
+        <div class="info-block">
+          <h3>Teléfono:</h3>
+          <p>{% if invoice.customer.phone %}{{ invoice.customer.phone }}{% else %}+57 3005034055{% endif %}</p>
+          <h3 style="margin-top: 15px;">Email:</h3>
+          <p>{% if invoice.customer.email %}{{ invoice.customer.email }}{% else %}info@celuproco.com.co{% endif %}</p>
         </div>
       </div>
 
-      <!-- Detalles de factura -->
-      <div class="invoice-meta">
-        <div class="meta-item">
-          <div class="meta-label">Recibo #</div>
-          <div class="meta-value">{{ invoice.invoice_number }}</div>
+      <!-- Cliente y Total Due -->
+      <div class="client-total-section">
+        <div class="client-info">
+          <h3>Factura Para:</h3>
+          <div class="client-name">{{ invoice.customer }}</div>
+          <p>{{ invoice.customer_address }}</p>
+          {% if invoice.customer.email %}
+          <p>{{ invoice.customer.email }}</p>
+          {% endif %}
+          {% if invoice.customer.phone %}
+          <p>{{ invoice.customer.phone }}</p>
+          {% endif %}
         </div>
-        <div class="meta-item">
-          <div class="meta-label">Método de Pago</div>
-          <div class="meta-value">{{ invoice.payment_method }}</div>
+
+        <div class="total-due-box">
+          <div class="total-due-label">Total a Pagar</div>
+          <div class="total-due-amount">${{ invoice.total|intcomma }}</div>
         </div>
-        {% if invoice.Quotas %}
-        <div class="meta-item">
-          <div class="meta-label">Cuotas</div>
-          <div class="meta-value">{{ invoice.Quotas }}</div>
-        </div>
-        {% endif %}
-        {% if invoice.payment_method == 'Credito' and invoice.initial_fee and invoice.initial_fee > 1 %}
-        <div class="meta-item">
-          <div class="meta-label">Cuota Inicial</div>
-          <div class="meta-value">${{ invoice.initial_fee|intcomma }}</div>
-        </div>
-        {% endif %}
-        {% if  invoice.delivery_amount and invoice.delivery_amount > 1 %}
-        <div class="meta-item">
-          <div class="meta-label">Domicilio</div>
-          <div class="meta-value">${{ invoice.delivery_amount|intcomma }}</div>
-        </div>
-        {% endif %}
       </div>
 
       <!-- Tabla de productos -->
-      <div class="items-section">
-        <div class="section-title">DETALLES DE PRODUCTO</div>
-        <table>
-          <thead>
-            <tr>
-              <th>DESCRIPCIÓN DEL PRODUCTO</th>
-              <th>PRECIO</th>
-              <th>CANTIDAD</th>
-              <th>SUBTOTAL</th>
-            </tr>
-          </thead>
-          <tbody>
-            {% for item in invoice.items.all %}
-            <tr>
-              <td>{{ item.item.Name }}</td>
-              <td>${{ item.price|intcomma }}</td>
-              <td>{{ item.quantity }}</td>
-              <td>${{ item.subtotal|intcomma }}</td>
-            </tr>
-            {% endfor %}
-          </tbody>
-        </table>
-      </div>
+      <table class="items-table">
+        <thead>
+          <tr>
+            <th>DESCRIPCIÓN</th>
+            <th>CANT.</th>
+            <th>PRECIO</th>
+            <th>{% if invoice.tax %}IVA{% else %}DESC.{% endif %}</th>
+            <th>TOTAL</th>
+          </tr>
+        </thead>
+        <tbody>
+          {% for item in invoice.items.all %}
+          <tr>
+            <td>
+              {{ item.item.Name }}
+              <span class="item-description">Producto de alta calidad</span>
+            </td>
+            <td>{{ item.quantity }}</td>
+            <td>${{ item.price|intcomma }}</td>
+            <td>{% if invoice.tax %}{{ invoice.tax }}%{% else %}0%{% endif %}</td>
+            <td>${{ item.subtotal|intcomma }}</td>
+          </tr>
+          {% endfor %}
+        </tbody>
+      </table>
 
-<!-- Totales -->
- <div class="totals-section">
-  <div class="totals-box">
-    <div class="total-row">
-      <span class="total-label">Subtotal</span>
-      <span class="total-value">${{ sub_total|intcomma }}</span>
-    </div>
-
-    <div class="total-row">
-      <span class="total-label">Impuesto</span>
-      <span class="total-value">{{ invoice.tax|intcomma }}%</span>
-    </div>
-
-    <div class="total-row">
-      <span class="total-label">Descuento</span>
-      <span class="total-value">-{{ invoice.discount }}%</span>
-    </div>
-
-    {% if invoice.delivery_amount and invoice.delivery_amount > 1 %}
-      <div class="total-row">
-        <span class="total-label">Domicilio</span>
-        {% if invoice.payment_method == "Credito" and invoice.initial_fee > 1 %}
-          <span class="total-value" style="color: red;">-${{ invoice.delivery_amount|intcomma }}</span>
-        {% else %}
-          <span class="total-value">${{ invoice.delivery_amount|intcomma }}</span>
-        {% endif %}
-      </div>
-    {% endif %}
-
-    {% if invoice.initial_fee and invoice.initial_fee > 1 %}
-      <div class="total-row">
-        <span class="total-label">Cuota Inicial</span>
-        {% if invoice.payment_method == "Credito" %}
-          <span class="total-value" style="color: red;">-${{ invoice.initial_fee|intcomma }}</span>
-        {% else %}
-          <span class="total-value">${{ invoice.initial_fee|intcomma }}</span>
-        {% endif %}
-      </div>
-    {% endif %}
-
-    <div class="total-row">
-      <span class="total-label">Total restante</span>
-      <span class="total-value">${{ total_restante|intcomma }}</span>
-    </div>
-
-    <div class="total-row final">
-      <span class="total-label">Gran Total</span>
-      {% if invoice.payment_method == "Credito" and invoice.initial_fee > 1 %}
-        <span class="total-value">${{ total_restante|intcomma }}</span>
-      {% else %}
-        <span class="total-value">${{ invoice.total|intcomma }}</span>
-      {% endif %}
-    </div>
-  </div>
-</div>
-
-
-
-      <!-- Footer -->
-      <div class="invoice-footer">
-        <div class="footer-section">
-          <h4>💳 Método de Pago</h4>
-          <p><strong>{{ invoice.payment_method }}</strong></p>
-          <p>Soporte: <strong>+57 3005034055</strong></p>
+      <!-- Área de totales y firma -->
+      <div class="totals-area">
+        <div class="thank-you-section">
+          <p>Gracias por tu compra</p>
+          <div class="signature-area">
+            <div class="signature-line">CELUPRO CO</div>
+            <div class="signature-name">GERENTE GENERAL</div>
+            <div class="signature-title">Gerente</div>
+          </div>
         </div>
-        <div class="footer-section">
-          <h4>📋 Términos y Condiciones</h4>
-          <p>Gracias por tu compra.</p>
-          <p>https://celuproco.com.co/</p>
+
+        <div class="totals-box">
+          <div class="total-row">
+            <span class="label">Subtotal</span>
+            <span class="value">${{ sub_total|intcomma }}</span>
+          </div>
+
+          {% if invoice.tax %}
+          <div class="total-row">
+            <span class="label">IVA ({{ invoice.tax }}%)</span>
+            <span class="value">${{ invoice.tax|intcomma }}</span>
+          </div>
+          {% endif %}
+
+          {% if invoice.discount %}
+          <div class="total-row">
+            <span class="label">Descuento (-{{ invoice.discount }}%)</span>
+            <span class="value">-${{ invoice.discount|intcomma }}</span>
+          </div>
+          {% endif %}
+
+          {% if invoice.delivery_amount and invoice.delivery_amount > 1 %}
+          <div class="total-row">
+            <span class="label">Domicilio</span>
+            <span class="value">${{ invoice.delivery_amount|intcomma }}</span>
+          </div>
+          {% endif %}
+
+          <div class="total-row grand-total">
+            <span class="label">Total a Pagar</span>
+            <span class="value">${{ invoice.total|intcomma }}</span>
+          </div>
         </div>
       </div>
+
     </div>
+
+    <!-- Footer -->
+    <div class="invoice-footer">
+      <h3 class="footer-title">Términos y Condiciones:</h3>
+      <p class="footer-content">
+        Esta factura corresponde a una venta de contado. Todos los productos tienen garantía según las políticas de CELUPRO CO. 
+        Para cualquier consulta o soporte técnico, comuníquese al +57 3005034055 o visite nuestro sitio web https://celuproco.com.co/
+        Gracias por confiar en nosotros.
+      </p>
+    </div>
+
   </div>
 </body>
 </html>

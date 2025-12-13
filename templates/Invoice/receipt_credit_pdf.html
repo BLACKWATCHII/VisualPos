@@ -1,0 +1,1167 @@
+{% load humanize %}
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8">
+  <title>Factura Crédito {{ invoice.invoice_number }} - {{ invoice.customer }}</title>
+  <style>
+    * {
+      margin: 0;
+      padding: 0;
+      box-sizing: border-box;
+    }
+
+    body {
+      font-family: 'Segoe UI', -apple-system, BlinkMacSystemFont, sans-serif;
+      background: #f5f5f5;
+      margin: 0;
+      padding: 20px;
+      color: #333;
+    }
+
+    .invoice-wrapper {
+      max-width: 210mm;
+      margin: 0 auto;
+      background: white;
+      box-shadow: 0 0 20px rgba(0,0,0,0.1);
+      position: relative;
+      overflow: hidden;
+      display: flex;
+      flex-direction: column;
+      min-height: 277mm;
+      max-height: 277mm;
+      page-break-after: always;
+    }
+
+    .payment-plan-page {
+      max-width: 210mm;
+      margin: 20px auto 0;
+      background: white;
+      box-shadow: 0 0 20px rgba(0,0,0,0.1);
+      position: relative;
+      overflow: hidden;
+      min-height: 277mm;
+      max-height: 277mm;
+      display: flex;
+      flex-direction: column;
+    }
+
+    /* Figuras decorativas hexagonales en tonos naranjas */
+    .decorative-shapes {
+      position: absolute;
+      pointer-events: none;
+      z-index: 0;
+    }
+
+    .hex-top-right {
+      position: absolute;
+      top: -30px;
+      right: -30px;
+      width: 150px;
+      height: 150px;
+      background: linear-gradient(135deg, #3e3eac 0%, #2e3199 100%);
+      opacity: 0.3;
+      clip-path: polygon(50% 0%, 100% 25%, 100% 75%, 50% 100%, 0% 75%, 0% 25%);
+      transform: rotate(15deg);
+    }
+
+    .hex-small-top {
+      position: absolute;
+      top: 80px;
+      right: 120px;
+      width: 60px;
+      height: 60px;
+      background: linear-gradient(135deg, #d5eaff 0%, #aabbfe 100%);
+      opacity: 0.4;
+      clip-path: polygon(50% 0%, 100% 25%, 100% 75%, 50% 100%, 0% 75%, 0% 25%);
+      transform: rotate(-20deg);
+    }
+
+    .circle-top-left {
+      position: absolute;
+      top: 120px;
+      left: -40px;
+      width: 100px;
+      height: 100px;
+      background: linear-gradient(135deg, #d5deff 0%, #b4aafe 100%);
+      opacity: 0.25;
+      border-radius: 50%;
+    }
+
+    .hex-bottom-right {
+      position: absolute;
+      bottom: -50px;
+      right: -50px;
+      width: 200px;
+      height: 200px;
+      background: linear-gradient(135deg, #3c85fb 0%, #1630f9 100%);
+      opacity: 0.35;
+      clip-path: polygon(50% 0%, 100% 25%, 100% 75%, 50% 100%, 0% 75%, 0% 25%);
+      transform: rotate(30deg);
+    }
+
+    .hex-medium-bottom {
+      position: absolute;
+      bottom: 100px;
+      right: 150px;
+      width: 90px;
+      height: 90px;
+      background: linear-gradient(135deg, #747dfd 0%, #3c3cfb 100%);
+      opacity: 0.3;
+      clip-path: polygon(50% 0%, 100% 25%, 100% 75%, 50% 100%, 0% 75%, 0% 25%);
+      transform: rotate(-15deg);
+    }
+
+    .hex-small-bottom-left {
+      position: absolute;
+      bottom: 200px;
+      left: 50px;
+      width: 70px;
+      height: 70px;
+      background: linear-gradient(135deg, #d5dfff 0%, #aaabfe 100%);
+      opacity: 0.25;
+      clip-path: polygon(50% 0%, 100% 25%, 100% 75%, 50% 100%, 0% 75%, 0% 25%);
+      transform: rotate(45deg);
+    }
+
+    /* Decoración página 2 - azul y negro */
+    .decorative-shapes-blue {
+      position: absolute;
+      pointer-events: none;
+      z-index: 0;
+    }
+
+    .decorative-shapes-blue .hex-top-right {
+      background: linear-gradient(135deg, #64b5f6 0%, #42a5f5 100%);
+      opacity: 0.25;
+    }
+
+    .decorative-shapes-blue .hex-small-top {
+      background: linear-gradient(135deg, #bbdefb 0%, #90caf9 100%);
+      opacity: 0.3;
+    }
+
+    .decorative-shapes-blue .circle-top-left {
+      background: linear-gradient(135deg, #263238 0%, #37474f 100%);
+      opacity: 0.15;
+    }
+
+    .decorative-shapes-blue .hex-bottom-right {
+      background: linear-gradient(135deg, #1e88e5 0%, #1565c0 100%);
+      opacity: 0.3;
+    }
+
+    .decorative-shapes-blue .hex-medium-bottom {
+      background: linear-gradient(135deg, #42a5f5 0%, #1e88e5 100%);
+      opacity: 0.25;
+    }
+
+    .decorative-shapes-blue .hex-small-bottom-left {
+      background: linear-gradient(135deg, #263238 0%, #37474f 100%);
+      opacity: 0.2;
+    }
+
+    /* Cinta decorativa de CRÉDITO */
+    .credit-ribbon {
+      position: absolute;
+      top: 25px;
+      right: -40px;
+      background: linear-gradient(135deg, #000000 0%, #0b18a6 100%);
+      color: white;
+      padding: 8px 50px;
+      transform: rotate(45deg);
+      box-shadow: 0 4px 15px rgba(8, 7, 4, 0.5);
+      font-weight: 700;
+      font-size: 11px;
+      letter-spacing: 2px;
+      text-transform: uppercase;
+      z-index: 10;
+      text-align: center;
+    }
+
+    .credit-ribbon-blue {
+      background: linear-gradient(135deg, #1e88e5 0%, #1565c0 100%);
+      box-shadow: 0 4px 15px rgba(30, 136, 229, 0.5);
+    }
+
+    .invoice-header,
+    .invoice-body,
+    .invoice-footer {
+      position: relative;
+      z-index: 1;
+    }
+
+    /* Header con logo y compañía */
+    .invoice-header {
+      background: linear-gradient(135deg, #edf5ff 0%, #ffffff 100%);
+      padding: 20px 35px 15px 35px;
+      border-bottom: 3px solid #0b13f5;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+    }
+
+    .payment-plan-page .invoice-header {
+      background: linear-gradient(135deg, #e3f2fd 0%, #ffffff 100%);
+      border-bottom: 3px solid #1e88e5;
+    }
+
+    .company-section {
+      display: flex;
+      align-items: center;
+      gap: 0;
+    }
+
+    .company-logo {
+      width: 280px;
+      height: 70px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      flex-shrink: 0;
+    }
+
+    .company-logo img {
+      transform: translateX(20px) scale(0.2);
+      transform-origin: center;
+    }
+
+    .company-info {
+      display: none;
+    }
+
+    /* Título FACTURA en línea con número */
+    .invoice-title {
+      text-align: right;
+    }
+
+    .invoice-title h2 {
+      font-size: 38px;
+      font-weight: 700;
+      color: #000000;
+      letter-spacing: 2px;
+      line-height: 1;
+      margin-bottom: 4px;
+    }
+
+    .payment-plan-page .invoice-title h2 {
+      color: #1e88e5;
+      font-size: 30px;
+    }
+
+    .invoice-number {
+      font-size: 12px;
+      color: #666;
+      font-weight: 600;
+    }
+
+    .credit-badge {
+      display: inline-block;
+      background: linear-gradient(135deg, #0b3ef5 0%, #066cd9 100%);
+      color: white;
+      padding: 4px 12px;
+      border-radius: 20px;
+      font-size: 10px;
+      font-weight: 700;
+      letter-spacing: 1px;
+      margin-top: 4px;
+      box-shadow: 0 2px 8px rgba(245, 158, 11, 0.3);
+    }
+
+    .credit-badge-blue {
+      background: linear-gradient(135deg, #1e88e5 0%, #1565c0 100%);
+      box-shadow: 0 2px 8px rgba(30, 136, 229, 0.3);
+    }
+
+    /* Contenido principal */
+    .invoice-body {
+      padding: 18px 35px;
+      flex: 1;
+      display: flex;
+      flex-direction: column;
+    }
+
+    /* Grid de información superior */
+    .top-info-grid {
+      display: grid;
+      grid-template-columns: 1fr 1fr 1fr;
+      gap: 15px;
+      margin-bottom: 18px;
+      padding-bottom: 15px;
+      border-bottom: 2px solid #e0e0e0;
+    }
+
+    .info-block h3 {
+      font-size: 9px;
+      color: #0b69f5;
+      text-transform: uppercase;
+      letter-spacing: 0.8px;
+      margin-bottom: 5px;
+      font-weight: 700;
+    }
+
+    .info-block p {
+      font-size: 11px;
+      color: #333;
+      line-height: 1.4;
+      margin-bottom: 2px;
+    }
+
+    .info-block .highlight {
+      font-weight: 700;
+      color: #0b3ef5;
+      font-size: 12px;
+    }
+
+    /* Cliente y Total Due */
+    .client-total-section {
+      display: flex;
+      justify-content: space-between;
+      align-items: flex-start;
+      margin-bottom: 18px;
+      gap: 15px;
+    }
+
+    .client-info {
+      flex: 1;
+    }
+
+    .client-info h3 {
+      font-size: 9px;
+      color: #0b46f5;
+      text-transform: uppercase;
+      letter-spacing: 0.8px;
+      margin-bottom: 5px;
+      font-weight: 700;
+    }
+
+    .client-name {
+      font-size: 14px;
+      font-weight: 700;
+      color: #333;
+      margin-bottom: 5px;
+    }
+
+    .client-info p {
+      font-size: 11px;
+      color: #666;
+      line-height: 1.4;
+      margin-bottom: 2px;
+    }
+
+    /* Total Due Box - Adaptado para crédito */
+    .total-due-box {
+      background: linear-gradient(135deg, #000000 0%, #1e40bd 100%);
+      padding: 15px 25px;
+      border-radius: 6px;
+      text-align: right;
+      min-width: 200px;
+      box-shadow: 0 3px 12px rgba(245, 158, 11, 0.3);
+    }
+
+    .total-due-label {
+      font-size: 11px;
+      text-transform: uppercase;
+      letter-spacing: 1px;
+      color: rgba(255,255,255,0.9);
+      margin-bottom: 5px;
+      font-weight: 600;
+    }
+
+    .total-due-amount {
+      font-size: 26px;
+      font-weight: 800;
+      color: white;
+      letter-spacing: 0.5px;
+    }
+
+    /* Información de crédito destacada */
+    .credit-info-box {
+      background: linear-gradient(135deg, #c7c9fe 0%, #8ab8fd 100%);
+      border: 2px solid #080411;
+      border-radius: 8px;
+      padding: 15px;
+      margin-bottom: 15px;
+    }
+
+    .credit-info-title {
+      font-size: 11px;
+      font-weight: 700;
+      color: #0e1792;
+      margin-bottom: 10px;
+      text-transform: uppercase;
+      letter-spacing: 0.5px;
+      display: flex;
+      align-items: center;
+      gap: 8px;
+    }
+
+    .credit-info-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(140px, 1fr));
+      gap: 10px;
+    }
+
+    .credit-info-item {
+      background: white;
+      padding: 10px;
+      border-radius: 5px;
+      border-left: 3px solid #1e40bd;
+    }
+
+    .credit-info-label {
+      font-size: 8px;
+      color: #0e1292;
+      text-transform: uppercase;
+      margin-bottom: 4px;
+      font-weight: 600;
+    }
+
+    .credit-info-value {
+      font-size: 13px;
+      font-weight: 700;
+      color: #1e293b;
+    }
+
+    /* Tabla de productos */
+    .items-table {
+      margin-bottom: 15px;
+      width: 100%;
+      border-collapse: collapse;
+    }
+
+    .items-table thead {
+      background: #37474f;
+      color: white;
+    }
+
+    .items-table th {
+      padding: 10px 8px;
+      text-align: left;
+      font-weight: 600;
+      font-size: 9px;
+      text-transform: uppercase;
+      letter-spacing: 0.5px;
+    }
+
+    .items-table th:nth-child(2),
+    .items-table th:nth-child(3),
+    .items-table th:nth-child(4),
+    .items-table th:nth-child(5) {
+      text-align: center;
+    }
+
+    .items-table tbody tr {
+      border-bottom: 1px solid #e0e0e0;
+      background: white;
+    }
+
+    .items-table tbody tr:nth-child(even) {
+      background: #f9f9f9;
+    }
+
+    .items-table td {
+      padding: 8px;
+      font-size: 11px;
+      color: #333;
+    }
+
+    .items-table td:first-child {
+      font-weight: 600;
+    }
+
+    .items-table td:nth-child(2),
+    .items-table td:nth-child(3),
+    .items-table td:nth-child(4),
+    .items-table td:nth-child(5) {
+      text-align: center;
+    }
+
+    .item-description {
+      color: #666;
+      font-size: 9px;
+      display: block;
+      margin-top: 2px;
+      font-weight: 400;
+    }
+
+    /* Sección de totales */
+    .totals-area {
+      display: flex;
+      justify-content: space-between;
+      align-items: flex-end;
+      margin-top: auto;
+      padding-top: 18px;
+      gap: 15px;
+    }
+
+    .thank-you-section {
+      flex: 1;
+    }
+
+    .thank-you-section p {
+      font-size: 12px;
+      color: #666;
+      margin-bottom: 10px;
+    }
+
+    .signature-area {
+      margin-top: 15px;
+    }
+
+    .signature-line {
+      border-bottom: 2px solid #333;
+      width: 180px;
+      margin-bottom: 5px;
+      font-family: 'Brush Script MT', cursive;
+      font-size: 20px;
+      color: #000000;
+      padding-bottom: 3px;
+    }
+
+    .signature-name {
+      font-weight: 700;
+      color: #0b36f5;
+      font-size: 12px;
+      text-transform: uppercase;
+      letter-spacing: 0.8px;
+    }
+
+    .signature-title {
+      font-size: 10px;
+      color: #666;
+    }
+
+    /* Totales a la derecha */
+    .totals-box {
+      min-width: 280px;
+    }
+
+    .total-row {
+      display: flex;
+      justify-content: space-between;
+      padding: 8px 15px;
+      font-size: 12px;
+      background: #f5f5f5;
+      margin-bottom: 2px;
+    }
+
+    .total-row .label {
+      font-weight: 600;
+      color: #666;
+      text-transform: uppercase;
+      font-size: 10px;
+      letter-spacing: 0.5px;
+    }
+
+    .total-row .value {
+      font-weight: 700;
+      color: #333;
+      font-size: 12px;
+    }
+
+    .total-row.deduction {
+      background: #fee2e2;
+    }
+
+    .total-row.deduction .value {
+      color: #dc2626;
+    }
+
+    .total-row.grand-total {
+      background: linear-gradient(135deg, #3d64ff 0%, #1b5ac7 100%);
+      color: white;
+      padding: 12px 15px;
+      margin-top: 5px;
+      border-radius: 4px;
+      box-shadow: 0 2px 8px rgba(245, 158, 11, 0.3);
+    }
+
+    .total-row.grand-total .label {
+      color: white;
+      font-size: 11px;
+    }
+
+    .total-row.grand-total .value {
+      color: white;
+      font-size: 16px;
+    }
+
+    /* Plan de pagos - Página 2 */
+    .payment-plan-content {
+      padding: 18px 35px;
+      flex: 1;
+    }
+
+    .payment-plan-header {
+      background: linear-gradient(135deg, #1e88e5 0%, #1565c0 100%);
+      color: white;
+      padding: 18px;
+      border-radius: 10px;
+      margin-bottom: 20px;
+      box-shadow: 0 4px 15px rgba(30, 136, 229, 0.3);
+    }
+
+    .payment-plan-header h1 {
+      font-size: 26px;
+      font-weight: 800;
+      margin-bottom: 8px;
+      letter-spacing: 1px;
+    }
+
+    .payment-plan-header p {
+      font-size: 12px;
+      opacity: 0.95;
+    }
+
+    .payment-summary-cards {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
+      gap: 15px;
+      margin-bottom: 20px;
+    }
+
+    .summary-card {
+      background: white;
+      border: 2px solid #1e88e5;
+      border-radius: 8px;
+      padding: 15px;
+      position: relative;
+      overflow: hidden;
+    }
+
+    .summary-card::before {
+      content: '';
+      position: absolute;
+      top: 0;
+      left: 0;
+      width: 100%;
+      height: 4px;
+      background: linear-gradient(90deg, #1e88e5 0%, #1565c0 100%);
+    }
+
+    .summary-card-label {
+      font-size: 9px;
+      color: #1e88e5;
+      text-transform: uppercase;
+      font-weight: 700;
+      margin-bottom: 6px;
+      letter-spacing: 0.5px;
+    }
+
+    .summary-card-value {
+      font-size: 20px;
+      font-weight: 800;
+      color: #263238;
+    }
+
+    .summary-card-subtext {
+      font-size: 10px;
+      color: #666;
+      margin-top: 4px;
+    }
+
+    .payment-plan-section {
+      background: #f8fafc;
+      padding: 18px;
+      border-radius: 10px;
+      border: 2px solid #1e88e5;
+      margin-bottom: 20px;
+    }
+
+    .payment-plan-title {
+      font-size: 14px;
+      font-weight: 700;
+      color: #263238;
+      margin-bottom: 15px;
+      text-transform: uppercase;
+      letter-spacing: 0.5px;
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      padding-bottom: 12px;
+      border-bottom: 2px solid #1e88e5;
+    }
+
+    .payment-plan-table {
+      width: 100%;
+      border-collapse: collapse;
+      background: white;
+      border-radius: 8px;
+      overflow: hidden;
+      box-shadow: 0 2px 10px rgba(0,0,0,0.05);
+    }
+
+    .payment-plan-table thead {
+      background: linear-gradient(135deg, #263238 0%, #37474f 100%);
+      color: white;
+    }
+
+    .payment-plan-table th {
+      padding: 12px;
+      font-weight: 700;
+      text-align: left;
+      font-size: 10px;
+      text-transform: uppercase;
+      letter-spacing: 0.5px;
+    }
+
+    .payment-plan-table tbody tr {
+      border-bottom: 1px solid #e2e8f0;
+      transition: background 0.2s;
+    }
+
+    .payment-plan-table tbody tr:hover {
+      background: #f1f5f9;
+    }
+
+    .payment-plan-table td {
+      padding: 12px;
+      font-size: 12px;
+    }
+
+    .payment-plan-table td:first-child {
+      font-weight: 700;
+      color: #1e88e5;
+    }
+
+    .payment-plan-table tr.paid {
+      background: #d1fae5;
+    }
+
+    .payment-plan-table tr.paid:hover {
+      background: #a7f3d0;
+    }
+
+    .payment-plan-table tr.pending {
+      background: white;
+    }
+
+    .status-badge {
+      display: inline-block;
+      padding: 5px 12px;
+      border-radius: 20px;
+      font-size: 9px;
+      font-weight: 700;
+      text-transform: uppercase;
+      letter-spacing: 0.5px;
+    }
+
+    .status-badge.paid {
+      background: linear-gradient(135deg, #10b981 0%, #059669 100%);
+      color: white;
+      box-shadow: 0 2px 8px rgba(16, 185, 129, 0.3);
+    }
+
+    .status-badge.pending {
+      background: linear-gradient(135deg, #1e88e5 0%, #1565c0 100%);
+      color: white;
+      box-shadow: 0 2px 8px rgba(30, 136, 229, 0.3);
+    }
+
+    /* Footer */
+    .invoice-footer {
+      background: linear-gradient(135deg, #edf2ff 0%, #ffffff 100%);
+      padding: 15px 35px;
+      border-top: 3px solid #000000;
+      margin-top: auto;
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 15px;
+    }
+
+    .payment-plan-page .invoice-footer {
+      background: linear-gradient(135deg, #e3f2fd 0%, #ffffff 100%);
+      border-top: 3px solid #1e88e5;
+    }
+
+    .footer-section h4 {
+      font-size: 10px;
+      color: #000000;
+      text-transform: uppercase;
+      letter-spacing: 0.8px;
+      margin-bottom: 8px;
+      font-weight: 700;
+    }
+
+    .payment-plan-page .footer-section h4 {
+      color: #1e88e5;
+    }
+
+    .footer-section p {
+      font-size: 9px;
+      color: #666;
+      line-height: 1.6;
+      margin-bottom: 2px;
+    }
+
+    /* Estilos de impresión */
+    @media print {
+      body {
+        background: white;
+        padding: 0;
+      }
+
+      .invoice-wrapper,
+      .payment-plan-page {
+        box-shadow: none;
+        max-width: 100%;
+        page-break-after: always;
+        margin: 0;
+        max-height: none;
+      }
+
+      .payment-plan-page {
+        margin-top: 0;
+      }
+
+      .invoice-header {
+        padding: 18px 30px 12px 30px;
+      }
+
+      .invoice-body,
+      .payment-plan-content {
+        padding: 15px 30px;
+      }
+
+      .invoice-footer {
+        padding: 12px 30px;
+      }
+    }
+
+    @page {
+      margin: 10mm;
+      size: A4;
+    }
+  </style>
+</head>
+<body>
+  <!-- PÁGINA 1: FACTURA PRINCIPAL -->
+  <div class="invoice-wrapper">
+    
+    <!-- Figuras decorativas -->
+    <div class="decorative-shapes">
+      <div class="hex-top-right"></div>
+      <div class="hex-small-top"></div>
+      <div class="circle-top-left"></div>
+      <div class="hex-bottom-right"></div>
+      <div class="hex-medium-bottom"></div>
+      <div class="hex-small-bottom-left"></div>
+    </div>
+
+    <!-- Cinta decorativa de CRÉDITO -->
+    <div class="credit-ribbon">CRÉDITO</div>
+
+    <!-- Header -->
+    <div class="invoice-header">
+      <div class="company-section">
+        <div class="company-logo">
+          <img src="https://raw.githubusercontent.com/Kevin25DC/celupro-assets/refs/heads/main/logo%20de%20prueba%20dos.png" alt="CELUPRO CO Logo">
+        </div>
+      </div>
+
+      <div class="invoice-title">
+        <h2>FACTURA</h2>
+        <p class="invoice-number">NO. # {{ invoice.invoice_number }}</p>
+        <span class="credit-badge">A CRÉDITO</span>
+      </div>
+    </div>
+
+    <!-- Body -->
+    <div class="invoice-body">
+      
+      <!-- Información superior: Fechas, Dirección, Contacto -->
+      <div class="top-info-grid">
+        <div class="info-block">
+          <h3>Fecha de Factura</h3>
+          <p class="highlight">{{ invoice.date }}</p>
+          <h3 style="margin-top: 15px;">Estado</h3>
+          <p>{{ invoice.status }}</p>
+        </div>
+
+        <div class="info-block">
+          <h3>Dirección:</h3>
+          <p>{{ invoice.customer_address|default:"Barranquilla, Colombia" }}</p>
+          {% if invoice.delivery_amount and invoice.delivery_amount > 1 %}
+          <h3 style="margin-top: 15px;">Domicilio</h3>
+          <p class="highlight">${{ invoice.delivery_amount|intcomma }}</p>
+          {% endif %}
+        </div>
+
+        <div class="info-block">
+          <h3>Teléfono:</h3>
+          <p>{% if invoice.customer.phone %}{{ invoice.customer.phone }}{% else %}+57 3005034055{% endif %}</p>
+          <h3 style="margin-top: 15px;">Email:</h3>
+          <p>{% if invoice.customer.email %}{{ invoice.customer.email }}{% else %}info@celuproco.com.co{% endif %}</p>
+        </div>
+      </div>
+
+      <!-- Cliente y Total a Financiar -->
+      <div class="client-total-section">
+        <div class="client-info">
+          <h3>Factura Para:</h3>
+          <div class="client-name">{{ invoice.customer }}</div>
+          <p>{{ invoice.customer_address }}</p>
+          {% if invoice.customer.email %}
+          <p>{{ invoice.customer.email }}</p>
+          {% endif %}
+          {% if invoice.customer.phone %}
+          <p>{{ invoice.customer.phone }}</p>
+          {% endif %}
+        </div>
+
+        <div class="total-due-box">
+          <div class="total-due-label">Total a Financiar</div>
+          <div class="total-due-amount">${{ total_financiar|intcomma }}</div>
+        </div>
+      </div>
+
+      <!-- Información de Crédito -->
+      <div class="credit-info-box">
+        <div class="credit-info-title">
+          📋 Información del Crédito
+        </div>
+        <div class="credit-info-grid">
+          <div class="credit-info-item">
+            <div class="credit-info-label">Número de Cuotas</div>
+            <div class="credit-info-value">{{ invoice.quotas }} cuotas</div>
+          </div>
+          <div class="credit-info-item">
+            <div class="credit-info-label">Valor por Cuota</div>
+            <div class="credit-info-value">${{ cuota_valor|intcomma }}</div>
+          </div>
+          <div class="credit-info-item">
+            <div class="credit-info-label">Frecuencia de Pago</div>
+            <div class="credit-info-value">{{ invoice.payment_frequency }}</div>
+          </div>
+          {% if invoice.initial_fee and invoice.initial_fee > 1 %}
+          <div class="credit-info-item">
+            <div class="credit-info-label">Cuota Inicial Pagada</div>
+            <div class="credit-info-value">${{ invoice.initial_fee|intcomma }}</div>
+          </div>
+          {% endif %}
+        </div>
+      </div>
+
+      <!-- Tabla de productos -->
+      <table class="items-table">
+        <thead>
+          <tr>
+            <th>DESCRIPCIÓN</th>
+            <th>CANT.</th>
+            <th>PRECIO</th>
+            <th>{% if invoice.tax %}IVA{% else %}DESC.{% endif %}</th>
+            <th>TOTAL</th>
+          </tr>
+        </thead>
+        <tbody>
+          {% for item in invoice.items.all %}
+          <tr>
+            <td>
+              {{ item.item.Name }}
+              <span class="item-description">Producto de alta calidad</span>
+            </td>
+            <td>{{ item.quantity }}</td>
+            <td>${{ item.price|intcomma }}</td>
+            <td>{% if invoice.tax %}{{ invoice.tax }}%{% else %}0%{% endif %}</td>
+            <td>${{ item.subtotal|intcomma }}</td>
+          </tr>
+          {% endfor %}
+        </tbody>
+      </table>
+
+      <!-- Área de totales y firma -->
+      <div class="totals-area">
+        <div class="thank-you-section">
+          <p>Gracias por tu compra</p>
+          <div class="signature-area">
+            <div class="signature-line">CELUPRO CO</div>
+            <div class="signature-name">GERENTE GENERAL</div>
+            <div class="signature-title">Gerente</div>
+          </div>
+        </div>
+
+        <div class="totals-box">
+          <div class="total-row">
+            <span class="label">Subtotal</span>
+            <span class="value">${{ sub_total|intcomma }}</span>
+          </div>
+
+          {% if invoice.tax %}
+          <div class="total-row">
+            <span class="label">IVA ({{ invoice.tax }}%)</span>
+            <span class="value">${{ invoice.tax|intcomma }}</span>
+          </div>
+          {% endif %}
+
+          {% if invoice.discount %}
+          <div class="total-row">
+            <span class="label">Descuento (-{{ invoice.discount }}%)</span>
+            <span class="value">-${{ invoice.discount|intcomma }}</span>
+          </div>
+          {% endif %}
+
+          {% if invoice.delivery_amount and invoice.delivery_amount > 1 %}
+          <div class="total-row deduction">
+            <span class="label">Domicilio (Pagado)</span>
+            <span class="value">-${{ invoice.delivery_amount|intcomma }}</span>
+          </div>
+          {% endif %}
+
+          {% if invoice.initial_fee and invoice.initial_fee > 1 %}
+          <div class="total-row deduction">
+            <span class="label">Cuota Inicial (Pagada)</span>
+            <span class="value">-${{ invoice.initial_fee|intcomma }}</span>
+          </div>
+          {% endif %}
+
+          <div class="total-row grand-total">
+            <span class="label">Total a Financiar</span>
+            <span class="value">${{ total_financiar|intcomma }}</span>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Footer -->
+    <div class="invoice-footer">
+      <div class="footer-section">
+        <h4>💳 Información de Crédito</h4>
+        <p><strong>{{ invoice.quotas }} cuotas de ${{ cuota_valor|intcomma }}</strong></p>
+        <p>Frecuencia: {{ invoice.payment_frequency }}</p>
+        <p>Soporte: <strong>+57 3005034055</strong></p>
+      </div>
+      <div class="footer-section">
+        <h4>📋 Términos y Condiciones</h4>
+        <p>El pago debe realizarse en las fechas indicadas.</p>
+        <p>Mora aplica después de 5 días de retraso.</p>
+        <p>https://celuproco.com.co/</p>
+      </div>
+    </div>
+  </div>
+
+  <!-- PÁGINA 2: PLAN DE PAGOS -->
+  {% if invoice.payment_quotas.all %}
+  <div class="payment-plan-page">
+    
+    <!-- Figuras decorativas azules y negras -->
+    <div class="decorative-shapes decorative-shapes-blue">
+      <div class="hex-top-right"></div>
+      <div class="hex-small-top"></div>
+      <div class="circle-top-left"></div>
+      <div class="hex-bottom-right"></div>
+      <div class="hex-medium-bottom"></div>
+      <div class="hex-small-bottom-left"></div>
+    </div>
+
+    <!-- Cinta decorativa de CRÉDITO -->
+    <div class="credit-ribbon credit-ribbon-blue">PLAN DE PAGOS</div>
+
+    <!-- Header -->
+    <div class="invoice-header">
+      <div class="company-section">
+        <div class="company-logo">
+          <img src="https://raw.githubusercontent.com/Kevin25DC/celupro-assets/refs/heads/main/logo%20de%20prueba%20dos.png" alt="CELUPRO CO Logo">
+        </div>
+      </div>
+
+      <div class="invoice-title">
+        <h2>PLAN DE PAGOS</h2>
+        <p class="invoice-number">FACTURA NO. # {{ invoice.invoice_number }}</p>
+        <span class="credit-badge credit-badge-blue">A CRÉDITO</span>
+      </div>
+    </div>
+
+    <!-- Contenido Plan de Pagos -->
+    <div class="payment-plan-content">
+      
+      <!-- Header del Plan -->
+      <div class="payment-plan-header">
+        <h1>📅 Cronograma de Pagos</h1>
+        <p>Cliente: <strong>{{ invoice.customer }}</strong> | Factura: <strong>#{{ invoice.invoice_number }}</strong></p>
+      </div>
+
+      <!-- Tarjetas Resumen -->
+      <div class="payment-summary-cards">
+        <div class="summary-card">
+          <div class="summary-card-label">Total a Financiar</div>
+          <div class="summary-card-value">${{ total_financiar|intcomma }}</div>
+        </div>
+        <div class="summary-card">
+          <div class="summary-card-label">Número de Cuotas</div>
+          <div class="summary-card-value">{{ invoice.quotas }}</div>
+          <div class="summary-card-subtext">Frecuencia: {{ invoice.payment_frequency }}</div>
+        </div>
+        <div class="summary-card">
+          <div class="summary-card-label">Valor por Cuota</div>
+          <div class="summary-card-value">${{ cuota_valor|intcomma }}</div>
+        </div>
+        <div class="summary-card">
+          <div class="summary-card-label">Cuotas Pagadas</div>
+          <div class="summary-card-value">{{ cuotas_pagadas }}</div>
+          <div class="summary-card-subtext">de {{ total_cuotas }} cuotas</div>
+        </div>
+      </div>
+
+      <!-- Tabla del Plan de Pagos -->
+      <div class="payment-plan-section">
+        <div class="payment-plan-title">
+          📊 Detalle de Cuotas
+        </div>
+        <table class="payment-plan-table">
+          <thead>
+            <tr>
+              <th>CUOTA</th>
+              <th>FECHA DE PAGO</th>
+              <th style="text-align: right;">MONTO</th>
+              <th style="text-align: center;">ESTADO</th>
+            </tr>
+          </thead>
+          <tbody>
+            {% for quota in invoice.payment_quotas.all %}
+            <tr class="{% if quota.is_paid %}paid{% else %}pending{% endif %}">
+              <td>
+                {% if quota.number == 0 %}
+                  <strong>⭐ Cuota Inicial</strong>
+                {% else %}
+                  Cuota {{ quota.number }}
+                {% endif %}
+              </td>
+              <td>{{ quota.payment_date }}</td>
+              <td style="text-align: right; font-weight: 700;">${{ quota.amount|intcomma }}</td>
+              <td style="text-align: center;">
+                {% if quota.is_paid %}
+                  <span class="status-badge paid">✓ Pagada</span>
+                {% else %}
+                  <span class="status-badge pending">⏳ Pendiente</span>
+                {% endif %}
+              </td>
+            </tr>
+            {% endfor %}
+          </tbody>
+        </table>
+      </div>
+
+    </div>
+
+    <!-- Footer -->
+    <div class="invoice-footer">
+      <div class="footer-section">
+        <h4>💳 Información de Contacto</h4>
+        <p><strong>CELUPRO CO</strong></p>
+        <p>Teléfono: <strong>+57 3005034055</strong></p>
+        <p>Email: <strong>info@celuproco.com.co</strong></p>
+        <p>Web: <strong>https://celuproco.com.co/</strong></p>
+      </div>
+      <div class="footer-section">
+        <h4>⚠️ Recordatorio Importante</h4>
+        <p>Por favor realice sus pagos en las fechas indicadas.</p>
+        <p>Mora aplica después de 5 días de retraso.</p>
+        <p>Para cualquier consulta, contáctenos.</p>
+      </div>
+    </div>
+  </div>
+  {% endif %}
+
+</body>
+</html>

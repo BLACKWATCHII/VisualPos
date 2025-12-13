@@ -199,11 +199,8 @@
                                             <td class="invoice-date">{{ invoice.date }}</td>
                                             <td>#{{ invoice.invoice_number }}</td>
                                             <td>{{ invoice.customer_full_name }}</td>
-                                            {% if invoice.payment_method == "Credito" and invoice.initial_fee > 1 %}
-                                                <td>${{ invoice.total_restante|intcomma }}</td>
-                                            {% else %}
-                                                <td>${{ invoice.total|intcomma }}</td>
-                                            {% endif %}
+                                            <td>${{ invoice.total|intcomma }}</td>
+
                                             <td>
                                                 {% if invoice.status == 'Pagada' %}
                                                     <span class="badge bg-success">Pagada</span>
@@ -470,7 +467,7 @@ function proceedWithEmailSending(url, customerName, customerEmail, button) {
         Swal.fire({
             icon: 'error',
             title: 'Timeout',
-            html: '❌ La operación está tomando demasiado tiempo.<br><br><b>Posibles causas:</b><br>• Problema con la generación del PDF<br>• Error en configuración de email<br>• Problema de conexión<br><br>Revise la consola del servidor para más detalles.',
+            html: 'La operación está tomando demasiado tiempo.<br><br><b>Posibles causas:</b><br>• Problema con la generación del PDF<br>• Error en configuración de email<br>• Problema de conexión<br><br>Revise la consola del servidor para más detalles.',
             confirmButtonColor: '#3085d6'
         });
     }, 60000);
