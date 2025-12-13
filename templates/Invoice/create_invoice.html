@@ -6,6 +6,31 @@
 
 {% block extra_head %}
 <style>
+.select2-container .select2-selection--single {
+    height: 38px; 
+    padding: 6px 12px;
+    border: 1px solid #ced4da;
+    border-radius: 0.375rem;
+}
+
+.select2-container--default .select2-selection--single .select2-selection__rendered {
+    line-height: 24px;
+    color: #212529;
+}
+
+.select2-container--default .select2-selection--single .select2-selection__arrow {
+    height: 38px;
+}
+
+.select2-container--default.select2-container--focus .select2-selection--single {
+    border-color: #86b7fe;
+    box-shadow: 0 0 0 0.25rem rgba(13,110,253,.25);
+}
+
+.select2-dropdown {
+    border-radius: 0.375rem;
+    border-color: #ced4da;
+}
     .preview-box {
         background: #ffffff;
         padding: 30px;
@@ -362,7 +387,7 @@
                     <tr class="product-line">
                         <td>
                             <select class="form-select item-id" name="item_id" required>
-                                <option value="">Seleccionar item o servicio</option>
+                                <option value="">Seleccionar producto o servicio</option>
                                 {% for item in items %}
                                     {% if item.active == 1 and item.Stock > 0 %}
                                         <option value="{{ item.id }}" data-price="{{ item.Price }}">
@@ -490,6 +515,15 @@
 {% block extra_scripts %}
 <script>
 $(document).ready(function(){
+
+    function initItemSelect() {
+        $('.item-id').select2({
+            placeholder: "Buscar producto o servicio...",
+            width: '100%',
+            allowClear: true
+        });
+    }
+    initItemSelect();
     // Buscador en el modal
     document.getElementById('searchCustomer').addEventListener('input', function () {
         const filter = this.value.toLowerCase();
@@ -668,15 +702,24 @@ $(document).ready(function(){
     });
 
     // Agregar nueva línea de producto
-    $('#add-line').click(function(e){
-        e.preventDefault();
-        var newLine = $('.product-line:first').clone();
-        newLine.find('select, input').val('');
-        newLine.find('.item-qty').val('1');
-        newLine.find('.item-price, .item-discount, .item-tax').val('0');
-        newLine.find('.item-total').val('$0.00');
-        $('#products').append(newLine);
-    });
+$('#add-line').click(function(e){
+    e.preventDefault();
+
+    // Destruir Select2 antes de clonar
+    $('.item-id').select2('destroy');
+
+    var newLine = $('.product-line:first').clone();
+
+    newLine.find('select, input').val('');
+    newLine.find('.item-qty').val('1');
+    newLine.find('.item-price, .item-discount, .item-tax').val('0');
+    newLine.find('.item-total').val('$0.00');
+
+    $('#products').append(newLine);
+
+    // Volver a inicializar Select2
+    initItemSelect();
+});
 
     // Mostrar/ocultar campos de descuento
     $('#add_discount').change(function(){
