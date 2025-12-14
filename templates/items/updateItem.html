@@ -3,66 +3,459 @@
 
 {% block content %}
 
-<link rel="stylesheet" href="{% static 'css/Inventory/updateItem.css' %}">
+<style>
+    /* Estilos generales del contenedor */
+    .product-update-container {
+        max-width: 1200px;
+        margin: 30px auto;
+        padding: 0 20px;
+    }
 
-<div class="card-container">
-    <div class="card">
-        <div class="card-header">
-            Productos
+    /* Estilos de la tarjeta principal */
+    .product-card {
+        background: #ffffff;
+        border-radius: 12px;
+        box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+        overflow: hidden;
+        margin-bottom: 30px;
+    }
+
+    /* Header de la tarjeta */
+    .product-card-header {
+        background: linear-gradient(135deg, #6dea66 0%, #58a24b 100%);
+        color: white;
+        padding: 25px 30px;
+        border-bottom: none;
+    }
+
+    .product-card-header h5 {
+        margin: 0;
+        font-size: 24px;
+        font-weight: 600;
+        display: flex;
+        align-items: center;
+        gap: 12px;
+    }
+
+    .product-card-header i {
+        font-size: 26px;
+    }
+
+    /* Body de la tarjeta */
+    .product-card-body {
+        padding: 35px 30px;
+    }
+
+    /* Estilos del formulario */
+    .product-form .form-row {
+        display: grid;
+        grid-template-columns: repeat(2, 1fr);
+        gap: 30px;
+        margin-bottom: 25px;
+    }
+
+    /* Grupos de formulario */
+    .form-group-modern {
+        margin-bottom: 25px;
+    }
+
+    .form-group-modern label {
+        display: flex;
+        align-items: center;
+        gap: 8px;
+        font-weight: 600;
+        color: #2d3748;
+        margin-bottom: 10px;
+        font-size: 14px;
+        text-transform: uppercase;
+        letter-spacing: 0.5px;
+    }
+
+    .form-group-modern label i {
+        color: #71ea66;
+        font-size: 16px;
+    }
+
+    /* Inputs y textareas */
+    .form-control-modern {
+        width: 100%;
+        padding: 12px 16px;
+        border: 2px solid #e2e8f0;
+        border-radius: 8px;
+        font-size: 15px;
+        transition: all 0.3s ease;
+        background-color: #f7fafc;
+    }
+
+    .form-control-modern:focus {
+        outline: none;
+        border-color: #6aea66;
+        background-color: #ffffff;
+        box-shadow: 0 0 0 3px rgba(102, 126, 234, 0.1);
+    }
+
+    .form-control-modern:disabled {
+        background-color: #edf2f7;
+        cursor: not-allowed;
+        color: #718096;
+    }
+
+    textarea.form-control-modern {
+        resize: vertical;
+        min-height: 120px;
+        font-family: inherit;
+    }
+
+    /* Input group para precio */
+    .input-group-modern {
+        display: flex;
+        align-items: stretch;
+    }
+
+    .input-group-text-modern {
+        background: linear-gradient(135deg, #66ea75 0%, #4ba24c 100%);
+        color: white;
+        padding: 12px 16px;
+        border: 2px solid #66ea73;
+        border-right: none;
+        border-radius: 8px 0 0 8px;
+        font-weight: 600;
+        display: flex;
+        align-items: center;
+    }
+
+    .input-group-modern .form-control-modern {
+        border-radius: 0 8px 8px 0;
+        border-left: none;
+    }
+
+    .input-group-modern .form-control-modern:focus {
+        border-left: 2px solid #73ea66;
+    }
+
+    /* Select */
+    select.form-control-modern {
+        cursor: pointer;
+        appearance: none;
+        background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='12' viewBox='0 0 12 12'%3E%3Cpath fill='%23667eea' d='M6 9L1 4h10z'/%3E%3C/svg%3E");
+        background-repeat: no-repeat;
+        background-position: right 16px center;
+        padding-right: 45px;
+    }
+
+    /* Mensaje de ayuda */
+    .help-text {
+        display: flex;
+        align-items: center;
+        gap: 6px;
+        margin-top: 8px;
+        font-size: 13px;
+        color: #719672;
+    }
+
+    .help-text i {
+        color: #66ea75;
+    }
+
+    /* Radio buttons para estado */
+    .status-group {
+        margin-bottom: 25px;
+    }
+
+    .status-options {
+        display: flex;
+        gap: 30px;
+        margin-top: 12px;
+    }
+
+    .radio-option {
+        display: flex;
+        align-items: center;
+        gap: 10px;
+        cursor: pointer;
+    }
+
+    .radio-option input[type="radio"] {
+        width: 20px;
+        height: 20px;
+        cursor: pointer;
+        accent-color: #66ea80;
+    }
+
+    .radio-option label {
+        margin: 0;
+        cursor: pointer;
+        font-weight: 500;
+        display: flex;
+        align-items: center;
+        gap: 6px;
+        text-transform: none;
+        letter-spacing: normal;
+        font-size: 15px;
+    }
+
+    .radio-option.active label {
+        color: #48bb78;
+    }
+
+    .radio-option.inactive label {
+        color: #f56565;
+    }
+
+    /* Botones de acción */
+    .action-buttons {
+        display: flex;
+        justify-content: center;
+        gap: 15px;
+        margin-top: 35px;
+        padding-top: 25px;
+        border-top: 2px solid #e2e8f0;
+    }
+
+    .btn-modern {
+        padding: 12px 40px;
+        border: none;
+        border-radius: 8px;
+        font-weight: 600;
+        font-size: 15px;
+        cursor: pointer;
+        transition: all 0.3s ease;
+        display: inline-flex;
+        align-items: center;
+        gap: 8px;
+        text-decoration: none;
+    }
+
+    .btn-save {
+        background: linear-gradient(135deg, #66ea75 0%, #4ba25b 100%);
+        color: white;
+    }
+
+    .btn-save:hover {
+        transform: translateY(-2px);
+        box-shadow: 0 6px 20px rgba(102, 126, 234, 0.4);
+    }
+
+    .btn-modern:active {
+        transform: translateY(0);
+    }
+
+    /* Responsive */
+    @media (max-width: 768px) {
+        .product-form .form-row {
+            grid-template-columns: 1fr;
+            gap: 0;
+        }
+
+        .product-card-header {
+            padding: 20px;
+        }
+
+        .product-card-body {
+            padding: 25px 20px;
+        }
+
+        .action-buttons {
+            flex-direction: column;
+        }
+
+        .btn-modern {
+            width: 100%;
+            justify-content: center;
+        }
+
+        .status-options {
+            flex-direction: column;
+            gap: 15px;
+        }
+    }
+
+    /* Animaciones */
+    @keyframes fadeIn {
+        from {
+            opacity: 0;
+            transform: translateY(20px);
+        }
+        to {
+            opacity: 1;
+            transform: translateY(0);
+        }
+    }
+
+    .product-card {
+        animation: fadeIn 0.5s ease;
+    }
+</style>
+
+<!-- Font Awesome -->
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
+<br>
+<br>
+<br>
+<div class="product-update-container">
+    <div class="product-card">
+        <div class="product-card-header">
+            <h5>
+                <i class="fas fa-edit"></i>
+                Actualizar Producto
+            </h5>
         </div>
-        <div class="section-header">ACTUALIZAR PRODUCTOS</div>
-        <form method="post" id="create-item-form">
-            {% csrf_token %}
-            <div class="form-group">
-                <label for="Name">Nombre</label>
-                <input type="text" id="Name" name="Name" required value="{{ item.Name }}">
-            </div>
-            <div class="form-group">
-                <label for="Referents">Referencias</label>
-                <input id="Referents" name="Referents" required value="{{ item.Referents }}">
-            </div>
-            <div class="form-group">
-                <label for="Description">Descripción</label>
-                <textarea id="Description" name="Description" required>{{ item.Description }}</textarea>
-            </div>
-            <div class="form-group">
-                <label for="Price">Precio</label>
-                <input type="text" id="Price" name="Price" value="{{ item.Price }}"required>
-            </div>
-            <div class="form-group">
-                <label for="Stock">Cantidad</label>
-                <input type="number" id="Stock" name="Stock" value="{{ item.Stock }}" disabled>
-            </div>
-            <div class="form-group">
-                <label for="Taxes">Impuestos</label>
-                <select id="Taxes" name="Taxes" class="form-select" >
-                    {% for tax in taxes %}
-                        <option value="{{ tax.id }}" {% if tax.id == item.Taxes.id %}selected{% endif %}>{{ tax.name }}</option>
-                    {% endfor %}
-                </select>                
-            </div>
-            <div class="form-group" style="margin-left: 30%; margin-top: 30px;">
-                <input class="form-check-input small-radio" type="radio" name="active" id="inlineRadio1" value="True" {% if item.active %}checked{% endif %} required>
-                <label class="form-check-label" for="inlineRadio1" style="margin-right: 50px;">activado</label><br>
-                <input class="form-check-input small-radio" type="radio" name="active" id="inlineRadio2" value="False" {% if not item.active %}checked{% endif %}>
-                <label class="form-check-label" for="inlineRadio2">desactivado</label>
-            </div>
-            
-            <div class="form-group">
-                <button type="submit" id="saveForm">Guardar</button>
-            </div>
-        </form>
+        <div class="product-card-body">
+            <form method="post" id="create-item-form" class="product-form">
+                {% csrf_token %}
+                
+                <div class="form-row">
+                    <!-- Columna Izquierda -->
+                    <div>
+                        <div class="form-group-modern">
+                            <label for="Name">
+                                <i class="fas fa-box"></i>
+                                Nombre del Producto
+                            </label>
+                            <input type="text" 
+                                   class="form-control-modern" 
+                                   id="Name" 
+                                   name="Name" 
+                                   value="{{ item.Name }}"
+                                   placeholder="Ingrese el nombre del producto"
+                                   required>
+                        </div>
+
+                        <div class="form-group-modern">
+                            <label for="Referents">
+                                <i class="fas fa-barcode"></i>
+                                Referencia
+                            </label>
+                            <input type="text" 
+                                   class="form-control-modern" 
+                                   id="Referents" 
+                                   name="Referents" 
+                                   value="{{ item.Referents }}"
+                                   placeholder="Código de referencia del producto"
+                                   required>
+                        </div>
+
+                        <div class="form-group-modern">
+                            <label for="Description">
+                                <i class="fas fa-align-left"></i>
+                                Descripción
+                            </label>
+                            <textarea class="form-control-modern" 
+                                      id="Description" 
+                                      name="Description" 
+                                      placeholder="Descripción detallada del producto"
+                                      required>{{ item.Description }}</textarea>
+                        </div>
+                    </div>
+
+                    <!-- Columna Derecha -->
+                    <div>
+                        <div class="form-group-modern">
+                            <label for="Price">
+                                <i class="fas fa-dollar-sign"></i>
+                                Precio
+                            </label>
+                            <div class="input-group-modern">
+                                <span class="input-group-text-modern">$</span>
+                                <input type="text" 
+                                       class="form-control-modern" 
+                                       id="Price" 
+                                       name="Price" 
+                                       value="{{ item.Price }}"
+                                       placeholder="0.00"
+                                       required>
+                            </div>
+                        </div>
+
+                        <div class="form-group-modern">
+                            <label for="Stock">
+                                <i class="fas fa-warehouse"></i>
+                                Cantidad en Stock
+                            </label>
+                            <input type="number" 
+                                   class="form-control-modern" 
+                                   id="Stock" 
+                                   name="Stock" 
+                                   value="{{ item.Stock }}"
+                                   disabled>
+                            <div class="help-text">
+                                <i class="fas fa-info-circle"></i>
+                                El stock se actualiza automáticamente con las transacciones
+                            </div>
+                        </div>
+
+                        <div class="form-group-modern">
+                            <label for="Taxes">
+                                <i class="fas fa-percentage"></i>
+                                Impuestos
+                            </label>
+                            <select id="Taxes" 
+                                    name="Taxes" 
+                                    class="form-control-modern">
+                                {% for tax in taxes %}
+                                    <option value="{{ tax.id }}" 
+                                            {% if tax.id == item.Taxes.id %}selected{% endif %}>
+                                        {{ tax.name }}
+                                    </option>
+                                {% endfor %}
+                            </select>
+                        </div>
+
+                        <div class="status-group">
+                            <label>
+                                <i class="fas fa-toggle-on"></i>
+                                Estado del Producto
+                            </label>
+                            <div class="status-options">
+                                <div class="radio-option active">
+                                    <input class="form-check-input" 
+                                           type="radio" 
+                                           name="active" 
+                                           id="inlineRadio1" 
+                                           value="True" 
+                                           {% if item.active %}checked{% endif %} 
+                                           required>
+                                    <label for="inlineRadio1">
+                                        <i class="fas fa-check-circle"></i>
+                                        Activo
+                                    </label>
+                                </div>
+                                <div class="radio-option inactive">
+                                    <input class="form-check-input" 
+                                           type="radio" 
+                                           name="active" 
+                                           id="inlineRadio2" 
+                                           value="False" 
+                                           {% if not item.active %}checked{% endif %}>
+                                    <label for="inlineRadio2">
+                                        <i class="fas fa-times-circle"></i>
+                                        Inactivo
+                                    </label>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Botón de Guardar -->
+                <div class="action-buttons">
+                    <button type="submit" class="btn-modern btn-save" id="saveForm">
+                        <i class="fas fa-save"></i>
+                        Guardar
+                    </button>
+                </div>
+            </form>
+        </div>
     </div>
 </div>
 
-
 {% endblock %}
-{% block extra_scripts %}
 
+{% block extra_scripts %}
 <!-- DataTables JS -->
 <script src="https://cdn.datatables.net/1.10.25/js/jquery.dataTables.min.js"></script>
 <script src="https://cdn.datatables.net/1.10.25/js/dataTables.bootstrap4.min.js"></script>
 
-<!-- script personalizado -->
+<!-- Script personalizado -->
 <script src="{% static 'js/Inventory/updateItem.js' %}"></script>
 {% endblock %}
