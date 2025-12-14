@@ -555,25 +555,30 @@ def invoices_report(request):
 
 @login_required
 def invoice_pdf(request, invoice_id):
-    try:
-        invoice = Invoice.objects.get(pk=invoice_id)
+    invoice = get_object_or_404(Invoice, pk=invoice_id)
 
-        total_factura = float(invoice.total or 0)
-        delivery = float(invoice.delivery_amount or 0)
-        initial_fee = float(invoice.initial_fee or 0)
+    if invoice.payment_method == 'Credito':
+        template = 'invoice/receipt_credit_pdf.html'
+        total_restante = invoice.total - (invoice.delivery_amount or 0) - (invoice.initial_fee or 0)
+    else:
+        template = 'invoice/receipt_pdf.html'
+        total_restante = invoice.total
 
-        if invoice.payment_method == 'Credito':
-            total_restante = total_factura - delivery - initial_fee
-        else:
-            total_restante = total_factura
+    response = render_pdf_with_puppeteer(
+        template,
+        {
+            'invoice': invoice,
+            'sub_total': invoice.total,
+            'total_restante': total_restante,
+        },
+        filename=f"Factura_{invoice.invoice_number}.pdf"
+    )
 
-    except Invoice.DoesNotExist:
-        raise Http404("Invoice not found")
-    return render_pdf_with_puppeteer('invoice/receipt_pdf.html', {'invoice': invoice,
-                                                                  'total_restante': total_restante,
-                                                                  'sub_total': invoice.total  or 0,   
-                                                                  'delivery_amount': delivery
-                                                                  },filename=f"Factura_{invoice.invoice_number}.pdf")
+    # 🔥 FORZAR DESCARGA
+    response['Content-Disposition'] = f'attachment; filename="Factura_{invoice.invoice_number}.pdf"'
+
+    return response
+
 
 
 def allow_iframe(view_func):

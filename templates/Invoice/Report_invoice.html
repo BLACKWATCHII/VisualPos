@@ -229,10 +229,10 @@
                                             <td>
                                                 <div class="d-flex">
                                                     <!-- Botón de Descargar PDF -->
-                                                     <button class="btn btn-outline-danger btn-sm action-btn me-1">
-                                                        <a href="{% url 'invoice_pdf' invoice.id %}" download>
-                                                            <i class="bi bi-file-earmark-arrow-down-fill"></i>
-                                                        </a>    
+                                                    <button 
+                                                        class="btn btn-outline-danger btn-sm action-btn me-1 btn-download-invoice"
+                                                        data-url="{% url 'invoice_pdf' invoice.id %}">
+                                                        <i class="bi bi-file-earmark-arrow-down-fill"></i>
                                                     </button>
                                                     <!-- Botón de Preview -->
                                                     <button class="btn btn-outline-primary btn-sm action-btn" 
@@ -558,6 +558,26 @@ function proceedWithEmailSending(url, customerName, customerEmail, button) {
         button.innerHTML = originalHTML;
     });
 }
+$(document).on('click', '.btn-download-invoice', function (e) {
+    e.preventDefault();
+
+    const button = this;
+    const url = button.getAttribute('data-url');
+    const originalHTML = button.innerHTML;
+
+    // Animación
+    button.disabled = true;
+    button.innerHTML = '<i class="bi bi-hourglass-split"></i> Descargando...';
+
+    // Forzar descarga
+    window.location.href = url;
+
+    // Restaurar botón
+    setTimeout(() => {
+        button.disabled = false;
+        button.innerHTML = originalHTML;
+    }, 3000);
+});
 
 </script>
 {% endblock %}
