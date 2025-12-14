@@ -528,9 +528,9 @@ def invoices_report(request):
             'customer_id': customer.id if customer else '',
 
             # IMPORTANTE
-            'total': total_factura,                # 🔒 FIJO
-            'pagado': total_pagado_factura,         # 💰 ABONOS
-            'saldo_pendiente': saldo_pendiente,     # ⏳ LO QUE FALTA
+            'total': total_factura,               
+            'pagado': total_pagado_factura,        
+            'saldo_pendiente': saldo_pendiente,     
 
             'payment_method': invoice.payment_method,
             'status': invoice.status,
@@ -545,7 +545,7 @@ def invoices_report(request):
 
     return render(request, 'Invoice/Report_invoice.html', {
         'invoices': invoice_list,
-        'invoices_json': json.dumps(invoice_list),  # ya sin Decimal
+        'invoices_json': json.dumps(invoice_list), 
         'total_pagado': float(total_pagado),
         'total_credito': float(total_credit),
         'cont_pay': cont_pay,
@@ -574,9 +574,7 @@ def invoice_pdf(request, invoice_id):
         filename=f"Factura_{invoice.invoice_number}.pdf"
     )
 
-    # 🔥 FORZAR DESCARGA
     response['Content-Disposition'] = f'attachment; filename="Factura_{invoice.invoice_number}.pdf"'
-
     return response
 
 
@@ -607,17 +605,14 @@ def preview_invoice(request, invoice_id):
     # =============================
     if invoice.payment_method == 'Credito':
 
-        # 🔥 TOTAL A FINANCIAR REAL (solo cuotas > 0)
         total_financiar = round(
             sum(q.amount for q in invoice.payment_quotas.filter(number__gt=0)),
             2
         )
 
-        # Valor por cuota (tomamos la primera cuota real)
         primera_cuota = invoice.payment_quotas.filter(number__gt=0).first()
         cuota_valor = round(primera_cuota.amount, 2) if primera_cuota else 0
 
-        # Cuotas pagadas (incluye cuota inicial)
         cuotas_pagadas = invoice.payment_quotas.filter(is_paid=True).count()
         total_cuotas = invoice.payment_quotas.count()
 
@@ -705,7 +700,6 @@ def View_quota_customer(request):
     elif estado == "Pendientes":
         quotas = quotas.filter(is_paid=False)
 
-    # Obtener facturas del cliente para el select
     invoices = Invoice.objects.all()
     if customer_id:
         invoices = invoices.filter(customer__id=customer_id)
@@ -751,7 +745,6 @@ def render_pdf_inline_with_puppeteer(template_src, context, filename="ReciboPago
     os.remove(html_path)
 
     if return_path:
-        # Devolvemos solo la ruta para que la vista pueda enviarlo por correo
         return pdf_path
 
     response = FileResponse(open(pdf_path, 'rb'), content_type='application/pdf')
@@ -889,7 +882,6 @@ def pay_quota(request, quota_id):
 def download_quota_receipt(request, quota_id):
     quota = get_object_or_404(PaymentQuota, pk=quota_id)
 
-    # Obtenemos el último pago asociado a esta cuota
     payment = quota.payments.order_by('-date').first()
     if not payment:
         return HttpResponse("No hay pagos para esta cuota.", status=404)
@@ -1217,7 +1209,6 @@ def generate_temp_invoice_pdf_safe(invoice):
     try:
         template = get_invoice_pdf_template(invoice)
 
-        # 🔥 CALCULAR TODO AQUÍ
         total_financiar = get_total_financiar(invoice)
         cuota_valor = get_valor_cuota(invoice)
         saldo_pendiente = get_saldo_pendiente(invoice)
