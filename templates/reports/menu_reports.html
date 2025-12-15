@@ -1,0 +1,399 @@
+{% extends 'base.html' %}
+{% load static %}
+
+{% block extra_head %}
+<style>
+    * {
+        margin: 0;
+        padding: 0;
+        box-sizing: border-box;
+    }
+
+    .reportes-container {
+        padding: 2rem;
+        background: linear-gradient(135deg, #f5f7fa 0%, #e9ecef 100%);
+        min-height: 100vh;
+    }
+
+    .header-section {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        margin-bottom: 2rem;
+        animation: fadeInDown 0.6s ease;
+    }
+
+    .header-content h1 {
+        font-size: 2rem;
+        color: #2c3e50;
+        font-weight: 700;
+        margin-bottom: 0.5rem;
+    }
+
+    .header-content p {
+        color: #6c757d;
+        font-size: 1rem;
+    }
+
+    .ayuda-btn {
+        display: flex;
+        align-items: center;
+        gap: 0.5rem;
+        background: white;
+        border: 2px solid #10b981;
+        color: #10b981;
+        padding: 0.75rem 1.5rem;
+        border-radius: 8px;
+        cursor: pointer;
+        font-weight: 600;
+        transition: all 0.3s ease;
+        border: none;
+    }
+
+    .ayuda-btn:hover {
+        background: #10b981;
+        color: white;
+        transform: translateY(-2px);
+        box-shadow: 0 4px 12px rgba(16, 185, 129, 0.3);
+    }
+
+    .reportes-grid {
+        display: grid;
+        grid-template-columns: repeat(auto-fit, minmax(320px, 1fr));
+        gap: 1.5rem;
+        animation: fadeInUp 0.6s ease;
+    }
+
+    .reporte-card {
+        background: white;
+        border-radius: 12px;
+        padding: 2rem;
+        position: relative;
+        overflow: hidden;
+        cursor: pointer;
+        transition: all 0.3s ease;
+        box-shadow: 0 2px 8px rgba(0, 0, 0, 0.08);
+    }
+
+    .reporte-card:hover {
+        transform: translateY(-5px);
+        box-shadow: 0 8px 24px rgba(0, 0, 0, 0.15);
+    }
+
+    .reporte-card::before {
+        content: '';
+        position: absolute;
+        top: 0;
+        left: 0;
+        width: 100%;
+        height: 4px;
+        background: linear-gradient(90deg, #10b981, #059669);
+        transform: scaleX(0);
+        transition: transform 0.3s ease;
+    }
+
+    .reporte-card:hover::before {
+        transform: scaleX(1);
+    }
+
+    .card-header {
+        display: flex;
+        justify-content: space-between;
+        align-items: flex-start;
+        margin-bottom: 1rem;
+    }
+
+    .icon-container {
+        width: 50px;
+        height: 50px;
+        border-radius: 12px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        font-size: 1.5rem;
+        transition: all 0.3s ease;
+    }
+
+    .icon-money {
+        background: linear-gradient(135deg, #d1fae5, #a7f3d0);
+        color: #059669;
+    }
+
+    .icon-excel {
+        background: linear-gradient(135deg, #e0e7ff, #c7d2fe);
+        color: #6366f1;
+    }
+
+    .reporte-card:hover .icon-container {
+        transform: scale(1.1) rotate(5deg);
+    }
+
+    .star-icon {
+        color: #fbbf24;
+        font-size: 1.5rem;
+        transition: all 0.3s ease;
+        cursor: pointer;
+        user-select: none;
+    }
+
+    .star-icon:hover {
+        transform: scale(1.2) rotate(15deg);
+    }
+
+    .star-icon.active {
+        color: #f59e0b;
+    }
+
+    .card-content h3 {
+        font-size: 1.25rem;
+        color: #1f2937;
+        font-weight: 600;
+        margin-bottom: 0.75rem;
+    }
+
+    .card-content p {
+        color: #6b7280;
+        font-size: 0.95rem;
+        line-height: 1.5;
+    }
+
+    .lock-icon {
+        color: #9ca3af;
+        font-size: 1.2rem;
+    }
+
+    .excel-label {
+        display: flex;
+        align-items: center;
+        gap: 0.5rem;
+    }
+
+    .excel-text {
+        color: #6366f1;
+        font-weight: 600;
+    }
+
+    @keyframes fadeInDown {
+        from {
+            opacity: 0;
+            transform: translateY(-20px);
+        }
+        to {
+            opacity: 1;
+            transform: translateY(0);
+        }
+    }
+
+    @keyframes fadeInUp {
+        from {
+            opacity: 0;
+            transform: translateY(20px);
+        }
+        to {
+            opacity: 1;
+            transform: translateY(0);
+        }
+    }
+
+    /* Animación de pulso para las tarjetas destacadas */
+    .reporte-card.featured {
+        animation: pulse 2s infinite;
+    }
+
+    @keyframes pulse {
+        0%, 100% {
+            box-shadow: 0 2px 8px rgba(0, 0, 0, 0.08);
+        }
+        50% {
+            box-shadow: 0 4px 16px rgba(16, 185, 129, 0.2);
+        }
+    }
+
+    /* Responsive */
+    @media (max-width: 768px) {
+        .reportes-container {
+            padding: 1rem;
+        }
+
+        .reportes-grid {
+            grid-template-columns: 1fr;
+        }
+        
+        .header-section {
+            flex-direction: column;
+            align-items: flex-start;
+            gap: 1rem;
+        }
+
+        .header-content h1 {
+            font-size: 1.5rem;
+        }
+    }
+</style>
+{% endblock %}
+
+{% block content %}
+<br>
+<br>
+<br>
+<div class="reportes-container">
+    <div class="header-section">
+        <div class="header-content">
+            <h1>Reportes de ventas</h1>
+            <p>Monitorea la distribución de tus ventas y obtén información para gestionar tus operaciones comerciales.</p>
+        </div>
+        <button class="ayuda-btn" type="button">
+            <span>❓</span>
+            <span>Ayuda</span>
+        </button>
+    </div>
+
+    <div class="reportes-grid">
+        <!-- Ventas generales -->
+        <div class="reporte-card" onclick="window.location.href='{% url 'report_invoice' %}'">
+            <div class="card-header">
+                <div class="icon-container icon-money">💰</div>
+                <span class="star-icon" onclick="event.stopPropagation(); toggleStar(this)">★</span>
+            </div>
+            <div class="card-content">
+                <h3>Ventas generales</h3>
+                <p>Revisa el desempeño de tus ventas para crear estrategias comerciales.</p>
+            </div>
+        </div>
+
+        <!-- Ventas por ítem -->
+        <div class="reporte-card" onclick="window.location.href='#'">
+            <div class="card-header">
+                <div class="icon-container icon-money">💵</div>
+                <span class="star-icon active" onclick="event.stopPropagation(); toggleStar(this)">★</span>
+            </div>
+            <div class="card-content">
+                <h3>Ventas por productos</h3>
+                <p>Consulta tus ventas detalladas por cada ítem inventariable.</p>
+            </div>
+        </div>
+
+        <!-- Ventas por clientes -->
+        <div class="reporte-card" onclick="window.location.href='#'">
+            <div class="card-header">
+                <div class="icon-container icon-money">💳</div>
+                <span class="star-icon active" onclick="event.stopPropagation(); toggleStar(this)">★</span>
+            </div>
+            <div class="card-content">
+                <h3>Ventas por clientes</h3>
+                <p>Conoce las ventas asociadas a cada uno de tus clientes.</p>
+            </div>
+        </div>
+
+        <!-- Rentabilidad por ítem -->
+        <div class="reporte-card" onclick="window.location.href='#'">
+            <div class="card-header">
+                <div class="icon-container icon-money">💹</div>
+                <span class="star-icon active" onclick="event.stopPropagation(); toggleStar(this)">★</span>
+            </div>
+            <div class="card-content">
+                <h3>Rentabilidad por ítem</h3>
+                <p>Conoce la utilidad que generan tus ítems inventariables.</p>
+            </div>
+        </div>
+
+        <!-- Ventas por vendedor -->
+        <div class="reporte-card" onclick="window.location.href='#'">
+            <div class="card-header">
+                <div class="icon-container icon-money">👤</div>
+                <span class="star-icon active" onclick="event.stopPropagation(); toggleStar(this)">★</span>
+            </div>
+            <div class="card-content">
+                <h3>Ventas por vendedor</h3>
+                <p>Revisa el resumen de las ventas asociadas a cada vendedor/a.</p>
+            </div>
+        </div>
+
+        <!-- Estado de cuenta cliente -->
+        <div class="reporte-card" onclick="window.location.href='#'">
+            <div class="card-header">
+                <div class="icon-container icon-money">📊</div>
+                <span class="star-icon active" onclick="event.stopPropagation(); toggleStar(this)">★</span>
+            </div>
+            <div class="card-content">
+                <h3>Estado de cuenta cliente</h3>
+                <p>Revisa el detalle de las ventas asociadas a cada cliente.</p>
+            </div>
+        </div>
+
+        <!-- Ventas diarias (Excel) -->
+        <div class="reporte-card" onclick="window.location.href='{% url 'reports_general' %}'">
+            <div class="card-header">
+                <div class="excel-label">
+                    <span class="lock-icon">🔒</span>
+                    <div class="icon-container icon-excel">📑</div>
+                    <span class="excel-text">Excel</span>
+                </div>
+                <span class="star-icon" onclick="event.stopPropagation(); toggleStar(this)">★</span>
+            </div>
+            <div class="card-content">
+                <h3>Ventas diarias</h3>
+                <p>Exporta tus ventas agrupadas por forma de pago y numeraciones.</p>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_scripts %}
+<script>
+    function toggleStar(element) {
+        element.classList.toggle('active');
+        
+        // Animación de feedback
+        element.style.transform = 'scale(1.3) rotate(15deg)';
+        setTimeout(() => {
+            element.style.transform = '';
+        }, 200);
+        
+        // Aquí puedes agregar una llamada AJAX para guardar el favorito
+        /*
+        const reportId = element.closest('.reporte-card').dataset.reportId;
+        fetch('/api/toggle-favorite/', {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+                'X-CSRFToken': getCookie('csrftoken')
+            },
+            body: JSON.stringify({ report_id: reportId })
+        });
+        */
+    }
+
+    // Función para obtener el CSRF token
+    function getCookie(name) {
+        let cookieValue = null;
+        if (document.cookie && document.cookie !== '') {
+            const cookies = document.cookie.split(';');
+            for (let i = 0; i < cookies.length; i++) {
+                const cookie = cookies[i].trim();
+                if (cookie.substring(0, name.length + 1) === (name + '=')) {
+                    cookieValue = decodeURIComponent(cookie.substring(name.length + 1));
+                    break;
+                }
+            }
+        }
+        return cookieValue;
+    }
+
+    // Agregar animación de entrada escalonada
+    document.addEventListener('DOMContentLoaded', function() {
+        const cards = document.querySelectorAll('.reporte-card');
+        cards.forEach((card, index) => {
+            card.style.opacity = '0';
+            card.style.transform = 'translateY(20px)';
+            
+            setTimeout(() => {
+                card.style.transition = 'all 0.5s ease';
+                card.style.opacity = '1';
+                card.style.transform = 'translateY(0)';
+            }, index * 100);
+        });
+    });
+</script>
+{% endblock %}

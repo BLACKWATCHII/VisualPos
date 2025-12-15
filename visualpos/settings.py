@@ -44,7 +44,8 @@ INSTALLED_APPS = [
     'Apps.item',
     'Apps.tax',
     'Apps.Invoice',
-    'Apps.inventory'
+    'Apps.inventory',
+    'Apps.reports'
 ]
 
 MIDDLEWARE = [
