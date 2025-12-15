@@ -316,7 +316,8 @@
             </div>
             <div class="col-md-3" id="delivery-amount-container" style="display: none;">
                 <div class="form-floating">
-                    <input type="number" id="delivery_amount" name="delivery_amount" class="form-control" placeholder="0" min="0" step="1000">
+                    <input type="text" id="delivery_amount_display" name="delivery_amount_display" class="form-control" placeholder="0" inputmode="numeric" autocomplete="off">
+                    <input type="hidden" id="delivery_amount" name="delivery_amount" value="0">
                     <label>Valor del domicilio</label>
                 </div>
             </div>
@@ -332,7 +333,8 @@
             </div>
             <div class="col-md-3" id="initial-fee-field" style="display: none;">
                 <div class="form-floating">
-                    <input type="number" id="initial_fee_value" name="initial_quota_amount" class="form-control" placeholder="0" min="0" step="0.01">
+                    <input type="text" id="initial_fee_value_display" name="initial_fee_value_display" class="form-control" placeholder="0" inputmode="numeric" autocomplete="off">
+                    <input type="hidden" id="initial_quota_amount" name="initial_quota_amount" value="0">
                     <label>Valor de cuota inicial</label>
                 </div>
             </div>
@@ -516,6 +518,46 @@
 <script>
 $(document).ready(function(){
 
+    function parseDigitsToInt(value) {
+        if (value === null || value === undefined) return 0;
+        const digits = value.toString().replace(/[^0-9]/g, '');
+        return digits ? parseInt(digits, 10) : 0;
+    }
+
+    function formatCOPInteger(value) {
+        const n = Number(value) || 0;
+        return n.toLocaleString('es-CO', { maximumFractionDigits: 0 });
+    }
+
+    function bindMoneyInput(displaySelector, hiddenSelector) {
+        const $display = $(displaySelector);
+        const $hidden = $(hiddenSelector);
+
+        const sync = () => {
+            const num = parseDigitsToInt($display.val());
+            $hidden.val(String(num));
+            $display.val(num ? formatCOPInteger(num) : '0');
+        };
+
+        $display.on('input', function() {
+            const num = parseDigitsToInt($display.val());
+            $hidden.val(String(num));
+            // Formatear en vivo (cursor se mueve al final, ok para montos)
+            $display.val(num ? formatCOPInteger(num) : '');
+        });
+
+        $display.on('blur', function() {
+            sync();
+            calculateTotals();
+        });
+
+        sync();
+        return sync;
+    }
+
+    const syncDelivery = bindMoneyInput('#delivery_amount_display', '#delivery_amount');
+    const syncInitialFee = bindMoneyInput('#initial_fee_value_display', '#initial_quota_amount');
+
     function initItemSelect() {
         $('.item-id').select2({
             placeholder: "Buscar producto o servicio...",
@@ -559,7 +601,9 @@ $(document).ready(function(){
             $('#initial-fee-container').slideUp();
             $('#has_initial_fee').prop('checked', false);
             $('#initial-fee-field').hide();
-            $('#initial_fee_value').val('0');
+            $('#initial_fee_value_display').val('0');
+            $('#initial_quota_amount').val('0');
+            syncInitialFee();
             calculateTotals();
         }
     });
@@ -570,13 +614,16 @@ $(document).ready(function(){
             $('#initial-fee-field').slideDown();
         } else {
             $('#initial-fee-field').slideUp();
-            $('#initial_fee_value').val('0');
+            $('#initial_fee_value_display').val('0');
+            $('#initial_quota_amount').val('0');
+            syncInitialFee();
             calculateTotals();
         }
     });
 
     // 💰 Recalcular totales cuando cambie el valor de la cuota inicial
-    $('#initial_fee_value').on('input change', function() {
+    $('#initial_fee_value_display').on('input change', function() {
+        // bindMoneyInput ya mantiene hidden en sync; solo recalculamos
         calculateTotals();
     });
 
@@ -586,18 +633,23 @@ $(document).ready(function(){
             $('#delivery-amount-container').slideDown();
         } else {
             $('#delivery-amount-container').slideUp();
+            $('#delivery_amount_display').val('0');
             $('#delivery_amount').val('0');
+            syncDelivery();
             calculateTotals(); // Recalcular totales al desactivar
         }
     });
 
     // Recalcular cuando cambie el valor del domicilio
-    $('#delivery_amount').on('input change', function() {
+    $('#delivery_amount_display').on('input change', function() {
         calculateTotals();
     });
 
     // Redireccionamiento al enviar el formulario
     $('#invoice-form').on('submit', function(){
+        // Asegurar que se envían valores numéricos limpios al backend
+        syncDelivery();
+        syncInitialFee();
         $('<input>').attr({
             type: 'hidden',
             name: 'download',
@@ -653,7 +705,7 @@ $(document).ready(function(){
         // 💰 Aplicar cuota inicial (solo si es crédito y está marcada)
         var initialFee = 0;
         if ($('#payment_method_select').val() === 'Credito' && $('#has_initial_fee').is(':checked')) {
-            initialFee = parseFloat($('#initial_fee_value').val()) || 0;
+            initialFee = parseFloat($('#initial_quota_amount').val()) || 0;
             subtotalWithDelivery -= initialFee;
             if (initialFee > 0) {
                 $('#initial-fee-preview').show();
