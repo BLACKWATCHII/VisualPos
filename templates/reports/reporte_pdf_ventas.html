@@ -1,0 +1,285 @@
+{% load humanize %}
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8" />
+  <title>Reporte Ventas</title>
+  <style>
+    :root {
+      --text: #111827;
+      --muted: #6b7280;
+      --line: #e5e7eb;
+      --bg: #ffffff;
+      --chip: #f3f4f6;
+      --accent: #10b981;
+    }
+
+    * { box-sizing: border-box; }
+
+    body {
+      margin: 0;
+      padding: 24px;
+      font-family: "Segoe UI", -apple-system, BlinkMacSystemFont, sans-serif;
+      color: var(--text);
+      background: #f9fafb;
+    }
+
+    .page {
+      max-width: 210mm;
+      margin: 0 auto;
+      background: var(--bg);
+      border: 1px solid var(--line);
+      border-radius: 12px;
+      padding: 24px;
+    }
+
+    .header {
+      display: flex;
+      justify-content: space-between;
+      align-items: flex-start;
+      gap: 16px;
+      padding-bottom: 16px;
+      border-bottom: 1px solid var(--line);
+      margin-bottom: 16px;
+    }
+
+    .brand {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+    }
+
+    .brand img {
+      height: 34px;
+      width: auto;
+      object-fit: contain;
+    }
+
+    h1 {
+      margin: 0;
+      font-size: 22px;
+      font-weight: 700;
+      letter-spacing: 0.2px;
+    }
+
+    .meta {
+      margin-top: 6px;
+      color: var(--muted);
+      font-size: 12px;
+      line-height: 1.4;
+    }
+
+    .badge {
+      display: inline-block;
+      padding: 6px 10px;
+      border-radius: 999px;
+      background: var(--chip);
+      color: var(--text);
+      font-size: 12px;
+      font-weight: 600;
+      white-space: nowrap;
+    }
+
+    table {
+      width: 100%;
+      border-collapse: collapse;
+      font-size: 12px;
+    }
+
+    thead th {
+      text-align: left;
+      color: var(--muted);
+      font-weight: 700;
+      font-size: 11px;
+      letter-spacing: 0.4px;
+      text-transform: uppercase;
+      padding: 10px 8px;
+      border-bottom: 1px solid var(--line);
+    }
+
+    tbody td {
+      padding: 10px 8px;
+      border-bottom: 1px solid var(--line);
+      vertical-align: top;
+    }
+
+    .right { text-align: right; }
+    .nowrap { white-space: nowrap; }
+
+    .items {
+      margin: 0;
+      padding: 0;
+      list-style: none;
+    }
+
+    .items li {
+      display: grid;
+      grid-template-columns: 1fr auto;
+      gap: 10px;
+      padding: 4px 0;
+      border-bottom: 1px dashed #f1f5f9;
+    }
+
+    .items li:last-child {
+      border-bottom: none;
+    }
+
+    .item-name {
+      font-weight: 600;
+    }
+
+    .item-sub {
+      color: var(--muted);
+      font-size: 11px;
+      margin-top: 2px;
+    }
+
+    .money { font-variant-numeric: tabular-nums; }
+
+    .type-chip {
+      display: inline-block;
+      padding: 4px 8px;
+      border-radius: 999px;
+      background: #ecfdf5;
+      color: #065f46;
+      font-weight: 700;
+      font-size: 11px;
+    }
+
+    .type-chip.credito {
+      background: #eff6ff;
+      color: #1d4ed8;
+    }
+
+    .empty {
+      padding: 32px 0;
+      text-align: center;
+      color: var(--muted);
+      font-size: 13px;
+    }
+
+    .totals {
+      margin-top: 16px;
+      display: grid;
+      grid-template-columns: 1fr 1fr 1fr;
+      gap: 12px;
+    }
+
+    .card {
+      border: 1px solid var(--line);
+      border-radius: 12px;
+      padding: 12px 14px;
+      background: #ffffff;
+    }
+
+    .card .label {
+      font-size: 11px;
+      color: var(--muted);
+      text-transform: uppercase;
+      letter-spacing: 0.4px;
+      font-weight: 700;
+    }
+
+    .card .value {
+      margin-top: 6px;
+      font-size: 18px;
+      font-weight: 800;
+    }
+
+    .card.credito .value { color: #1d4ed8; }
+    .card.contado .value { color: #065f46; }
+    .card.general .value { color: var(--text); }
+
+    @page {
+      size: A4;
+      margin: 18mm;
+    }
+  </style>
+</head>
+<body>
+  <div class="page">
+    <div class="header">
+      <div>
+        <div class="brand">
+          <img src="https://raw.githubusercontent.com/Kevin25DC/celupro-assets/refs/heads/main/logo%20de%20prueba%20dos.png" alt="CELUPRO CO Logo" />
+          <div>
+            <h1>Reporte de Ventas</h1>
+            <div class="meta">
+              Rango: {{ fecha_inicio|date:"d/m/Y" }} – {{ fecha_fin|date:"d/m/Y" }}<br />
+              Periodo: {{ periodo }}
+            </div>
+          </div>
+        </div>
+        <div class="meta">
+          
+        </div>
+      </div>
+      <div class="badge">Generado: {% now "d/m/Y H:i" %}</div>
+    </div>
+
+    {% if invoices %}
+      <table>
+        <thead>
+          <tr>
+            <th>Cliente</th>
+            <th class="nowrap">Fecha</th>
+            <th class="right">Factura</th>
+            <th>Tipo</th>
+            <th class="right">Total</th>
+            <th>Items</th>
+          </tr>
+        </thead>
+        <tbody>
+          {% for inv in invoices %}
+            <tr>
+              <td>{{ inv.cliente }}</td>
+              <td class="nowrap">{{ inv.fecha }}</td>
+              <td class="right">{{ inv.factura_id }}</td>
+              <td>
+                <span class="type-chip {% if inv.tipo_pago == 'Crédito' %}credito{% endif %}">
+                  {{ inv.tipo_pago }}
+                </span>
+              </td>
+              <td class="right money">$ {{ inv.total_factura|floatformat:0|intcomma }}</td>
+              <td>
+                {% if inv.items %}
+                  <ul class="items">
+                    {% for it in inv.items %}
+                      <li>
+                        <div>
+                          <div class="item-name">{{ it.name }}</div>
+                          <div class="item-sub">Cant: {{ it.qty }} · Precio: $ {{ it.price|floatformat:0|intcomma }}</div>
+                        </div>
+                        <div class="right money">$ {{ it.subtotal|floatformat:0|intcomma }}</div>
+                      </li>
+                    {% endfor %}
+                  </ul>
+                {% else %}
+                  <span class="meta">Sin items</span>
+                {% endif %}
+              </td>
+            </tr>
+          {% endfor %}
+        </tbody>
+      </table>
+
+      <div class="totals">
+        <div class="card contado">
+          <div class="label">Total ventas contado</div>
+          <div class="value money">$ {{ totales.contado|floatformat:0|intcomma }}</div>
+        </div>
+        <div class="card credito">
+          <div class="label">Total ventas crédito</div>
+          <div class="value money">$ {{ totales.credito|floatformat:0|intcomma }}</div>
+        </div>
+        <div class="card general">
+          <div class="label">Total ventas general</div>
+          <div class="value money">$ {{ totales.general|floatformat:0|intcomma }}</div>
+        </div>
+      </div>
+    {% else %}
+      <div class="empty">No hay ventas en el rango seleccionado.</div>
+    {% endif %}
+  </div>
+</body>
+</html>

@@ -1,0 +1,852 @@
+{% extends 'base.html' %}
+{% load static %}
+
+{% block title %}Reporte generales{% endblock %}
+
+{% block extra_head %}
+<link rel="stylesheet" type="text/css" href="https://cdn.jsdelivr.net/npm/daterangepicker/daterangepicker.css" />
+<style>
+    .ventas-generales-container {
+        padding: 2rem;
+        background-color: #f8f9fa;
+        min-height: 100vh;
+    }
+
+    .header-section {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        margin-bottom: 1.5rem;
+    }
+
+    .header-title {
+        display: flex;
+        align-items: center;
+        gap: 1rem;
+    }
+
+    .header-title h1 {
+        font-size: 2rem;
+        font-weight: 300;
+        color: #333;
+        margin: 0;
+    }
+
+    .header-actions {
+        display: flex;
+        gap: 0.5rem;
+    }
+
+    .icon-btn {
+        background: white;
+        border: 1px solid #ddd;
+        padding: 0.5rem 0.75rem;
+        border-radius: 0.5rem;
+        cursor: pointer;
+        transition: all 0.2s;
+    }
+
+    .icon-btn:hover {
+        background-color: #f0f0f0;
+        transform: translateY(-2px);
+        box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+    }
+
+    .subtitle {
+        color: #666;
+        font-size: 0.95rem;
+        margin-bottom: 2rem;
+    }
+
+    .filters-section {
+        background: white;
+        padding: 1.5rem;
+        border-radius: 0.5rem;
+        margin-bottom: 2rem;
+        box-shadow: 0 1px 3px rgba(0,0,0,0.1);
+    }
+
+    .filters-row {
+        display: flex;
+        gap: 1rem;
+        align-items: flex-end;
+    }
+
+    .filter-group {
+        flex: 1;
+        display: flex;
+        flex-direction: column;
+        gap: 0.5rem;
+    }
+
+    .filter-group label {
+        font-size: 0.875rem;
+        color: #666;
+        font-weight: 500;
+    }
+
+    .filter-input {
+        padding: 0.625rem;
+        border: 1px solid #ddd;
+        border-radius: 0.375rem;
+        font-size: 0.95rem;
+        transition: border-color 0.2s;
+        cursor: pointer;
+    }
+
+    .filter-input:focus {
+        outline: none;
+        border-color: #10b981;
+        box-shadow: 0 0 0 3px rgba(16, 185, 129, 0.1);
+    }
+
+    .btn-generate {
+        background-color: #10b981;
+        color: white;
+        border: none;
+        padding: 0.75rem 2rem;
+        border-radius: 0.5rem;
+        font-weight: 500;
+        cursor: pointer;
+        transition: all 0.2s;
+        margin-top: 1.5rem;
+    }
+
+    .btn-generate:hover {
+        background-color: #059669;
+        transform: translateY(-2px);
+        box-shadow: 0 4px 12px rgba(16, 185, 129, 0.3);
+    }
+
+    .btn-generate:disabled {
+        background-color: #9ca3af;
+        cursor: not-allowed;
+        transform: none;
+    }
+
+    .chart-section {
+        background: white;
+        padding: 2rem;
+        border-radius: 0.5rem;
+        box-shadow: 0 1px 3px rgba(0,0,0,0.1);
+    }
+
+    .chart-header {
+        display: flex;
+        align-items: center;
+        gap: 0.5rem;
+        margin-bottom: 1.5rem;
+    }
+
+    .chart-header h2 {
+        font-size: 1.1rem;
+        font-weight: 500;
+        color: #333;
+        margin: 0;
+    }
+
+    .info-icon {
+        width: 18px;
+        height: 18px;
+        background-color: #10b981;
+        color: white;
+        border-radius: 50%;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        font-size: 0.75rem;
+        cursor: help;
+    }
+
+    .chart-container {
+        height: 400px;
+        position: relative;
+    }
+
+    .loading-overlay {
+        position: absolute;
+        top: 0;
+        left: 0;
+        right: 0;
+        bottom: 0;
+        background: rgba(255, 255, 255, 0.9);
+        display: none;
+        align-items: center;
+        justify-content: center;
+        z-index: 10;
+    }
+
+    .loading-overlay.active {
+        display: flex;
+    }
+
+    .spinner {
+        border: 4px solid #f3f3f3;
+        border-top: 4px solid #10b981;
+        border-radius: 50%;
+        width: 40px;
+        height: 40px;
+        animation: spin 1s linear infinite;
+    }
+
+    @keyframes spin {
+        0% { transform: rotate(0deg); }
+        100% { transform: rotate(360deg); }
+    }
+
+    .modal-overlay {
+        display: none;
+        position: fixed;
+        top: 0;
+        left: 0;
+        right: 0;
+        bottom: 0;
+        background-color: rgba(0, 0, 0, 0.5);
+        z-index: 1000;
+        align-items: center;
+        justify-content: center;
+    }
+
+    .modal-overlay.active {
+        display: flex;
+    }
+
+    .modal-content {
+        background: white;
+        padding: 2rem;
+        border-radius: 0.5rem;
+        max-width: 500px;
+        width: 90%;
+        box-shadow: 0 20px 25px -5px rgba(0, 0, 0, 0.1);
+        animation: modalSlideIn 0.3s ease;
+    }
+
+    @keyframes modalSlideIn {
+        from {
+            opacity: 0;
+            transform: translateY(-20px);
+        }
+        to {
+            opacity: 1;
+            transform: translateY(0);
+        }
+    }
+
+    .modal-content h3 {
+        margin-top: 0;
+        margin-bottom: 1.5rem;
+        font-size: 1.25rem;
+    }
+
+    .format-options {
+        display: flex;
+        gap: 1rem;
+        margin-bottom: 1.5rem;
+    }
+
+    .format-option {
+        flex: 1;
+        padding: 1rem;
+        border: 2px solid #ddd;
+        border-radius: 0.5rem;
+        cursor: pointer;
+        text-align: center;
+        transition: all 0.2s;
+    }
+
+    .format-option:hover {
+        border-color: #10b981;
+        background-color: #f0fdf4;
+        transform: translateY(-2px);
+    }
+
+    .format-option.selected {
+        border-color: #10b981;
+        background-color: #ecfdf5;
+    }
+
+    .period-tabs {
+        display: flex;
+        gap: 0.5rem;
+        margin-top: 2rem;
+        margin-bottom: 1.5rem;
+        flex-wrap: wrap;
+    }
+
+    .period-tab {
+        padding: 0.625rem 1.5rem;
+        border: none;
+        background: transparent;
+        color: #666;
+        cursor: pointer;
+        border-radius: 0.375rem;
+        transition: all 0.2s;
+        font-size: 0.95rem;
+    }
+
+    .period-tab:hover {
+        background-color: #f0f0f0;
+    }
+
+    .period-tab.active {
+        background-color: #ecfdf5;
+        color: #10b981;
+        font-weight: 500;
+    }
+
+    .legend {
+        display: flex;
+        justify-content: center;
+        gap: 2rem;
+        margin-top: 1rem;
+        flex-wrap: wrap;
+    }
+
+    .legend-item {
+        display: flex;
+        align-items: center;
+        gap: 0.5rem;
+        font-size: 0.875rem;
+    }
+
+    .legend-color {
+        width: 12px;
+        height: 12px;
+        border-radius: 50%;
+    }
+
+    .stats-summary {
+        display: grid;
+        grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+        gap: 1rem;
+        margin-bottom: 2rem;
+    }
+
+    .stat-card {
+        background: white;
+        padding: 1.5rem;
+        border-radius: 0.5rem;
+        box-shadow: 0 1px 3px rgba(0,0,0,0.1);
+        transition: all 0.2s;
+    }
+
+    .stat-card:hover {
+        transform: translateY(-2px);
+        box-shadow: 0 4px 12px rgba(0,0,0,0.1);
+    }
+
+    .stat-card h3 {
+        font-size: 0.875rem;
+        color: #666;
+        margin: 0 0 0.5rem 0;
+        font-weight: 500;
+    }
+
+    .stat-card p {
+        font-size: 1.5rem;
+        font-weight: 600;
+        margin: 0;
+        color: #1f2937;
+    }
+
+    .alert {
+        padding: 1rem;
+        border-radius: 0.5rem;
+        margin-bottom: 1rem;
+        animation: slideInDown 0.3s ease;
+    }
+
+    @keyframes slideInDown {
+        from {
+            opacity: 0;
+            transform: translateY(-10px);
+        }
+        to {
+            opacity: 1;
+            transform: translateY(0);
+        }
+    }
+
+    .alert-info {
+        background-color: #dbeafe;
+        color: #1e40af;
+        border-left: 4px solid #3b82f6;
+    }
+
+    .alert-error {
+        background-color: #fee2e2;
+        color: #991b1b;
+        border-left: 4px solid #ef4444;
+    }
+
+    .no-data-message {
+        text-align: center;
+        padding: 3rem;
+        color: #6b7280;
+    }
+
+    /* Responsive */
+    @media (max-width: 768px) {
+        .ventas-generales-container {
+            padding: 1rem;
+        }
+
+        .header-section {
+            flex-direction: column;
+            align-items: flex-start;
+            gap: 1rem;
+        }
+
+        .filters-row {
+            flex-direction: column;
+        }
+
+        .filter-group {
+            width: 100%;
+        }
+
+        .btn-generate {
+            width: 100%;
+            margin-top: 1rem;
+        }
+
+        .stats-summary {
+            grid-template-columns: 1fr;
+        }
+
+        .period-tabs {
+            justify-content: flex-start;
+        }
+
+        .chart-container {
+            height: 300px;
+        }
+    }
+</style>
+{% endblock %}
+
+{% block content %}
+<br>
+<br>
+<br>
+<div class="ventas-generales-container">
+    <!-- Header -->
+    <div class="header-section">
+        <div class="header-title">
+            <span style="font-size: 1.5rem;">📈</span>
+            <h1>Ventas generales</h1>
+        </div>
+        <div class="header-actions">
+            <button class="icon-btn" id="btnDownload" title="Descargar">
+                <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                    <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4M7 10l5 5 5-5M12 15V3"/>
+                </svg>
+            </button>
+        </div>
+    </div>
+
+    <p class="subtitle">Obtén una visión completa de las ventas y devoluciones de tu empresa en el período que elijas.</p>
+
+    <!-- Mensaje de alerta inicial -->
+    <div class="alert alert-info" id="alertInicial">
+        📊 Selecciona un período y haz clic en "Generar Reporte" para visualizar los datos.
+    </div>
+
+    <!-- Filtros -->
+    <div class="filters-section">
+        <form id="filterForm">
+            <div class="filters-row">
+                <div class="filter-group" style="flex: 2;">
+                    <label for="periodo">Período *</label>
+                    <input type="text" 
+                           id="periodo" 
+                           name="periodo" 
+                           class="filter-input" 
+                           placeholder="Seleccionar período"
+                           readonly>
+                </div>
+                
+                <div class="filter-group">
+                    <button type="submit" class="btn-generate" id="btnGenerar">
+                        Generar Reporte
+                    </button>
+                </div>
+            </div>
+        </form>
+
+        <!-- Tabs de período -->
+        <div class="period-tabs">
+            <button class="period-tab" data-period="daily">Diario</button>
+            <button class="period-tab" data-period="weekly">Semanal</button>
+            <button class="period-tab active" data-period="monthly">Mensual</button>
+            <button class="period-tab" data-period="yearly">Anual</button>
+        </div>
+    </div>
+
+    <!-- Tarjetas de resumen (se muestran después de generar reporte) -->
+    <div class="stats-summary" id="statsSummary" style="display: none;"></div>
+
+    <!-- Gráfico -->
+    <div class="chart-section">
+        <div class="chart-header">
+            <span style="font-size: 1.2rem;">📊</span>
+            <h2>Gráfico comparativo entre períodos</h2>
+            <span class="info-icon" title="Compara las ventas del período seleccionado con el período anterior">?</span>
+        </div>
+        
+        <div class="chart-container">
+            <div class="loading-overlay" id="loadingOverlay">
+                <div class="spinner"></div>
+            </div>
+            <div id="noDataMessage" class="no-data-message">
+                <p>📊 Selecciona un período y genera el reporte para ver el gráfico</p>
+            </div>
+            <canvas id="salesChart" style="display: none;"></canvas>
+        </div>
+
+        <div class="legend" id="chartLegend" style="display: none;"></div>
+    </div>
+</div>
+
+<!-- Modal de formato de descarga -->
+<div class="modal-overlay" id="downloadModal">
+    <div class="modal-content">
+        <h3>Formato de descarga</h3>
+        <div class="format-options">
+            <div class="format-option" data-format="pdf">
+                <div style="font-size: 2rem; margin-bottom: 0.5rem;">📄</div>
+                <div>PDF</div>
+            </div>
+            <div class="format-option selected" data-format="excel">
+                <div style="font-size: 2rem; margin-bottom: 0.5rem;">📊</div>
+                <div>Excel (CSV)</div>
+            </div>
+        </div>
+        <div style="display: flex; gap: 1rem;">
+            <button class="btn-generate" style="flex: 1; margin-top: 0;" onclick="descargarReporte()">Descargar</button>
+            <button class="btn-generate" style="flex: 1; margin-top: 0; background-color: #6b7280;" onclick="cerrarModal()">Cancelar</button>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_scripts %}
+<script type="text/javascript" src="https://cdn.jsdelivr.net/momentjs/latest/moment.min.js"></script>
+<script type="text/javascript" src="https://cdn.jsdelivr.net/npm/daterangepicker/daterangepicker.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+
+<script>
+let salesChart = null;
+let currentPeriod = 'monthly';
+let currentDates = null;
+
+// Inicializar daterangepicker (jQuery ya está cargado en base.html)
+$(function() {
+    $('#periodo').daterangepicker({
+        locale: {
+            format: 'DD/MM/YYYY',
+            separator: ' - ',
+            applyLabel: 'Aplicar',
+            cancelLabel: 'Cancelar',
+            fromLabel: 'Desde',
+            toLabel: 'Hasta',
+            customRangeLabel: 'Personalizado',
+            weekLabel: 'S',
+            daysOfWeek: ['Do', 'Lu', 'Ma', 'Mi', 'Ju', 'Vi', 'Sa'],
+            monthNames: ['Enero', 'Febrero', 'Marzo', 'Abril', 'Mayo', 'Junio', 
+                         'Julio', 'Agosto', 'Septiembre', 'Octubre', 'Noviembre', 'Diciembre'],
+            firstDay: 1
+        },
+        startDate: moment().startOf('month'),
+        endDate: moment().endOf('month'),
+        ranges: {
+            'Hoy': [moment(), moment()],
+            'Ayer': [moment().subtract(1, 'days'), moment().subtract(1, 'days')],
+            'Últimos 7 días': [moment().subtract(6, 'days'), moment()],
+            'Últimos 30 días': [moment().subtract(29, 'days'), moment()],
+            'Este mes': [moment().startOf('month'), moment().endOf('month')],
+            'Mes pasado': [moment().subtract(1, 'month').startOf('month'), moment().subtract(1, 'month').endOf('month')],
+            'Este año': [moment().startOf('year'), moment().endOf('year')]
+        }
+    });
+});
+
+// Tabs de período
+document.querySelectorAll('.period-tab').forEach(tab => {
+    tab.addEventListener('click', function() {
+        document.querySelectorAll('.period-tab').forEach(t => t.classList.remove('active'));
+        this.classList.add('active');
+        currentPeriod = this.dataset.period;
+        
+        // Si ya hay datos cargados, recargar con el nuevo período
+        if (currentDates) {
+            cargarDatosVentas();
+        }
+    });
+});
+
+// Generar reporte
+document.getElementById('filterForm').addEventListener('submit', function(e) {
+    e.preventDefault();
+    cargarDatosVentas();
+});
+
+function cargarDatosVentas() {
+    const periodoInput = $('#periodo').data('daterangepicker');
+    const fechaInicio = periodoInput.startDate.format('YYYY-MM-DD');
+    const fechaFin = periodoInput.endDate.format('YYYY-MM-DD');
+    
+    currentDates = {
+        inicio: fechaInicio,
+        fin: fechaFin
+    };
+    
+    // Mostrar loading
+    document.getElementById('loadingOverlay').classList.add('active');
+    document.getElementById('alertInicial').style.display = 'none';
+    
+    // Hacer petición AJAX
+    const apiUrl = "{% url 'api_ventas_datos' %}";
+    fetch(`${apiUrl}?fecha_inicio=${fechaInicio}&fecha_fin=${fechaFin}&periodo=${currentPeriod}`)
+        .then(response => {
+            if (!response.ok) {
+                throw new Error('Error en la respuesta del servidor');
+            }
+            return response.json();
+        })
+        .then(data => {
+            if (data.error) {
+                throw new Error(data.error);
+            }
+            mostrarDatos(data);
+        })
+        .catch(error => {
+            console.error('Error:', error);
+            mostrarError(error.message);
+            
+            // Por ahora, mostrar datos de ejemplo
+            mostrarDatosEjemplo();
+        })
+        .finally(() => {
+            document.getElementById('loadingOverlay').classList.remove('active');
+        });
+}
+
+// Función para mostrar datos de ejemplo (mientras implementas el backend)
+function mostrarDatosEjemplo() {
+    const datosEjemplo = {
+        labels: ['Ene', 'Feb', 'Mar', 'Abr', 'May', 'Jun'],
+        datasets: [
+            {
+                label: 'Período Actual',
+                data: [12000000, 15000000, 13000000, 18000000, 16000000, 20000000],
+                borderColor: '#10b981',
+                backgroundColor: 'rgba(16, 185, 129, 0.1)',
+                tension: 0.4
+            },
+            {
+                label: 'Período Anterior',
+                data: [10000000, 12000000, 11000000, 14000000, 13000000, 15000000],
+                borderColor: '#6b7280',
+                backgroundColor: 'rgba(107, 114, 128, 0.1)',
+                tension: 0.4
+            }
+        ],
+        totales: {
+            actual: 94000000,
+            anterior: 75000000,
+            diferencia: 19000000,
+            porcentaje_cambio: 25.33
+        }
+    };
+    
+    mostrarDatos(datosEjemplo);
+}
+
+function mostrarDatos(data) {
+    // Ocultar mensaje de no data
+    document.getElementById('noDataMessage').style.display = 'none';
+    document.getElementById('salesChart').style.display = 'block';
+    document.getElementById('chartLegend').style.display = 'flex';
+    
+    // Mostrar estadísticas
+    mostrarEstadisticas(data.totales);
+    
+    // Actualizar o crear gráfico
+    const ctx = document.getElementById('salesChart').getContext('2d');
+    
+    if (salesChart) {
+        salesChart.destroy();
+    }
+    
+    salesChart = new Chart(ctx, {
+        type: 'line',
+        data: {
+            labels: data.labels,
+            datasets: data.datasets
+        },
+        options: {
+            responsive: true,
+            maintainAspectRatio: false,
+            plugins: {
+                legend: {
+                    display: false
+                },
+                tooltip: {
+                    callbacks: {
+                        label: function(context) {
+                            let label = context.dataset.label || '';
+                            if (label) {
+                                label += ': ';
+                            }
+                            label += new Intl.NumberFormat('es-CO', {
+                                style: 'currency',
+                                currency: 'COP',
+                                minimumFractionDigits: 0
+                            }).format(context.parsed.y);
+                            return label;
+                        }
+                    }
+                }
+            },
+            scales: {
+                y: {
+                    beginAtZero: true,
+                    ticks: {
+                        callback: function(value) {
+                            return '$' + (value / 1000000).toFixed(1) + 'M';
+                        }
+                    }
+                }
+            }
+        }
+    });
+    
+    // Actualizar leyenda
+    actualizarLeyenda(data.datasets);
+}
+
+function mostrarEstadisticas(totales) {
+    const statsSummary = document.getElementById('statsSummary');
+    const cambio = totales.diferencia;
+    const porcentaje = totales.porcentaje_cambio;
+    const esPositivo = cambio >= 0;
+    
+    statsSummary.innerHTML = `
+        <div class="stat-card">
+            <h3>Ventas Período Actual</h3>
+            <p>${formatearMoneda(totales.actual)}</p>
+        </div>
+        <div class="stat-card">
+            <h3>Ventas Período Anterior</h3>
+            <p>${formatearMoneda(totales.anterior)}</p>
+        </div>
+        <div class="stat-card">
+            <h3>Cambio</h3>
+            <p style="color: ${esPositivo ? '#10b981' : '#ef4444'}">
+                ${esPositivo ? '+' : ''}${formatearMoneda(cambio)}
+            </p>
+        </div>
+        <div class="stat-card">
+            <h3>Variación</h3>
+            <p style="color: ${esPositivo ? '#10b981' : '#ef4444'}">
+                ${esPositivo ? '+' : ''}${porcentaje.toFixed(2)}%
+            </p>
+        </div>
+    `;
+    statsSummary.style.display = 'grid';
+}
+
+function actualizarLeyenda(datasets) {
+    const legend = document.getElementById('chartLegend');
+    legend.innerHTML = datasets.map(dataset => `
+        <div class="legend-item">
+            <span class="legend-color" style="background-color: ${dataset.borderColor}"></span>
+            <span>${dataset.label}</span>
+        </div>
+    `).join('');
+}
+
+function formatearMoneda(valor) {
+    return new Intl.NumberFormat('es-CO', {
+        style: 'currency',
+        currency: 'COP',
+        minimumFractionDigits: 0
+    }).format(valor);
+}
+
+function mostrarError(mensaje) {
+    const alertDiv = document.createElement('div');
+    alertDiv.className = 'alert alert-error';
+    alertDiv.textContent = '❌ ' + mensaje;
+    
+    const container = document.querySelector('.ventas-generales-container');
+    const firstChild = container.firstElementChild;
+    container.insertBefore(alertDiv, firstChild);
+    
+    setTimeout(() => alertDiv.remove(), 5000);
+}
+
+// Modal de descarga
+const downloadModal = document.getElementById('downloadModal');
+const btnDownload = document.getElementById('btnDownload');
+
+btnDownload.addEventListener('click', () => {
+    if (!currentDates) {
+        alert('Por favor, genera un reporte primero');
+        return;
+    }
+    downloadModal.classList.add('active');
+});
+
+function cerrarModal() {
+    downloadModal.classList.remove('active');
+}
+
+downloadModal.addEventListener('click', (e) => {
+    if (e.target === downloadModal) {
+        cerrarModal();
+    }
+});
+
+// Selección de formato
+document.querySelectorAll('.format-option').forEach(option => {
+    option.addEventListener('click', function() {
+        document.querySelectorAll('.format-option').forEach(opt => {
+            opt.classList.remove('selected');
+        });
+        this.classList.add('selected');
+    });
+});
+
+function descargarReporte() {
+    if (!currentDates) {
+        alert('No hay datos para descargar');
+        return;
+    }
+    
+    const formato = document.querySelector('.format-option.selected').dataset.format;
+    const downloadUrl = "{% url 'api_ventas_descargar' %}";
+    const url = `${downloadUrl}?fecha_inicio=${currentDates.inicio}&fecha_fin=${currentDates.fin}&periodo=${currentPeriod}&formato=${formato}`;
+    
+    window.location.href = url;
+    cerrarModal();
+}
+
+// Función para obtener CSRF token de Django
+function getCookie(name) {
+    let cookieValue = null;
+    if (document.cookie && document.cookie !== '') {
+        const cookies = document.cookie.split(';');
+        for (let i = 0; i < cookies.length; i++) {
+            const cookie = cookies[i].trim();
+            if (cookie.substring(0, name.length + 1) === (name + '=')) {
+                cookieValue = decodeURIComponent(cookie.substring(name.length + 1));
+                break;
+            }
+        }
+    }
+    return cookieValue;
+}
+</script>
+{% endblock %}

@@ -16,4 +16,5 @@ urlpatterns = [
     path('signin/', views.signin, name='signin'),
     path('invoice/', include('Invoice.urls')),
     path('inventory/', include('inventory.urls')),
+    path('reports/', include('reports.urls')),
 ]
