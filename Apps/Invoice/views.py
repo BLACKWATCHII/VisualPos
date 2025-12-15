@@ -212,7 +212,7 @@ def create_invoice(request):
 
 
 def create_invoice_credit(request, form):
-    """Maneja la creación de facturas a crédito (lógica financiera correcta)"""
+    """Maneja la creación de facturas a crédito"""
 
     sub_total = Decimal('0.00')
 
@@ -365,7 +365,7 @@ def create_invoice_credit(request, form):
                 filename=f"Factura_Credito_{invoice.invoice_number}.pdf"
             )
 
-        return redirect('home')
+        return redirect('report_invoice')
 
 
 def create_invoice_cash(request, form):
@@ -452,12 +452,7 @@ def create_invoice_cash(request, form):
                 filename=f"Factura_Contado_{invoice.invoice_number}.pdf"
             )
 
-        return redirect('home')
-
-from django.contrib.auth.decorators import login_required
-from django.db.models import Sum
-from decimal import Decimal
-import json
+        return redirect('report_invoice')
 
 @login_required
 def invoices_report(request):
