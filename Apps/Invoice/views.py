@@ -552,19 +552,32 @@ def invoices_report(request):
 def invoice_pdf(request, invoice_id):
     invoice = get_object_or_404(Invoice, pk=invoice_id)
 
+    # Subtotal de productos (sin depender de campos calculados en frontend)
+    sub_total = sum(
+        (item.subtotal() if callable(getattr(item, 'subtotal', None)) else item.subtotal)
+        for item in invoice.items.all()
+    )
+
     if invoice.payment_method == 'Credito':
         template = 'invoice/receipt_credit_pdf.html'
-        total_restante = invoice.total - (invoice.delivery_amount or 0) - (invoice.initial_fee or 0)
+        total_financiar = get_total_financiar(invoice)
+        cuota_valor = get_valor_cuota(invoice)
+        saldo_pendiente = get_saldo_pendiente(invoice)
     else:
         template = 'invoice/receipt_pdf.html'
-        total_restante = invoice.total
+        total_financiar = None
+        cuota_valor = None
+        saldo_pendiente = invoice.total
 
     response = render_pdf_with_puppeteer(
         template,
         {
             'invoice': invoice,
-            'sub_total': invoice.total,
-            'total_restante': total_restante,
+            'sub_total': sub_total,
+            'total_restante': saldo_pendiente,
+            'total_financiar': total_financiar,
+            'cuota_valor': cuota_valor,
+            'saldo_pendiente': saldo_pendiente,
         },
         filename=f"Factura_{invoice.invoice_number}.pdf"
     )
@@ -1204,6 +1217,12 @@ def generate_temp_invoice_pdf_safe(invoice):
     try:
         template = get_invoice_pdf_template(invoice)
 
+        # Subtotal de productos (sin domicilio)
+        sub_total = sum(
+            (item.subtotal() if callable(getattr(item, 'subtotal', None)) else item.subtotal)
+            for item in invoice.items.all()
+        )
+
         total_financiar = get_total_financiar(invoice)
         cuota_valor = get_valor_cuota(invoice)
         saldo_pendiente = get_saldo_pendiente(invoice)
@@ -1213,6 +1232,7 @@ def generate_temp_invoice_pdf_safe(invoice):
             {
                 'invoice': invoice,
                 'is_credit': invoice.payment_method == 'Credito',
+                'sub_total': sub_total,
                 'total_financiar': total_financiar,
                 'cuota_valor': cuota_valor,
                 'saldo_pendiente': saldo_pendiente,
