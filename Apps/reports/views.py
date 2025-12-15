@@ -1,6 +1,7 @@
 from django.shortcuts import render
 from django.http import JsonResponse, HttpResponse
-from django.db.models import Sum
+from django.db.models import Sum, F, DecimalField, ExpressionWrapper
+from django.db.models.functions import Coalesce
 from django.db.models.functions import TruncDate, TruncWeek, TruncMonth, TruncYear
 from django.contrib.auth.decorators import login_required
 from django.utils import timezone
@@ -32,6 +33,12 @@ def menu_reportes(request):
 def reports_general(request):
     """Vista de reportes generales"""
     return render(request, 'reports/reports_general.html')
+
+
+@login_required
+def reports_productos(request):
+    """Vista de reporte de ventas por productos"""
+    return render(request, 'reports/reports_productos.html')
 
 
 EXCLUDED_STATUSES = (
@@ -205,6 +212,94 @@ def _get_invoice_detail_rows(inicio: date, fin: date):
             })
 
     return rows
+
+
+def _aggregate_product_sales(inicio: date, fin: date):
+    """Agrega ventas por producto en el rango dado.
+
+    Retorna lista de dicts: {item_id, nombre, cantidad, total} ordenado por total desc.
+    """
+    start_dt, end_dt_excl = _date_range_to_datetimes(inicio, fin)
+
+    line_total = ExpressionWrapper(
+        F('quantity') * F('price'),
+        output_field=DecimalField(max_digits=12, decimal_places=2),
+    )
+
+    rows = (
+        InvoiceItem.objects
+        .filter(invoice__date__gte=start_dt, invoice__date__lt=end_dt_excl)
+        .exclude(invoice__status__in=EXCLUDED_STATUSES)
+        .values('item_id', 'item__Name')
+        .annotate(
+            cantidad=Coalesce(Sum('quantity'), 0),
+            total=Coalesce(Sum(line_total), Decimal('0.00')),
+        )
+        .order_by('-total', 'item__Name')
+    )
+
+    out = []
+    for r in rows:
+        out.append({
+            'item_id': r['item_id'],
+            'nombre': r.get('item__Name') or f"Producto #{r['item_id']}",
+            'cantidad': int(r['cantidad'] or 0),
+            'total': r['total'] or Decimal('0.00'),
+        })
+    return out
+
+
+def _build_products_payload(fecha_inicio: date, fecha_fin: date, top_n: int = 15):
+    days_len = (fecha_fin - fecha_inicio).days + 1
+    prev_fin = fecha_inicio - timedelta(days=1)
+    prev_inicio = prev_fin - timedelta(days=days_len - 1)
+
+    actual_rows = _aggregate_product_sales(fecha_inicio, fecha_fin)
+    anterior_rows = _aggregate_product_sales(prev_inicio, prev_fin)
+
+    anterior_by_id = {r['item_id']: r for r in anterior_rows}
+
+    top_rows = actual_rows[:max(1, int(top_n))]
+    labels = [r['nombre'] for r in top_rows]
+    valores_actual = [float(r['total']) for r in top_rows]
+    valores_anterior = [float((anterior_by_id.get(r['item_id']) or {}).get('total', Decimal('0.00'))) for r in top_rows]
+
+    total_actual = sum(float(r['total']) for r in actual_rows)
+    total_anterior = sum(float(r['total']) for r in anterior_rows)
+    diferencia = total_actual - total_anterior
+    if total_anterior == 0:
+        porcentaje = 0.0 if total_actual == 0 else 100.0
+    else:
+        porcentaje = (diferencia / total_anterior) * 100.0
+
+    return {
+        'labels': labels,
+        'datasets': [
+            {
+                'label': 'Período Actual',
+                'data': valores_actual,
+                'borderColor': '#10b981',
+                'backgroundColor': 'rgba(16, 185, 129, 0.35)',
+            },
+            {
+                'label': 'Período Anterior',
+                'data': valores_anterior,
+                'borderColor': '#6b7280',
+                'backgroundColor': 'rgba(107, 114, 128, 0.25)',
+            },
+        ],
+        'totales': {
+            'actual': total_actual,
+            'anterior': total_anterior,
+            'diferencia': diferencia,
+            'porcentaje_cambio': porcentaje,
+        },
+        'meta': {
+            'prev_inicio': prev_inicio.isoformat(),
+            'prev_fin': prev_fin.isoformat(),
+            'top_n': int(top_n),
+        },
+    }
 
 
 def _render_pdf_with_puppeteer(template_src: str, context: dict, filename: str):
@@ -415,6 +510,104 @@ def api_ventas_descargar(request):
 
             return _render_pdf_with_puppeteer(
                 'reports/reporte_pdf_ventas.html',
+                context,
+                filename=f"{filename_base}.pdf",
+            )
+
+        return JsonResponse({'error': 'Formato inválido. Usa pdf o excel.'}, status=400)
+    except ValueError as e:
+        return JsonResponse({'error': str(e)}, status=400)
+    except Exception:
+        return JsonResponse({'error': 'Ocurrió un error generando la descarga.'}, status=500)
+
+
+@login_required
+def api_ventas_productos_datos(request):
+    try:
+        fecha_inicio = _parse_iso_date(request.GET.get('fecha_inicio', ''))
+        fecha_fin = _parse_iso_date(request.GET.get('fecha_fin', ''))
+        top_n = int(request.GET.get('top', '15') or 15)
+
+        payload = _build_products_payload(fecha_inicio, fecha_fin, top_n=top_n)
+        return JsonResponse(payload)
+    except ValueError as e:
+        return JsonResponse({'error': str(e)}, status=400)
+    except Exception:
+        return JsonResponse({'error': 'Ocurrió un error generando el reporte.'}, status=500)
+
+
+@login_required
+def api_ventas_productos_descargar(request):
+    try:
+        fecha_inicio = _parse_iso_date(request.GET.get('fecha_inicio', ''))
+        fecha_fin = _parse_iso_date(request.GET.get('fecha_fin', ''))
+        formato = request.GET.get('formato', 'excel')
+
+        filename_base = f"ventas_productos_{fecha_inicio.isoformat()}_{fecha_fin.isoformat()}"
+        rows = _aggregate_product_sales(fecha_inicio, fecha_fin)
+
+        if formato in ('excel', 'csv'):
+            response = HttpResponse(content_type='text/csv; charset=utf-8')
+            response['Content-Disposition'] = f'attachment; filename="{filename_base}.csv"'
+            response.write('\ufeff')
+            writer = csv.writer(response)
+            writer.writerow(['Producto', 'Cantidad', 'Total'])
+            for r in rows:
+                writer.writerow([r['nombre'], r['cantidad'], f"{float(r['total']):.2f}"])
+            return response
+
+        if formato == 'pdf':
+            total_general = sum(float(r['total']) for r in rows)
+
+            top_revenue_raw = rows[:5]
+            max_rev = max((float(r['total']) for r in top_revenue_raw), default=0.0) or 1.0
+            top_revenue = []
+            for r in top_revenue_raw:
+                top_revenue.append({
+                    'nombre': r['nombre'],
+                    'total': r['total'],
+                    'pct': (float(r['total']) / max_rev) * 100.0,
+                })
+
+            top_qty_sorted = sorted(rows, key=lambda x: int(x.get('cantidad') or 0), reverse=True)[:5]
+            max_qty = max((int(r.get('cantidad') or 0) for r in top_qty_sorted), default=0) or 1
+            top_qty = []
+            for r in top_qty_sorted:
+                qty = int(r.get('cantidad') or 0)
+                top_qty.append({
+                    'nombre': r['nombre'],
+                    'cantidad': qty,
+                    'pct': (qty / max_qty) * 100.0,
+                })
+
+            top_n = 5
+            top_total = sum(float(r['total']) for r in rows[:top_n])
+            otros_total = max(0.0, total_general - top_total)
+            if total_general <= 0:
+                top_pct = 0.0
+                otros_pct = 0.0
+            else:
+                top_pct = (top_total / total_general) * 100.0
+                otros_pct = 100.0 - top_pct
+
+            context = {
+                'fecha_inicio': fecha_inicio,
+                'fecha_fin': fecha_fin,
+                'rows': rows,
+                'total_general': total_general,
+                'top_revenue': top_revenue,
+                'top_qty': top_qty,
+                'dist': {
+                    'top_n': top_n,
+                    'top_total': top_total,
+                    'otros_total': otros_total,
+                    'top_pct': top_pct,
+                    'otros_pct': otros_pct,
+                },
+            }
+
+            return _render_pdf_with_puppeteer(
+                'reports/reporte_pdf_producto_ventas.html',
                 context,
                 filename=f"{filename_base}.pdf",
             )

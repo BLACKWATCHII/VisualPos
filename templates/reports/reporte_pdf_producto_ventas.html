@@ -1,0 +1,363 @@
+{% load humanize %}
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8" />
+  <title>Reporte Ventas por Productos</title>
+  <style>
+    :root {
+      --text: #111827;
+      --muted: #6b7280;
+      --line: #e5e7eb;
+      --bg: #ffffff;
+      --chip: #f3f4f6;
+      --accent: #10b981;
+      --accent-2: #2563eb;
+    }
+
+    * { box-sizing: border-box; }
+
+    body {
+      margin: 0;
+      padding: 24px;
+      font-family: "Segoe UI", -apple-system, BlinkMacSystemFont, sans-serif;
+      color: var(--text);
+      background: #f9fafb;
+    }
+
+    .page {
+      max-width: 210mm;
+      margin: 0 auto;
+      background: var(--bg);
+      border: 1px solid var(--line);
+      border-radius: 14px;
+      padding: 22px;
+    }
+
+    .header {
+      display: flex;
+      justify-content: space-between;
+      align-items: flex-start;
+      gap: 16px;
+      padding-bottom: 14px;
+      border-bottom: 1px solid var(--line);
+      margin-bottom: 14px;
+    }
+
+    .brand {
+      display: flex;
+      align-items: center;
+      gap: 14px;
+    }
+
+    .brand img {
+      height: 56px;
+      width: auto;
+      object-fit: contain;
+    }
+
+    h1 {
+      margin: 0;
+      font-size: 20px;
+      font-weight: 800;
+      letter-spacing: 0.2px;
+    }
+
+    .meta {
+      margin-top: 6px;
+      color: var(--muted);
+      font-size: 12px;
+      line-height: 1.4;
+    }
+
+    .badge {
+      display: inline-block;
+      padding: 6px 10px;
+      border-radius: 999px;
+      background: var(--chip);
+      color: var(--text);
+      font-size: 12px;
+      font-weight: 700;
+      white-space: nowrap;
+    }
+
+    .grid {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 12px;
+      margin-top: 10px;
+      margin-bottom: 14px;
+    }
+
+    .card {
+      border: 1px solid var(--line);
+      border-radius: 12px;
+      padding: 12px 14px;
+      background: #ffffff;
+    }
+
+    .card-title {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      margin-bottom: 10px;
+    }
+
+    .card-title h2 {
+      margin: 0;
+      font-size: 12px;
+      color: var(--muted);
+      text-transform: uppercase;
+      letter-spacing: 0.4px;
+      font-weight: 800;
+    }
+
+    .chip {
+      display: inline-block;
+      padding: 4px 8px;
+      border-radius: 999px;
+      background: #ecfdf5;
+      color: #065f46;
+      font-weight: 800;
+      font-size: 11px;
+      white-space: nowrap;
+    }
+
+    .rows {
+      display: grid;
+      gap: 8px;
+    }
+
+    .row {
+      display: grid;
+      grid-template-columns: 1fr 110px;
+      gap: 10px;
+      align-items: center;
+    }
+
+    .row .name {
+      font-size: 12px;
+      font-weight: 700;
+      line-height: 1.2;
+    }
+
+    .row .sub {
+      margin-top: 2px;
+      font-size: 11px;
+      color: var(--muted);
+      font-variant-numeric: tabular-nums;
+    }
+
+    .bar {
+      height: 10px;
+      border-radius: 999px;
+      background: #f3f4f6;
+      overflow: hidden;
+      border: 1px solid #eef2f7;
+    }
+
+    .bar > span {
+      display: block;
+      height: 100%;
+      width: 0;
+      background: var(--accent);
+    }
+
+    .bar.blue > span { background: var(--accent-2); }
+
+    .stack {
+      height: 12px;
+      border-radius: 999px;
+      overflow: hidden;
+      border: 1px solid #eef2f7;
+      background: #f3f4f6;
+      display: grid;
+      grid-template-columns: {{ dist.top_pct|floatformat:0 }}% {{ dist.otros_pct|floatformat:0 }}%;
+    }
+
+    .stack .a { background: var(--accent); }
+    .stack .b { background: #d1d5db; }
+
+    .stack-legend {
+      display: flex;
+      gap: 10px;
+      margin-top: 8px;
+      font-size: 11px;
+      color: var(--muted);
+      align-items: center;
+    }
+
+    .dot {
+      width: 10px;
+      height: 10px;
+      border-radius: 999px;
+      display: inline-block;
+    }
+
+    .dot.a { background: var(--accent); }
+    .dot.b { background: #d1d5db; }
+
+    table {
+      width: 100%;
+      border-collapse: collapse;
+      font-size: 12px;
+    }
+
+    thead th {
+      text-align: left;
+      color: var(--muted);
+      font-weight: 800;
+      font-size: 11px;
+      letter-spacing: 0.4px;
+      text-transform: uppercase;
+      padding: 10px 8px;
+      border-bottom: 1px solid var(--line);
+    }
+
+    tbody td {
+      padding: 10px 8px;
+      border-bottom: 1px solid var(--line);
+      vertical-align: top;
+    }
+
+    .right { text-align: right; }
+    .money { font-variant-numeric: tabular-nums; }
+
+    .empty {
+      padding: 32px 0;
+      text-align: center;
+      color: var(--muted);
+      font-size: 13px;
+    }
+
+    .footer {
+      margin-top: 12px;
+      display: flex;
+      justify-content: space-between;
+      color: var(--muted);
+      font-size: 11px;
+    }
+
+    @page {
+      size: A4;
+      margin: 18mm;
+    }
+  </style>
+</head>
+<body>
+  <div class="page">
+    <div class="header">
+      <div>
+        <div class="brand">
+          <img src="https://raw.githubusercontent.com/Kevin25DC/celupro-assets/refs/heads/main/logo%20de%20prueba%20dos.png" alt="CELUPRO CO Logo" />
+          <div>
+            <h1>Reporte de Ventas por Productos</h1>
+            <div class="meta">
+              Rango: {{ fecha_inicio|date:"d/m/Y" }} – {{ fecha_fin|date:"d/m/Y" }}<br />
+              Total general: <span class="money">$ {{ total_general|floatformat:0|intcomma }}</span>
+            </div>
+          </div>
+        </div>
+      </div>
+      <div class="badge">Generado: {% now "d/m/Y H:i" %}</div>
+    </div>
+
+    {% if rows %}
+      <div class="grid">
+        <!-- Gráfica 1: Top por ingresos -->
+        <div class="card">
+          <div class="card-title">
+            <h2>Top productos (ingresos)</h2>
+            <span class="chip">Top {{ top_revenue|length }}</span>
+          </div>
+          <div class="rows">
+            {% for r in top_revenue %}
+              <div class="row">
+                <div>
+                  <div class="name">{{ r.nombre }}</div>
+                  <div class="sub money">$ {{ r.total|floatformat:0|intcomma }}</div>
+                </div>
+                <div class="bar"><span style="width: {{ r.pct|floatformat:0 }}%"></span></div>
+              </div>
+            {% endfor %}
+          </div>
+        </div>
+
+        <!-- Gráfica 2: Top por cantidad -->
+        <div class="card">
+          <div class="card-title">
+            <h2>Top productos (cantidad)</h2>
+            <span class="chip" style="background:#eff6ff; color:#1d4ed8;">Top {{ top_qty|length }}</span>
+          </div>
+          <div class="rows">
+            {% for r in top_qty %}
+              <div class="row">
+                <div>
+                  <div class="name">{{ r.nombre }}</div>
+                  <div class="sub">Unidades: {{ r.cantidad }}</div>
+                </div>
+                <div class="bar blue"><span style="width: {{ r.pct|floatformat:0 }}%"></span></div>
+              </div>
+            {% endfor %}
+          </div>
+        </div>
+
+        <!-- Gráfica 3: Distribución top vs otros -->
+        <div class="card" style="grid-column: 1 / span 2;">
+          <div class="card-title">
+            <h2>Distribución de ingresos</h2>
+            <span class="chip">Top {{ dist.top_n }}</span>
+          </div>
+
+          <div class="stack" title="Top {{ dist.top_n }} vs Otros">
+            <div class="a"></div>
+            <div class="b"></div>
+          </div>
+
+          <div class="stack-legend">
+            <span><span class="dot a"></span> Top {{ dist.top_n }}: <span class="money">$ {{ dist.top_total|floatformat:0|intcomma }}</span> ({{ dist.top_pct|floatformat:0 }}%)</span>
+            <span><span class="dot b"></span> Otros: <span class="money">$ {{ dist.otros_total|floatformat:0|intcomma }}</span> ({{ dist.otros_pct|floatformat:0 }}%)</span>
+          </div>
+        </div>
+      </div>
+
+      <div class="card">
+        <div class="card-title">
+          <h2>Detalle por producto</h2>
+          <span class="chip">{{ rows|length }} productos</span>
+        </div>
+        <table>
+          <thead>
+            <tr>
+              <th>Producto</th>
+              <th class="right">Cantidad</th>
+              <th class="right">Total</th>
+            </tr>
+          </thead>
+          <tbody>
+            {% for r in rows %}
+              <tr>
+                <td>{{ r.nombre }}</td>
+                <td class="right">{{ r.cantidad }}</td>
+                <td class="right money">$ {{ r.total|floatformat:0|intcomma }}</td>
+              </tr>
+            {% endfor %}
+            <tr>
+              <td></td>
+              <td class="right" style="font-weight:800;">TOTAL</td>
+              <td class="right money" style="font-weight:800;">$ {{ total_general|floatformat:0|intcomma }}</td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
+
+      <div class="footer">
+        <div>Reporte generado automáticamente.</div>
+        <div>CELUPRO CO</div>
+      </div>
+    {% else %}
+      <div class="empty">No hay ventas por productos en el rango seleccionado.</div>
+    {% endif %}
+  </div>
+</body>
+</html>
