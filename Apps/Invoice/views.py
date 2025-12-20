@@ -30,6 +30,7 @@ from functools import wraps
 from customer.sendEmail import send_email_with_attachment
 from dateutil.relativedelta import relativedelta
 from .utils import get_total_pagado, get_total_financiar, get_valor_cuota, get_saldo_pendiente
+import threading
 
 def render_to_pdf(template_src, context_dict={}):
     template = get_template(template_src)
@@ -787,96 +788,92 @@ def pay_quota(request, quota_id):
             return_path=True
         )
 
-        send_email_with_attachment(
-            destinatario=quota.invoice.customer.email,
-            asunto=" Confirmación de pago - Recibo incluido",
-            contenido_texto=f"""
-        Hola {quota.invoice.customer.name},
+        # Enviar email en segundo plano para no demorar la respuesta al usuario.
+        destinatario = getattr(quota.invoice.customer, 'email', None)
+        nombre_cliente = getattr(quota.invoice.customer, 'name', '')
+        referencia = f"#{quota.invoice.id}"
+        fecha_hoy = datetime.now().strftime('%d/%m/%Y')
+        attachment_name = f"Recibo_Cuota_{quota.id}.pdf"
 
-        ¡Tu pago ha sido procesado exitosamente! 
+        def _enviar_y_limpiar():
+            try:
+                if destinatario:
+                    send_email_with_attachment(
+                        destinatario=destinatario,
+                        asunto="Confirmación de pago - Recibo incluido",
+                        contenido_texto=(
+                            f"Hola {nombre_cliente},\n\n"
+                            "¡Tu pago ha sido procesado exitosamente!\n\n"
+                            "En este correo encontrarás tu recibo de pago adjunto.\n\n"
+                            f"Detalles del pago:\n"
+                            f"• Estado: Confirmado\n"
+                            f"• Fecha: {fecha_hoy}\n"
+                            f"• Referencia: {referencia}\n\n"
+                            "Gracias por tu confianza.\n"
+                            "Equipo CELUPRO CO"
+                        ),
+                        contenido_html=(
+                            f"<div style='font-family: -apple-system, BlinkMacSystemFont, \"Segoe UI\", Roboto, \"Helvetica Neue\", Arial, sans-serif; max-width: 600px; margin: 0 auto; background-color: #ffffff;'>"
+                            
+                            f"<!-- Header -->"
+                            f"<div style='background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); padding: 40px 30px; text-align: center;'>"
+                            f"<h1 style='color: #ffffff; margin: 0; font-size: 28px; font-weight: 600; letter-spacing: -0.5px;'>CELUPRO CO</h1>"
+                            f"</div>"
+                            
+                            f"<!-- Content -->"
+                            f"<div style='padding: 40px 30px;'>"
+                            f"<h2 style='color: #1a202c; margin: 0 0 24px 0; font-size: 24px; font-weight: 600;'>Pago confirmado ✓</h2>"
+                            
+                            f"<p style='color: #4a5568; font-size: 16px; line-height: 1.6; margin: 0 0 24px 0;'>"
+                            f"Hola <strong style='color: #2d3748;'>{nombre_cliente}</strong>,</p>"
+                            
+                            f"<p style='color: #4a5568; font-size: 16px; line-height: 1.6; margin: 0 0 32px 0;'>"
+                            f"Tu pago ha sido procesado exitosamente. A continuación encontrarás los detalles de tu transacción.</p>"
+                            
+                            f"<!-- Details Card -->"
+                            f"<div style='background-color: #f7fafc; border-left: 4px solid #667eea; padding: 24px; margin: 0 0 32px 0; border-radius: 4px;'>"
+                            f"<table style='width: 100%; border-collapse: collapse;'>"
+                            f"<tr><td style='padding: 8px 0; color: #718096; font-size: 14px;'>Estado</td>"
+                            f"<td style='padding: 8px 0; color: #2d3748; font-size: 14px; text-align: right; font-weight: 600;'>"
+                            f"<span style='background-color: #c6f6d5; color: #22543d; padding: 4px 12px; border-radius: 12px; font-size: 13px;'>Confirmado</span></td></tr>"
+                            f"<tr><td style='padding: 8px 0; color: #718096; font-size: 14px; border-top: 1px solid #e2e8f0;'>Fecha</td>"
+                            f"<td style='padding: 8px 0; color: #2d3748; font-size: 14px; text-align: right; font-weight: 500; border-top: 1px solid #e2e8f0;'>{fecha_hoy}</td></tr>"
+                            f"<tr><td style='padding: 8px 0; color: #718096; font-size: 14px; border-top: 1px solid #e2e8f0;'>Referencia</td>"
+                            f"<td style='padding: 8px 0; color: #2d3748; font-size: 14px; text-align: right; font-weight: 500; border-top: 1px solid #e2e8f0;'>{referencia}</td></tr>"
+                            f"</table>"
+                            f"</div>"
+                            
+                            f"<p style='color: #4a5568; font-size: 14px; line-height: 1.6; margin: 0 0 8px 0;'>"
+                            f"📎 Encontrarás el recibo detallado adjunto a este correo en formato PDF.</p>"
+                            
+                            f"</div>"
+                            
+                            f"<!-- Footer -->"
+                            f"<div style='background-color: #f7fafc; padding: 30px; text-align: center; border-top: 1px solid #e2e8f0;'>"
+                            f"<p style='color: #718096; font-size: 14px; margin: 0 0 8px 0;'>Gracias por tu confianza</p>"
+                            f"<p style='color: #2d3748; font-size: 16px; font-weight: 600; margin: 0;'>CELUPRO CO</p>"
+                            f"</div>"
+                            
+                            f"</div>"
+                        ),
+                        attachment_path=pdf_path,
+                        attachment_name=attachment_name,
+                    )
+            finally:
+                try:
+                    if os.path.exists(pdf_path):
+                        os.remove(pdf_path)
+                except Exception:
+                    pass
 
-        📄 En este correo encontrarás tu recibo de pago adjunto para tus registros.
+        threading.Thread(target=_enviar_y_limpiar, daemon=True).start()
 
-        Detalles del pago:
-        • Estado: Confirmado
-        • Fecha: {datetime.now().strftime('%d/%m/%Y')}
-        • Referencia: #{quota.invoice.id}
-
-        Si tienes alguna pregunta sobre tu pago, no dudes en contactarnos respondiendo a este correo.
-
-        ¡Gracias por tu confianza!
-
-        Saludos cordiales,
-        El equipo de Celupro co
-            """.strip(),
-            contenido_html=f"""
-            <div style="font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; max-width: 600px; margin: 0 auto; background-color: #f8f9fa;">
-                <div style="background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); padding: 30px; text-align: center;">
-                    <h1 style="color: white; margin: 0; font-size: 24px; font-weight: 600;">
-                        ✅ Pago Confirmado
-                    </h1>
-                </div>
-                
-                <div style="padding: 30px; background-color: white; margin: 20px; border-radius: 10px; box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);">
-                    <p style="font-size: 18px; color: #333; margin-bottom: 20px;">
-                        Hola <strong style="color: #667eea;">{quota.invoice.customer.name}</strong>,
-                    </p>
-                    
-                    <div style="background-color: #d4edda; border: 1px solid #c3e6cb; border-radius: 8px; padding: 15px; margin: 20px 0;">
-                        <p style="color: #155724; margin: 0; font-weight: 600;">
-                            🎉 ¡Tu pago ha sido procesado exitosamente!
-                        </p>
-                    </div>
-                    
-                    <p style="color: #666; line-height: 1.6; margin-bottom: 25px;">
-                        📄 En este correo encontrarás tu <strong>recibo de pago adjunto</strong> para tus registros.
-                    </p>
-                    
-                    <div style="background-color: #f8f9fa; border-left: 4px solid #667eea; padding: 20px; margin: 20px 0;">
-                        <h3 style="color: #333; margin: 0 0 15px 0; font-size: 16px;">📋 Detalles del pago</h3>
-                        <table style="width: 100%; border-collapse: collapse;">
-                            <tr>
-                                <td style="padding: 8px 0; color: #666; font-weight: 500;">Estado:</td>
-                                <td style="padding: 8px 0; color: #28a745; font-weight: 600;">✅ Confirmado</td>
-                            </tr>
-                            <tr>
-                                <td style="padding: 8px 0; color: #666; font-weight: 500;">Fecha:</td>
-                                <td style="padding: 8px 0; color: #333;">{datetime.now().strftime('%d/%m/%Y')}</td>
-                            </tr>
-                            <tr>
-                                <td style="padding: 8px 0; color: #666; font-weight: 500;">Referencia:</td>
-                                <td style="padding: 8px 0; color: #333;">#{quota.invoice.id}</td>
-                            </tr>
-                        </table>
-                    </div>
-                    
-                    <div style="background-color: #e3f2fd; border-radius: 8px; padding: 20px; margin: 25px 0;">
-                        <p style="color: #1565c0; margin: 0; font-size: 14px; line-height: 1.5;">
-                            💬 <strong>¿Necesitas ayuda?</strong><br>
-                            Si tienes alguna pregunta sobre tu pago, no dudes en contactarnos respondiendo a este correo.
-                        </p>
-                    </div>
-                    
-                    <p style="color: #333; font-size: 16px; margin-top: 30px;">
-                        ¡Gracias por tu confianza! 🙏
-                    </p>
-                    
-                    <p style="color: #666; font-size: 14px; margin-bottom: 0;">
-                        Saludos cordiales,<br>
-                        <strong style="color: #667eea;">El equipo de BerserkerDev</strong>
-                    </p>
-                </div>
-                
-                <div style="text-align: center; padding: 20px; color: #999; font-size: 12px;">
-                    <p style="margin: 0;">Este correo fue enviado automáticamente. Por favor, no respondas a esta dirección.</p>
-                </div>
-            </div>
-            """,
-            attachment_path=pdf_path,
-            attachment_name="ReciboPagoCuota.pdf"
-        )
-
-        return FileResponse(open(pdf_path, 'rb'), content_type='application/pdf')
+        # Responder con el PDF como descarga inmediata.
+        with open(pdf_path, 'rb') as f:
+            pdf_bytes = f.read()
+        response = HttpResponse(pdf_bytes, content_type='application/pdf')
+        response['Content-Disposition'] = f'attachment; filename="{attachment_name}"'
+        return response
 
     return HttpResponseNotAllowed(['POST'])
 

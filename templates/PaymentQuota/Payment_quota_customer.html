@@ -654,13 +654,30 @@ document.addEventListener('DOMContentLoaded', function () {
       },
       body: new URLSearchParams({ amount: payValue })
     })
-    .then(response => {
+    .then(async (response) => {
       if (!response.ok) throw new Error('Error al procesar el pago');
-      return response.blob();
+      const contentDisposition = response.headers.get('content-disposition');
+      const blob = await response.blob();
+      return { blob, contentDisposition };
     })
-    .then(blob => {
-      const pdfURL = URL.createObjectURL(blob);
-      window.open(pdfURL, '_blank'); // Abrir PDF en nueva pestaña
+    .then(({ blob, contentDisposition }) => {
+      const parseFilename = (cd) => {
+        if (!cd) return null;
+        const match = /filename\*=UTF-8''([^;]+)|filename="?([^";]+)"?/i.exec(cd);
+        const filename = (match && (match[1] || match[2])) ? (match[1] || match[2]) : null;
+        return filename ? decodeURIComponent(filename) : null;
+      };
+
+      const filename = parseFilename(contentDisposition) || 'ReciboPagoCuota.pdf';
+      const url = URL.createObjectURL(blob);
+      const a = document.createElement('a');
+      a.href = url;
+      a.download = filename;
+      document.body.appendChild(a);
+      a.click();
+      a.remove();
+      URL.revokeObjectURL(url);
+
       bootstrap.Modal.getInstance(payModal).hide();
 
       // Mensaje de éxito
