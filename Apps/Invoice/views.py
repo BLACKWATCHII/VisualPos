@@ -24,6 +24,8 @@ from django.http import FileResponse
 import uuid
 import subprocess
 import os
+import re
+import unicodedata
 from functools import wraps
 from customer.sendEmail import send_email_with_attachment
 from dateutil.relativedelta import relativedelta
@@ -218,7 +220,6 @@ def create_invoice_credit(request, form):
 
     with transaction.atomic():
         invoice = form.save(commit=False)
-
         items = request.POST.getlist('item_id')
         quantities = request.POST.getlist('quantity')
         prices = request.POST.getlist('price')
@@ -1072,6 +1073,18 @@ def send_invoice_simple(request, invoice_id):
         
         print("📧 Enviando email...")
         try:
+            def _safe_filename_part(value: str) -> str:
+                value = (value or '').strip()
+                if not value:
+                    return ''
+                value = unicodedata.normalize('NFKD', value).encode('ascii', 'ignore').decode('ascii')
+                value = re.sub(r'[^A-Za-z0-9]+', '_', value).strip('_')
+                return value
+
+            customer_full_name = f"{invoice.customer.name} {invoice.customer.lastname}".strip()
+            safe_customer = _safe_filename_part(customer_full_name) or f"Cliente_{invoice.customer.id}"
+            attachment_name = f"Factura_{invoice.invoice_number}_{safe_customer}.pdf"
+
             email_content = f"""
             <!DOCTYPE html>
             <html lang="es">
@@ -1191,7 +1204,8 @@ def send_invoice_simple(request, invoice_id):
                 asunto=asunto,
                 contenido_texto="Adjuntamos su factura en PDF.",
                 contenido_html=email_content,
-                attachment_path=pdf_path
+                attachment_path=pdf_path,
+                attachment_name=attachment_name
             )
             
             if success:
