@@ -2,303 +2,429 @@
 <!DOCTYPE html>
 <html lang="es">
 <head>
-  <meta charset="UTF-8">
-  <title>Factura Cancelada - {{ invoice.customer }}</title>
-  <style>
-    * {
-      margin: 0;
-      padding: 0;
-      box-sizing: border-box;
-    }
+	<meta charset="UTF-8" />
+	<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+	<title>Comprobante de Anulación - Factura {{ invoice.invoice_number }}</title>
+	<style>
+		* { margin: 0; padding: 0; box-sizing: border-box; }
 
-    body {
-      font-family: 'Arial', sans-serif;
-      background: white;
-      margin: 0;
-      padding: 0;
-      position: relative;
-    }
+		body {
+			font-family: 'Segoe UI', -apple-system, BlinkMacSystemFont, sans-serif;
+			background: #f5f5f5;
+			padding: 20px;
+			color: #1f2937;
+		}
 
-    /* Marca de agua */
-    body::before {
-      content: "ANULADA";
-      position: fixed;
-      top: 50%;
-      left: 50%;
-      transform: translate(-50%, -50%) rotate(-45deg);
-      font-size: 120px;
-      font-weight: bold;
-      color: rgba(255, 0, 0, 0.15);
-      z-index: 1;
-      pointer-events: none;
-      user-select: none;
-      letter-spacing: 8px;
-    }
+		.receipt-wrapper {
+			max-width: 210mm;
+			margin: 0 auto;
+			background: #ffffff;
+			box-shadow: 0 0 20px rgba(0,0,0,0.12);
+			position: relative;
+			overflow: hidden;
+			min-height: 277mm;
+			max-height: 277mm;
+			display: flex;
+			flex-direction: column;
+			page-break-after: always;
+		}
 
-    .invoice-container {
-      width: 100%;
-      padding: 40px;
-      position: relative;
-      z-index: 2;
-    }
+		.decorative-shapes { position: absolute; inset: 0; pointer-events: none; z-index: 0; }
+		.decorative-shapes .circle-top-left {
+			position: absolute; top: 120px; left: -50px;
+			width: 120px; height: 120px; border-radius: 50%;
+			background: radial-gradient(circle at 30% 30%, rgba(239,68,68,0.22), rgba(239,68,68,0.05));
+		}
+		.decorative-shapes .hex-top-right {
+			position: absolute; top: -40px; right: -40px;
+			width: 170px; height: 170px;
+			background: linear-gradient(135deg, rgba(239,68,68,0.35) 0%, rgba(153,27,27,0.25) 100%);
+			clip-path: polygon(50% 0%, 100% 25%, 100% 75%, 50% 100%, 0% 75%, 0% 25%);
+			transform: rotate(18deg);
+		}
+		.decorative-shapes .hex-bottom-right {
+			position: absolute; bottom: -60px; right: -60px;
+			width: 240px; height: 240px;
+			background: linear-gradient(135deg, rgba(239,68,68,0.28) 0%, rgba(185,28,28,0.18) 100%);
+			clip-path: polygon(50% 0%, 100% 25%, 100% 75%, 50% 100%, 0% 75%, 0% 25%);
+			transform: rotate(28deg);
+		}
 
-    .header-section {
-      display: flex;
-      justify-content: space-between;
-      align-items: flex-start;
-      margin-bottom: 20px;
-    }
+		/* Cinta ANULACIÓN */
+		.cancel-ribbon {
+			position: absolute;
+			top: 25px;
+			right: -50px;
+			background: linear-gradient(135deg, #dc2626 0%, #7f1d1d 100%);
+			color: #fff;
+			padding: 9px 58px;
+			transform: rotate(45deg);
+			box-shadow: 0 6px 18px rgba(127, 29, 29, 0.45);
+			font-weight: 800;
+			font-size: 11px;
+			letter-spacing: 2px;
+			text-transform: uppercase;
+			z-index: 10;
+			text-align: center;
+		}
 
-    .company-info {
-      display: flex;
-      align-items: center;
-      gap: 15px;
-    }
+		.receipt-header,
+		.receipt-body,
+		.receipt-footer {
+			position: relative;
+			z-index: 1;
+		}
 
-    .logo {
-      width: 60px;
-      height: 60px;
-      background: #333;
-      color: white;
-      font-size: 24px;
-      font-weight: bold;
-      display: flex;
-      align-items: center;
-      justify-content: center;
-      border-radius: 8px;
-    }
+		.receipt-header {
+			background: linear-gradient(135deg, #fff5f5 0%, #ffffff 100%);
+			padding: 22px 35px 16px 35px;
+			border-bottom: 3px solid #dc2626;
+			display: flex;
+			justify-content: space-between;
+			align-items: center;
+			gap: 16px;
+		}
 
-    .company-details h1 {
-      font-size: 18px;
-      font-weight: bold;
-      color: #333;
-    }
+		.company-logo {
+			width: 240px;
+			display: flex;
+			align-items: center;
+		}
 
-    .company-details p {
-      font-size: 14px;
-      color: #666;
-    }
+		.company-logo img {
+			max-width: 220px;
+			height: auto;
+			display: block;
+		}
 
-    .invoice-date {
-      font-size: 14px;
-      color: #333;
-      font-weight: 500;
-    }
+		.title-box {
+			text-align: right;
+		}
 
-    .invoice-to {
-      font-size: 16px;
-      font-weight: bold;
-      margin-top: 30px;
-    }
+		.title-box h2 {
+			margin: 0;
+			font-size: 22px;
+			font-weight: 800;
+			letter-spacing: 0.2px;
+			color: #111827;
+		}
 
-    .customer-details,
-    .invoice-details {
-      margin-top: 10px;
-      margin-bottom: 30px;
-    }
+		.title-box .subtitle {
+			margin-top: 6px;
+			font-size: 12px;
+			color: #6b7280;
+		}
 
-    .customer-details h3 {
-      font-size: 16px;
-      font-weight: 600;
-    }
+		.title-box .cancel-number {
+			margin-top: 8px;
+			display: inline-block;
+			background: rgba(220, 38, 38, 0.08);
+			border: 1px solid rgba(220, 38, 38, 0.25);
+			color: #991b1b;
+			padding: 6px 10px;
+			border-radius: 10px;
+			font-size: 12px;
+			font-weight: 800;
+		}
 
-    .customer-details p {
-      font-size: 14px;
-      color: #666;
-    }
+		.receipt-body {
+			padding: 22px 35px;
+			flex: 1;
+		}
 
-    .invoice-details {
-      display: flex;
-      gap: 50px;
-      font-size: 14px;
-    }
+		.info-grid {
+			display: grid;
+			grid-template-columns: 1fr 1fr 1fr;
+			gap: 14px;
+			margin-bottom: 18px;
+		}
 
-    .invoice-details .detail-row {
-      margin-bottom: 5px;
-    }
+		.info-card {
+			border: 1px solid #e5e7eb;
+			border-radius: 12px;
+			padding: 12px 14px;
+			background: #ffffff;
+		}
 
-    .items-section {
-      width: 100%;
-      margin-bottom: 30px;
-    }
+		.info-card h3 {
+			font-size: 11px;
+			color: #6b7280;
+			text-transform: uppercase;
+			letter-spacing: 1px;
+			margin-bottom: 6px;
+		}
 
-    table {
-      width: 100%;
-      border-collapse: collapse;
-      font-size: 14px;
-    }
+		.info-card p {
+			font-size: 13px;
+			color: #111827;
+			font-weight: 650;
+			line-height: 1.35;
+			word-break: break-word;
+		}
 
-    th, td {
-      padding: 12px;
-      border: 1px solid #ddd;
-    }
+		.reason-box {
+			margin-top: 10px;
+			border-radius: 12px;
+			padding: 14px 16px;
+			background: #fff1f2;
+			border: 1px solid rgba(220, 38, 38, 0.25);
+		}
 
-    thead {
-      background: #2196f3;
-      color: white;
-    }
+		.reason-box .label {
+			font-size: 11px;
+			text-transform: uppercase;
+			letter-spacing: 1px;
+			color: #991b1b;
+			font-weight: 800;
+			margin-bottom: 6px;
+		}
 
-    tbody tr:nth-child(even) {
-      background: #f9f9f9;
-    }
+		.reason-box .value {
+			font-size: 13px;
+			color: #111827;
+			line-height: 1.45;
+		}
 
-    td:nth-child(2),
-    td:nth-child(3),
-    td:nth-child(4),
-    th:nth-child(2),
-    th:nth-child(3),
-    th:nth-child(4) {
-      text-align: center;
-    }
+		.items-table {
+			width: 100%;
+			border-collapse: collapse;
+			margin-top: 18px;
+			border: 1px solid #e5e7eb;
+			border-radius: 12px;
+			overflow: hidden;
+		}
 
-    .totals-section {
-      width: 100%;
-      margin-bottom: 30px;
-      display: flex;
-      justify-content: flex-end;
-    }
+		.items-table thead th {
+			background: linear-gradient(135deg, #dc2626 0%, #991b1b 100%);
+			color: #ffffff;
+			font-size: 11px;
+			padding: 12px 12px;
+			text-align: left;
+			letter-spacing: 0.6px;
+			text-transform: uppercase;
+			border: none;
+		}
 
-    .totals-content {
-      width: 300px;
-      font-size: 14px;
-    }
+		.items-table tbody td {
+			font-size: 12px;
+			padding: 12px 12px;
+			border-top: 1px solid #e5e7eb;
+			vertical-align: top;
+		}
 
-    .totals-content div {
-      display: flex;
-      justify-content: space-between;
-      padding: 6px 0;
-    }
+		.items-table tbody tr:nth-child(even) {
+			background: #fafafa;
+		}
 
-    .total-row {
-      background: #4caf50;
-      color: white;
-      padding: 12px;
-      border-radius: 6px;
-      font-weight: bold;
-      margin-top: 10px;
-    }
+		.right { text-align: right; }
 
-    .additional-info {
-      display: flex;
-      justify-content: space-between;
-      font-size: 14px;
-      margin-top: 20px;
-    }
+		.totals {
+			margin-top: 18px;
+			display: flex;
+			justify-content: flex-end;
+		}
 
-    .payment-info, .terms-info {
-      width: 48%;
-    }
+		.totals-box {
+			width: 330px;
+			border: 1px solid #e5e7eb;
+			border-radius: 12px;
+			padding: 14px 14px;
+			background: #ffffff;
+		}
 
-    .payment-info p,
-    .terms-info p {
-      margin: 4px 0;
-      color: #444;
-    }
+		.total-row {
+			display: flex;
+			justify-content: space-between;
+			align-items: center;
+			padding: 6px 0;
+			font-size: 12px;
+			border-bottom: 1px dashed #e5e7eb;
+		}
+		.total-row:last-child { border-bottom: 0; }
+		.total-row .label { color: #6b7280; font-weight: 700; }
+		.total-row .value { color: #111827; font-weight: 800; }
+		.total-row.grand .label { color: #991b1b; }
+		.total-row.grand .value { color: #991b1b; font-size: 14px; }
 
-    @media print {
-      html, body {
-        width: 210mm;
-        height: 297mm;
-        margin: 0;
-        padding: 0;
-        background: white;
-      }
+		.receipt-footer {
+			padding: 14px 35px 18px 35px;
+			border-top: 1px solid #e5e7eb;
+			display: flex;
+			justify-content: space-between;
+			gap: 16px;
+			color: #6b7280;
+			font-size: 11px;
+		}
 
-      body::before {
-        position: absolute !important;
-        font-size: 100px !important;
-        color: rgba(255, 0, 0, 0.2) !important;
-      }
+		.footer-block h4 {
+			margin-bottom: 6px;
+			font-size: 11px;
+			color: #111827;
+			text-transform: uppercase;
+			letter-spacing: 1px;
+		}
 
-      .items-section,
-      table,
-      tr,
-      td,
-      th {
-        page-break-inside: avoid;
-      }
+		@media print {
+			body { background: #ffffff; padding: 0; }
+			.receipt-wrapper { box-shadow: none; margin: 0; }
+		}
 
-      .totals-section,
-      .additional-info {
-        page-break-inside: avoid;
-      }
-    }
-  </style>
+		@page { size: A4; margin: 10mm; }
+	</style>
 </head>
+
 <body>
-  <div class="invoice-container">
-    <div class="header-section">
-      <div class="company-info">
-        <div class="logo">BC</div>
-        <div class="company-details">
-          <h1>CELUPRO CO</h1>
-        </div>
-      </div>
-      <div class="invoice-date">{{ invoice.date }}</div>
-    </div>
+	<div class="receipt-wrapper">
+		<div class="decorative-shapes">
+			<div class="hex-top-right"></div>
+			<div class="circle-top-left"></div>
+			<div class="hex-bottom-right"></div>
+		</div>
 
-    <div class="invoice-to">FACTURA PARA:</div>
-    <div class="customer-details">
-      <h3>{{ invoice.customer }}</h3>
-      <p>{{ invoice.customer_address }}</p>
-    </div>
+		<div class="cancel-ribbon">ANULACIÓN</div>
 
-    <div class="invoice-details">
-      <div>
-        <div class="detail-row">Recibo #: <strong>{{ invoice.invoice_number }}</strong></div>
-        <div class="detail-row">Método de pago: <strong>{{ invoice.payment_method }}</strong></div>
-      </div>
-      {% if invoice.Quotas %}
-      <div>
-        <div class="detail-row">Cuotas: <strong>{{ invoice.Quotas }}</strong></div>
-      </div>
-      {% endif %}
-    </div>
+		<div class="receipt-header">
+			<div class="company-logo">
+				<img src="https://raw.githubusercontent.com/Kevin25DC/celupro-assets/refs/heads/main/logo%20de%20prueba%20dos.png" alt="CELUPRO CO Logo">
+			</div>
 
-    <div class="items-section">
-      <table>
-        <thead>
-          <tr>
-            <th>DESCRIPCION DEL PRODUCTO</th>
-            <th>PRECIO UNITARIO</th>
-            <th>CANTIDAD</th>
-            <th>TOTAL</th>
-          </tr>
-        </thead>
-        <tbody>
-          {% for item in invoice.items.all %}
-          <tr>
-            <td>{{ item.item.Name }}</td>
-            <td>${{ item.price|intcomma }}</td>
-            <td>{{ item.quantity }}</td>
-            <td>${{ item.subtotal|intcomma }}</td>
-          </tr>
-          {% endfor %}
-        </tbody>
-      </table>
-    </div>
+			<div class="title-box">
+				<h2>COMPROBANTE DE ANULACIÓN</h2>
+				<div class="subtitle">
+					Factura original No. <strong>#{{ invoice.invoice_number }}</strong>
+				</div>
+				{% if canceled %}
+					<div class="cancel-number">No. Anulación: {{ canceled.cancel_number }}</div>
+				{% else %}
+					<div class="cancel-number">Anulación</div>
+				{% endif %}
+			</div>
+		</div>
 
-    <div class="totals-section">
-      <div class="totals-content">
-        <div><span>SUB TOTAL</span><span>${{ invoice.subtotal|intcomma }}</span></div>
-        <div><span>IMPUESTO</span><span>{{ invoice.tax|intcomma }}</span></div>
-        <div><span>DESCUENTO</span><span>-{{ invoice.discount }}%</span></div>
-        <div class="total-row"><span>TOTAL</span><span>${{ invoice.total|intcomma }}</span></div>
-      </div>
-    </div>
+		<div class="receipt-body">
+			<div class="info-grid">
+				<div class="info-card">
+					<h3>Cliente</h3>
+					<p>
+						{% if invoice.customer %}
+							{{ invoice.customer.name }} {{ invoice.customer.lastname }}
+						{% else %}
+							-
+						{% endif %}
+					</p>
+				</div>
 
-    <div class="additional-info">
-      <div class="payment-info">
-        <p><strong>Método de pago:</strong> {{ invoice.payment_method }}</p>
-        <p>Soporte: +57 3013916533</p>
-      </div>
-      <div class="terms-info">
-        <p><strong>Términos y Condiciones</strong></p>
-        <p>Gracias por tu compra.</p>
-        <p>¿Tienes dudas? Contáctanos para cualquier consulta.</p>
-      </div>
-    </div>
-  </div>
+				<div class="info-card">
+					<h3>Fecha Factura</h3>
+					<p>{{ invoice.date|date:"d/m/Y H:i" }}</p>
+				</div>
+
+				<div class="info-card">
+					<h3>Fecha Anulación</h3>
+					<p>
+						{% if canceled %}
+							{{ canceled.canceled_date|date:"d/m/Y H:i" }}
+						{% else %}
+							-
+						{% endif %}
+					</p>
+				</div>
+
+				<div class="info-card">
+					<h3>Método de Pago</h3>
+					<p>{{ invoice.payment_method }}</p>
+				</div>
+
+				<div class="info-card">
+					<h3>Estado</h3>
+					<p>{{ invoice.status }}</p>
+				</div>
+
+				<div class="info-card">
+					<h3>Responsable</h3>
+					<p>
+						{% if canceled and canceled.user %}
+							{% if canceled.user.get_full_name %}{{ canceled.user.get_full_name|default:canceled.user.username }}{% else %}{{ canceled.user.username }}{% endif %}
+						{% else %}
+							-
+						{% endif %}
+					</p>
+				</div>
+			</div>
+
+			<div class="reason-box">
+				<div class="label">Motivo de anulación</div>
+				<div class="value">
+					{% if canceled and canceled.reason %}
+						{{ canceled.reason }}
+					{% else %}
+						Sin motivo registrado.
+					{% endif %}
+				</div>
+			</div>
+
+			<table class="items-table">
+				<thead>
+					<tr>
+						<th style="width: 70px;">Código</th>
+						<th>Descripción</th>
+						<th class="right" style="width: 80px;">Cant.</th>
+						<th class="right" style="width: 120px;">Precio</th>
+						<th class="right" style="width: 130px;">Subtotal</th>
+					</tr>
+				</thead>
+				<tbody>
+					{% for detail in invoice.items.all %}
+						<tr>
+							<td>{{ detail.item.id }}</td>
+							<td>
+								<div style="font-weight: 800; color: #111827;">{{ detail.item.Name }}</div>
+								{% if detail.item.Referents %}
+									<div style="font-size: 11px; color: #6b7280;">Ref: {{ detail.item.Referents }}</div>
+								{% endif %}
+							</td>
+							<td class="right">{{ detail.quantity }}</td>
+							<td class="right">${{ detail.price|intcomma }}</td>
+							<td class="right">${{ detail.subtotal|intcomma }}</td>
+						</tr>
+					{% empty %}
+						<tr>
+							<td colspan="5" style="text-align:center; padding: 18px; color:#6b7280;">Sin ítems registrados</td>
+						</tr>
+					{% endfor %}
+				</tbody>
+			</table>
+
+			<div class="totals">
+				<div class="totals-box">
+					<div class="total-row">
+						<span class="label">Total original</span>
+						<span class="value">${{ invoice.total|intcomma }}</span>
+					</div>
+					{% if invoice.discount and invoice.discount|floatformat != '0.00' %}
+					<div class="total-row">
+						<span class="label">Descuento</span>
+						<span class="value">{{ invoice.discount }}%</span>
+					</div>
+					{% endif %}
+					<div class="total-row grand">
+						<span class="label">Total anulado</span>
+						<span class="value">${{ invoice.total|intcomma }}</span>
+					</div>
+				</div>
+			</div>
+		</div>
+
+		<div class="receipt-footer">
+			<div class="footer-block">
+				<h4>Nota</h4>
+				<div>Este comprobante certifica la anulación de la factura indicada.</div>
+			</div>
+			<div class="footer-block" style="text-align:right;">
+				<h4>Generado</h4>
+				<div>{{ now|default:'' }}</div>
+			</div>
+		</div>
+	</div>
 </body>
 </html>
-<script>

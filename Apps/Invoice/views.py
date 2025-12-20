@@ -276,7 +276,8 @@ def create_invoice_credit(request, form):
         # =============================
         # TOTAL A FINANCIAR (REAL)
         # =============================
-        total_financiar = total - (initial_quota_value + delivery_value)
+        # El domicilio se cobra aparte (pagado) y NO reduce el valor financiado.
+        total_financiar = total - initial_quota_value
 
         if total_financiar < 0:
             total_financiar = Decimal('0.00')
@@ -480,29 +481,21 @@ def invoices_report(request):
     for invoice in invoices:
         customer = invoice.customer
 
-        # TOTAL FIJO DE LA FACTURA
         total_factura = float(invoice.total or 0)
 
-        # ===============================
-        # CALCULAR MONTO PAGADO
-        # ===============================
-        cuota_inicial = float(invoice.initial_fee or 0)
-        domicilio = float(invoice.delivery_amount or 0)
-
-        cuotas_pagadas = sum(
-            float(q.amount) for q in invoice.payment_quotas.filter(is_paid=True)
-        )
-
-        total_pagado_factura = round(
-            cuota_inicial + domicilio + cuotas_pagadas, 2
-        )
+        if invoice.payment_method == 'Credito':
+            total_pagado_factura = round(
+                sum(float(q.amount) for q in invoice.payment_quotas.filter(is_paid=True)),
+                2
+            )
+        else:
+            # Para contado, si está marcada como pagada, consideramos el total como pagado.
+            total_pagado_factura = total_factura if invoice.status == 'Pagada' else 0.0
 
         # ===============================
         # SALDO PENDIENTE
         # ===============================
-        saldo_pendiente = round(
-            total_factura - total_pagado_factura, 2
-        )
+        saldo_pendiente = round(total_factura - total_pagado_factura, 2)
 
         # ===============================
         # VALIDAR ESTADO
@@ -534,8 +527,8 @@ def invoices_report(request):
             'quotas': invoice.quotas,
             'has_unpaid_quotas': has_unpaid_quotas,
 
-            'delivery_amount': domicilio,
-            'initial_fee': cuota_inicial,
+            'delivery_amount': float(invoice.delivery_amount or 0),
+            'initial_fee': float(invoice.initial_fee or 0),
         })
 
     return render(request, 'Invoice/Report_invoice.html', {
@@ -981,11 +974,30 @@ def cancel_invoice_ajax(request, invoice_id):
             item.save()
 
         
+        # El frontend envía el motivo como JSON (application/json)
+        reason = ''
+        try:
+            content_type = (request.headers.get('Content-Type') or '').lower()
+        except Exception:
+            content_type = ''
+
+        if 'application/json' in content_type:
+            try:
+                payload = json.loads((request.body or b'{}').decode('utf-8'))
+                reason = (payload.get('reason') or '').strip()
+            except Exception:
+                reason = ''
+        else:
+            reason = (request.POST.get('reason', '') or '').strip()
+
+        if not reason:
+            reason = 'Cancelación manual desde el sistema'
+
         canceled = CanceledInvoice.objects.create(
             original_invoice=invoice,
             transaction_type=transaction_type,
             cancel_number=cancel_number,
-            reason=request.POST.get('reason', ''),
+            reason=reason,
             user=request.user
         )
 
@@ -994,6 +1006,7 @@ def cancel_invoice_ajax(request, invoice_id):
         html_path = os.path.join(settings.BASE_DIR, "tmp", f"{html_id}.html")
         pdf_path = os.path.join(settings.MEDIA_ROOT, f"factura_cancelada_{invoice.id}.pdf")
         os.makedirs(os.path.dirname(html_path), exist_ok=True)
+        os.makedirs(settings.MEDIA_ROOT, exist_ok=True)
 
         
         html_content = render_to_string('invoice/receipt_pdf_cancel.html', {
@@ -1016,8 +1029,12 @@ def cancel_invoice_ajax(request, invoice_id):
             print("STDERR:", result.stderr)
             return JsonResponse({'success': False, 'message': 'Error generando PDF'})
 
+        if not os.path.exists(pdf_path):
+            return JsonResponse({'success': False, 'message': 'El PDF no se generó correctamente.'})
+
         
-        os.remove(html_path)
+        if os.path.exists(html_path):
+            os.remove(html_path)
 
         return JsonResponse({
             'success': True,

@@ -1002,9 +1002,9 @@
           {% endif %}
 
           {% if invoice.delivery_amount and invoice.delivery_amount > 1 %}
-          <div class="total-row deduction">
+          <div class="total-row">
             <span class="label">Domicilio (Pagado)</span>
-            <span class="value">-${{ invoice.delivery_amount|intcomma }}</span>
+            <span class="value">${{ invoice.delivery_amount|intcomma }}</span>
           </div>
           {% endif %}
 

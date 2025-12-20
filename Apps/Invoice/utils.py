@@ -24,7 +24,8 @@ def _get_items_subtotal(invoice) -> Decimal:
 
 def get_total_financiar(invoice):
     # Para crédito: el “total a financiar” se calcula sobre el subtotal de productos
-    # (sin domicilio), y se descuenta lo pagado de contado (cuota inicial + domicilio).
+    # (sin domicilio), y se descuenta únicamente la cuota inicial.
+    # El domicilio se cobra aparte (pagado) y NO debe restarse del valor financiado.
     subtotal_productos = _get_items_subtotal(invoice)
 
     discount_percent = invoice.discount or Decimal('0.00')
@@ -37,8 +38,7 @@ def get_total_financiar(invoice):
         subtotal_productos = subtotal_productos - (subtotal_productos * (discount_percent / Decimal('100')))
 
     cuota_inicial = invoice.initial_fee or Decimal('0.00')
-    domicilio = invoice.delivery_amount or Decimal('0.00')
-    total_financiar = subtotal_productos - (cuota_inicial + domicilio)
+    total_financiar = subtotal_productos - cuota_inicial
 
     if total_financiar < 0:
         total_financiar = Decimal('0.00')
@@ -60,4 +60,19 @@ def get_total_pagado(invoice):
 
 
 def get_saldo_pendiente(invoice):
-    return invoice.total - get_total_pagado(invoice)
+    # Para crédito, el saldo pendiente debe reflejar SOLO lo financiado (cuotas > 0),
+    # sin domicilio y sin cuota inicial (porque no hacen parte del capital financiado).
+    try:
+        quotas = invoice.payment_quotas.filter(number__gt=0)
+    except Exception:
+        return Decimal('0.00')
+
+    saldo = Decimal('0.00')
+    for q in quotas:
+        try:
+            saldo += (q.balance if hasattr(q, 'balance') else Decimal(str(q.amount or 0)))
+        except Exception:
+            continue
+    if saldo < 0:
+        saldo = Decimal('0.00')
+    return saldo
