@@ -1,0 +1,248 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Reporte de ajustes de inventario</title>
+    <style>
+        * { box-sizing: border-box; }
+        body {
+            font-family: Arial, Helvetica, sans-serif;
+            color: #111827;
+            margin: 0;
+            padding: 24px;
+            background: #ffffff;
+        }
+        .page {
+            width: 100%;
+            max-width: 980px;
+            margin: 0 auto;
+        }
+        .header {
+            display: flex;
+            align-items: flex-start;
+            justify-content: space-between;
+            gap: 16px;
+            margin-bottom: 14px;
+        }
+        .logo {
+            width: 160px;
+            height: auto;
+        }
+        .company {
+            text-align: right;
+        }
+        .company h1 {
+            margin: 0;
+            font-size: 18px;
+            letter-spacing: 0.2px;
+        }
+        .company .meta {
+            margin-top: 4px;
+            font-size: 11px;
+            color: #6b7280;
+            line-height: 1.4;
+        }
+        .titlebar {
+            background: #1f2937;
+            color: #fff;
+            font-weight: 700;
+            text-align: center;
+            padding: 10px 12px;
+            border-radius: 6px;
+            margin: 14px 0 16px;
+            letter-spacing: 0.6px;
+        }
+        .grid {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 10px 18px;
+            margin-bottom: 12px;
+        }
+        .field {
+            display: flex;
+            gap: 10px;
+            font-size: 12px;
+            line-height: 1.4;
+            padding: 6px 0;
+            border-bottom: 1px solid #e5e7eb;
+        }
+        .field .label {
+            min-width: 140px;
+            color: #374151;
+            font-weight: 700;
+        }
+        .field .value {
+            color: #111827;
+        }
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            margin-top: 10px;
+        }
+        thead th {
+            background: #1f2937;
+            color: #fff;
+            font-size: 11px;
+            text-align: left;
+            padding: 10px 10px;
+        }
+        tbody td {
+            font-size: 11px;
+            padding: 10px 10px;
+            border-bottom: 1px solid #e5e7eb;
+            vertical-align: top;
+        }
+        .pill {
+            display: inline-block;
+            padding: 2px 8px;
+            border-radius: 999px;
+            font-size: 10px;
+            font-weight: 700;
+        }
+        .pill-in {
+            background: #dcfce7;
+            color: #166534;
+        }
+        .pill-out {
+            background: #fee2e2;
+            color: #991b1b;
+        }
+        .summary {
+            background: #f3f4f6;
+            border-radius: 8px;
+            padding: 12px;
+            margin-top: 14px;
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 10px 18px;
+            font-size: 12px;
+        }
+        .summary .row {
+            display: flex;
+            justify-content: space-between;
+            gap: 10px;
+            padding: 4px 0;
+            border-bottom: 1px solid #e5e7eb;
+        }
+        .summary .row:last-child { border-bottom: 0; }
+        .footer {
+            margin-top: 22px;
+            font-size: 10px;
+            color: #6b7280;
+            text-align: center;
+        }
+        @page { margin: 12mm; }
+    </style>
+</head>
+<body>
+    <div class="page">
+        <div class="header">
+            <div>
+                <img class="logo" src="{{ logo_url }}" alt="Logo">
+            </div>
+            <div class="company">
+                <h1>{{ company_name }}</h1>
+                <div class="meta">
+                    Reporte de ajustes de inventario por fechas<br>
+                    Generado por: {{ generado_por }}<br>
+                    Generado el: {{ generado_en|date:"d/m/Y H:i" }}
+                </div>
+            </div>
+        </div>
+
+        <div class="titlebar">REPORTE DE AJUSTES DE INVENTARIO</div>
+
+        <div class="grid">
+            <div class="field">
+                <div class="label">Rango de fechas:</div>
+                <div class="value">{{ fecha_inicio }} a {{ fecha_fin }}</div>
+            </div>
+            <div class="field">
+                <div class="label">Total registros:</div>
+                <div class="value">{{ total_registros }}</div>
+            </div>
+        </div>
+
+        <table>
+            <thead>
+                <tr>
+                    <th style="width: 140px;">Fecha</th>
+                    <th style="width: 120px;">Código</th>
+                    <th>Producto</th>
+                    <th style="width: 90px;">Tipo</th>
+                    <th style="width: 80px; text-align:right;">Cant.</th>
+                    <th style="width: 110px; text-align:right;">Stock antes</th>
+                    <th style="width: 110px; text-align:right;">Stock después</th>
+                    <th>Motivo</th>
+                    <th style="width: 140px;">Usuario</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for adj in ajustes %}
+                    {% with h=adj.history.all.0 %}
+                    <tr>
+                        <td>{{ adj.created_at|date:"d/m/Y H:i" }}</td>
+                        <td>AJI-{{ adj.created_at|date:"Y" }}-{{ adj.id|stringformat:"04d" }}</td>
+                        <td><strong>{{ adj.item.Name }}</strong></td>
+                        <td>
+                            {% if adj.adjustment_type == 'IN' %}
+                                <span class="pill pill-in">Entrada</span>
+                            {% else %}
+                                <span class="pill pill-out">Salida</span>
+                            {% endif %}
+                        </td>
+                        <td style="text-align:right; font-weight:700;">
+                            {% if adj.adjustment_type == 'IN' %}+{{ adj.quantity }}{% else %}-{{ adj.quantity }}{% endif %}
+                        </td>
+                        <td style="text-align:right;">{% if h %}{{ h.stock_before }}{% else %}-{% endif %}</td>
+                        <td style="text-align:right;">{% if h %}{{ h.stock_after }}{% else %}-{% endif %}</td>
+                        <td>{{ adj.reason|default:"" }}</td>
+                        <td>
+                            {% if adj.user.get_full_name %}
+                                {% if adj.user.get_full_name|length > 0 %}
+                                    {{ adj.user.get_full_name }}
+                                {% else %}
+                                    {{ adj.user.username }}
+                                {% endif %}
+                            {% else %}
+                                {{ adj.user.username }}
+                            {% endif %}
+                        </td>
+                    </tr>
+                    {% endwith %}
+                {% empty %}
+                    <tr>
+                        <td colspan="9" style="text-align:center; padding: 18px; color:#6b7280;">
+                            No hay ajustes en el rango seleccionado.
+                        </td>
+                    </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+
+        <div class="summary">
+            <div class="row">
+                <span><strong>Unidades de entrada</strong></span>
+                <span>+{{ total_entradas }}</span>
+            </div>
+            <div class="row">
+                <span><strong>Unidades de salida</strong></span>
+                <span>-{{ total_salidas }}</span>
+            </div>
+            <div class="row">
+                <span><strong>Neto</strong></span>
+                <span style="font-weight:700;">{{ neto }}</span>
+            </div>
+            <div class="row">
+                <span><strong>Registros</strong></span>
+                <span>{{ total_registros }}</span>
+            </div>
+        </div>
+
+        <div class="footer">
+            Este documento es generado automáticamente por el sistema.
+        </div>
+    </div>
+</body>
+</html>

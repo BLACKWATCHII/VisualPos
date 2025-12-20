@@ -4,14 +4,20 @@ from django.contrib.auth.decorators import login_required
 from django.core.paginator import Paginator
 from django.conf import settings
 from django.template.loader import render_to_string
-from django.http import FileResponse
+from django.http import FileResponse, HttpResponse
 from django.urls import reverse
+from django.utils import timezone
 from .models import InventoryAdjustment, InventoryHistory
 from item.models import Item
 
+from datetime import datetime, time
+from io import BytesIO
 import os
 import subprocess
 import uuid
+
+from openpyxl import Workbook
+from openpyxl.styles import Font, Alignment
 
 @login_required
 def inventory_adjustment_create(request):
@@ -110,6 +116,177 @@ def _render_pdf_inline_with_puppeteer(template_src: str, context: dict, filename
     response = FileResponse(open(pdf_path, 'rb'), content_type='application/pdf')
     disposition = 'attachment' if as_attachment else 'inline'
     response['Content-Disposition'] = f'{disposition}; filename="{filename}"'
+    return response
+
+
+def _obtener_rango_fechas_desde_request(request):
+    """Devuelve (inicio_dt, fin_dt, inicio_str, fin_str) o None si falta/está mal."""
+    fecha_inicio = (request.GET.get('fecha_inicio') or '').strip()
+    fecha_fin = (request.GET.get('fecha_fin') or '').strip()
+
+    if not fecha_inicio or not fecha_fin:
+        return None
+
+    try:
+        inicio_date = datetime.strptime(fecha_inicio, '%Y-%m-%d').date()
+        fin_date = datetime.strptime(fecha_fin, '%Y-%m-%d').date()
+    except ValueError:
+        return None
+
+    if fin_date < inicio_date:
+        return None
+
+    tz = timezone.get_current_timezone()
+    inicio_dt = timezone.make_aware(datetime.combine(inicio_date, time.min), tz)
+    fin_dt = timezone.make_aware(datetime.combine(fin_date, time.max), tz)
+    return inicio_dt, fin_dt, fecha_inicio, fecha_fin
+
+
+def _obtener_ajustes_en_rango(inicio_dt, fin_dt):
+    return (
+        InventoryAdjustment.objects
+        .select_related('item', 'user')
+        .prefetch_related('history')
+        .filter(created_at__range=(inicio_dt, fin_dt))
+        .order_by('created_at', 'id')
+    )
+
+
+@login_required
+def exportar_ajustes_inventario_pdf(request):
+    rango = _obtener_rango_fechas_desde_request(request)
+    if not rango:
+        messages.error(request, "Debe seleccionar un rango de fechas válido (inicio y fin).")
+        return redirect('inventory_adjustment_create')
+
+    inicio_dt, fin_dt, fecha_inicio, fecha_fin = rango
+    ajustes = list(_obtener_ajustes_en_rango(inicio_dt, fin_dt))
+
+    total_entradas = sum(a.quantity for a in ajustes if a.adjustment_type == 'IN')
+    total_salidas = sum(a.quantity for a in ajustes if a.adjustment_type == 'OUT')
+
+    context = {
+        'logo_url': 'https://raw.githubusercontent.com/Kevin25DC/celupro-assets/refs/heads/main/logo%20de%20prueba%20dos.png',
+        'company_name': 'CELUPRO CO',
+        'fecha_inicio': fecha_inicio,
+        'fecha_fin': fecha_fin,
+        'ajustes': ajustes,
+        'total_registros': len(ajustes),
+        'total_entradas': total_entradas,
+        'total_salidas': total_salidas,
+        'neto': total_entradas - total_salidas,
+        'generado_por': (
+            request.user.get_full_name().strip()
+            if hasattr(request.user, 'get_full_name') and request.user.get_full_name().strip()
+            else request.user.username
+        ),
+        'generado_en': timezone.localtime(timezone.now()),
+    }
+
+    filename = f"Reporte_Ajustes_Inventario_{fecha_inicio}_a_{fecha_fin}.pdf"
+    return _render_pdf_inline_with_puppeteer(
+        'reports/reportsInventory/reporte_ajustes_inventario_rango.html',
+        context,
+        filename=filename,
+        as_attachment=True,
+    )
+
+
+@login_required
+def exportar_ajustes_inventario_excel(request):
+    rango = _obtener_rango_fechas_desde_request(request)
+    if not rango:
+        messages.error(request, "Debe seleccionar un rango de fechas válido (inicio y fin).")
+        return redirect('inventory_adjustment_create')
+
+    inicio_dt, fin_dt, fecha_inicio, fecha_fin = rango
+    ajustes = list(_obtener_ajustes_en_rango(inicio_dt, fin_dt))
+
+    wb = Workbook()
+    ws = wb.active
+    ws.title = "Ajustes"
+
+    titulo = f"Reporte de ajustes de inventario ({fecha_inicio} a {fecha_fin})"
+    ws.merge_cells('A1:I1')
+    c = ws['A1']
+    c.value = titulo
+    c.font = Font(bold=True, size=14)
+    c.alignment = Alignment(horizontal='center')
+
+    headers = [
+        'Fecha',
+        'Código',
+        'Producto',
+        'Tipo',
+        'Cantidad',
+        'Motivo',
+        'Usuario',
+        'Stock antes',
+        'Stock después',
+    ]
+    ws.append([])
+    ws.append(headers)
+    header_row = ws[3]
+    for cell in header_row:
+        cell.font = Font(bold=True)
+
+    total_entradas = 0
+    total_salidas = 0
+
+    for adj in ajustes:
+        h = None
+        try:
+            h = adj.history.all()[0]
+        except Exception:
+            h = None
+
+        tipo = 'Entrada' if adj.adjustment_type == 'IN' else 'Salida'
+        cantidad = adj.quantity
+        if adj.adjustment_type == 'IN':
+            total_entradas += cantidad
+        else:
+            total_salidas += cantidad
+
+        usuario = (
+            adj.user.get_full_name().strip()
+            if hasattr(adj.user, 'get_full_name') and adj.user.get_full_name().strip()
+            else adj.user.username
+        )
+
+        codigo = f"AJI-{timezone.localtime(adj.created_at).strftime('%Y')}-{adj.id:04d}"
+        ws.append([
+            timezone.localtime(adj.created_at).strftime('%d/%m/%Y %H:%M'),
+            codigo,
+            getattr(adj.item, 'Name', ''),
+            tipo,
+            cantidad,
+            adj.reason or '',
+            usuario,
+            h.stock_before if h else '',
+            h.stock_after if h else '',
+        ])
+
+    ws.append([])
+    ws.append(['Totales', '', '', '', '', '', '', '', ''])
+    ws.append(['Entradas (unidades)', total_entradas, '', '', '', '', '', '', ''])
+    ws.append(['Salidas (unidades)', total_salidas, '', '', '', '', '', '', ''])
+    ws.append(['Neto (entradas - salidas)', total_entradas - total_salidas, '', '', '', '', '', '', ''])
+
+    # Ajuste simple de ancho de columnas
+    widths = [18, 18, 30, 12, 10, 30, 20, 12, 12]
+    for i, w in enumerate(widths, start=1):
+        ws.column_dimensions[chr(64 + i)].width = w
+
+    output = BytesIO()
+    wb.save(output)
+    output.seek(0)
+
+    filename = f"Reporte_Ajustes_Inventario_{fecha_inicio}_a_{fecha_fin}.xlsx"
+    response = HttpResponse(
+        output.getvalue(),
+        content_type='application/vnd.openxmlformats-officedocument.spreadsheetml.sheet'
+    )
+    response['Content-Disposition'] = f'attachment; filename="{filename}"'
     return response
 
 
