@@ -850,7 +850,7 @@ def pay_quota(request, quota_id):
                             
                             f"<!-- Footer -->"
                             f"<div style='background-color: #f7fafc; padding: 30px; text-align: center; border-top: 1px solid #e2e8f0;'>"
-                            f"<p style='color: #718096; font-size: 14px; margin: 0 0 8px 0;'>Gracias por tu confianza</p>"
+                            f"<p style='color: #718096; font-size: 14px; margin: 0 0 8px 0;'>Gracias por tu confianza, si tienes alguna duda escríbenos.</p>"
                             f"<p style='color: #2d3748; font-size: 16px; font-weight: 600; margin: 0;'>CELUPRO CO</p>"
                             f"</div>"
                             
