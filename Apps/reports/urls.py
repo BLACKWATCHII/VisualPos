@@ -14,4 +14,9 @@ urlpatterns = [
     # API productos
     path('api/ventas-productos/datos/', views.api_ventas_productos_datos, name='api_ventas_productos_datos'),
     path('api/ventas-productos/descargar/', views.api_ventas_productos_descargar, name='api_ventas_productos_descargar'),
+
+    # Estado de cuenta clientes
+    path('estado-cuenta-clientes/', views.estado_cuenta_clientes, name='estado_cuenta_clientes'),
+    path('api/estado-cuenta-clientes/datos/', views.api_estado_cuenta_clientes_datos, name='api_estado_cuenta_clientes_datos'),
+    path('api/estado-cuenta-clientes/descargar/', views.api_estado_cuenta_clientes_descargar, name='api_estado_cuenta_clientes_descargar'),
 ]

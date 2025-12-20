@@ -5,7 +5,7 @@ from item.models import Item
 from customer.models import Customer
 from decimal import Decimal
 import json
-from django.db.models import Sum
+from django.db.models import Sum, Q
 from django.contrib.auth.decorators import login_required
 from django.http import HttpResponse, HttpResponseBadRequest, HttpResponseNotAllowed, JsonResponse
 from django.template.loader import get_template
@@ -30,6 +30,8 @@ from functools import wraps
 from customer.sendEmail import send_email_with_attachment
 from dateutil.relativedelta import relativedelta
 from .utils import get_total_pagado, get_total_financiar, get_valor_cuota, get_saldo_pendiente
+from django.views.decorators.http import require_GET
+from django.db.models.functions import TruncDate
 import threading
 
 def render_to_pdf(template_src, context_dict={}):
@@ -899,10 +901,118 @@ def download_quota_receipt(request, quota_id):
 
 @login_required
 def payment_history(request, customer_id=None):
-    qs = Early_Payment.objects.select_related('quota__invoice__customer')
-    if customer_id:
-        qs = qs.filter(quota__invoice__customer__id=customer_id)
-    return render(request, 'PaymentQuota/History.html', {'payments': qs})
+    customers = Customer.objects.all().order_by('name', 'lastname')
+
+    # Mantener compatibilidad: si llega customer_id por URL (legacy), se preselecciona.
+    selected_customer_id = customer_id or request.GET.get('customer_id')
+    selected_invoice_id = request.GET.get('invoice_id')
+
+    context = {
+        'customers': customers,
+        'selected_customer_id': int(selected_customer_id) if selected_customer_id else None,
+        'selected_invoice_id': int(selected_invoice_id) if selected_invoice_id else None,
+    }
+    return render(request, 'PaymentQuota/History.html', context)
+
+
+@login_required
+@require_GET
+def payment_history_invoices(request, customer_id):
+    # Solo facturas a crédito: en este sistema, la fuente de verdad es que existan cuotas
+    # (PaymentQuota) asociadas a la factura.
+    # Además mantenemos un fallback por si hay facturas a crédito sin cuotas creadas.
+    credit_method = (
+        Q(payment_method__iexact='credit') |
+        Q(payment_method__iexact='credito') |
+        Q(payment_method__iexact='crédito') |
+        Q(payment_method__iexact='Credito')
+    )
+
+    invoices = (
+        Invoice.objects
+        .filter(customer_id=customer_id)
+        .filter(
+            Q(payment_quotas__isnull=False) |
+            (credit_method & Q(quotas__gt=0))
+        )
+        .distinct()
+        .only('id', 'invoice_number', 'date', 'payment_method')
+        .order_by('-date')
+    )
+
+    data = {
+        'invoices': [
+            {
+                'id': inv.id,
+                'invoice_number': inv.invoice_number,
+                'date': inv.date.strftime('%Y-%m-%d'),
+                'payment_method': inv.payment_method,
+            }
+            for inv in invoices
+        ]
+    }
+    return JsonResponse(data)
+
+
+@login_required
+@require_GET
+def payment_history_data(request):
+    customer_id = request.GET.get('customer_id')
+    invoice_id = request.GET.get('invoice_id')
+
+    if not customer_id:
+        return JsonResponse({'error': 'customer_id es requerido'}, status=400)
+
+    payments_qs = Early_Payment.objects.select_related(
+        'quota',
+        'quota__invoice',
+        'quota__invoice__customer'
+    ).filter(quota__invoice__customer_id=customer_id)
+
+    if invoice_id:
+        payments_qs = payments_qs.filter(quota__invoice_id=invoice_id)
+
+    payments_qs = payments_qs.order_by('-date')
+
+    payments = []
+    total_paid = Decimal('0.00')
+    for p in payments_qs:
+        customer = p.quota.invoice.customer
+        total_paid += p.amount
+        payments.append({
+            'customer': f"{customer.name} {customer.lastname}",
+            'invoice_number': p.quota.invoice.invoice_number,
+            'quota_number': p.quota.number,
+            'amount': float(p.amount),
+            'date': p.date.strftime('%Y-%m-%d %H:%M'),
+        })
+
+    # Serie para gráfica: total pagado por día
+    series_qs = (
+        payments_qs
+        .annotate(day=TruncDate('date'))
+        .values('day')
+        .annotate(total=Sum('amount'))
+        .order_by('day')
+    )
+
+    labels = []
+    values = []
+    for row in series_qs:
+        labels.append(row['day'].strftime('%Y-%m-%d') if row['day'] else '')
+        values.append(float(row['total'] or 0))
+
+    return JsonResponse({
+        'payments': payments,
+        'chart': {
+            'labels': labels,
+            'values': values,
+        },
+        'summary': {
+            'total_paid': float(total_paid),
+            'count_payments': len(payments),
+        }
+    })
 
 def cancel_invoice_view(request):
     invoices = Invoice.objects.select_related('customer').all()
