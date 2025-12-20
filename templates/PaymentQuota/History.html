@@ -2,148 +2,398 @@
 
 {% block content %}
 <style>
-    .dashboard-container {
-        display: flex;
-        gap: 2rem;
-        padding: 2rem;
-        font-family: 'Segoe UI', sans-serif;
+    .history-page {
         margin-top: 7rem;
     }
 
-    .table-wrapper {
-        flex: 2;
+    .history-hero {
+        padding: 1.75rem 0 1rem 0;
     }
 
-    .payments-table {
-        width: 100%;
-        border-collapse: collapse;
-        border-radius: 12px;
-        overflow: hidden;
-        background-color: #fff;
-        box-shadow: 0 4px 8px rgba(0, 0, 0, 0.06);
+    .history-subtitle {
+        color: var(--bs-secondary-color);
     }
 
-    .payments-table thead {
-        background-color: #f0f4f8;
+    .history-card {
+        border: 0;
+        box-shadow: 0 0.5rem 1.25rem rgba(0, 0, 0, 0.08);
+        border-radius: 1rem;
     }
 
-    .payments-table th, .payments-table td {
-        padding: 1rem;
-        text-align: left;
-    }
-
-    .payments-table tbody tr:hover {
-        background-color: #e9f5ef;
-        cursor: pointer;
-    }
-
-    .highlight-row {
-        background-color: #c7f5d9 !important;
-    }
-
-    .table-actions {
+    .history-empty {
+        min-height: 320px;
         display: flex;
-        justify-content: space-between;
         align-items: center;
+        justify-content: center;
+        flex-direction: column;
+        text-align: center;
+        padding: 3rem 1.5rem;
+        color: var(--bs-secondary-color);
+    }
+
+    .history-empty .icon {
+        width: 72px;
+        height: 72px;
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
+        border-radius: 999px;
+        background: rgba(var(--bs-success-rgb), 0.12);
+        color: var(--bs-success);
         margin-bottom: 1rem;
     }
 
-    .btn-green {
-        background-color: #28a745;
-        color: white;
-        padding: 0.5rem 1rem;
-        border-radius: 8px;
-        text-decoration: none;
-        font-weight: bold;
+    .table thead th {
+        white-space: nowrap;
     }
 
-    .btn-green:hover {
-        background-color: #218838;
+    .select2-container .select2-selection--single {
+        height: 38px;
+        border-color: var(--bs-border-color);
     }
-
-    .search-bar input {
-        padding: 0.5rem 1rem;
-        border: 1px solid #ccc;
-        border-radius: 8px;
+    .select2-container--default .select2-selection--single .select2-selection__rendered {
+        line-height: 38px;
     }
-
-    .side-panel {
-        flex: 1;
-        background-color: #f8f9fa;
-        border-radius: 12px;
-        padding: 1.5rem;
-        box-shadow: 0 4px 8px rgba(0, 0, 0, 0.05);
-        transition: all 0.3s ease;
-    }
-
-    .side-panel h3 {
-        margin-top: 0;
-        margin-bottom: 1rem;
-        color: #28a745;
-    }
-
-    .detail-item {
-        margin-bottom: 0.75rem;
-    }
-
-    .detail-item span {
-        font-weight: bold;
-        color: #333;
+    .select2-container--default .select2-selection--single .select2-selection__arrow {
+        height: 38px;
     }
 </style>
 
-<div class="dashboard-container">
-    <div class="table-wrapper">
-        <div class="table-actions">
-            <h2>Historial de Pagos</h2>
-            <div class="search-bar">
-                <input type="text" placeholder="Buscar cliente...">
+<div
+    class="container history-page"
+    id="historyPage"
+    data-invoices-url-template="{% url 'payment_history_invoices' 0 %}"
+    data-history-data-url="{% url 'payment_history_data' %}"
+    data-selected-invoice-id="{% if selected_invoice_id %}{{ selected_invoice_id }}{% endif %}"
+>
+    <div class="history-hero">
+        <h1 class="mb-1">Historial de Pagos</h1>
+        <div class="history-subtitle">Consulta y analiza los pagos de tus clientes</div>
+    </div>
+
+    <div class="card history-card mb-4">
+        <div class="card-body p-4">
+            <div class="d-flex align-items-center mb-3">
+                <div class="me-2" style="color: var(--bs-success);">
+                    <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" fill="currentColor" viewBox="0 0 16 16">
+                        <path d="M0 0h1v15h15v1H0V0zm14.817 3.113a.5.5 0 0 1 .07.704l-4.5 5.5a.5.5 0 0 1-.74.037L7.5 7.207 4.854 10.5a.5.5 0 1 1-.708-.708l3-3.75a.5.5 0 0 1 .74-.037l2.146 2.146 4.146-5.067a.5.5 0 0 1 .704-.07z"/>
+                    </svg>
+                </div>
+                <h5 class="mb-0">Filtros de Búsqueda</h5>
+            </div>
+
+            <div class="row g-3">
+                <div class="col-12 col-lg-5">
+                    <label class="form-label">Seleccionar Cliente</label>
+                    <select class="form-select" id="customerSelect">
+                        <option value="">-- Seleccione un cliente --</option>
+                        {% for c in customers %}
+                            <option value="{{ c.id }}" {% if selected_customer_id == c.id %}selected{% endif %}>
+                                {{ c.name }} {{ c.lastname }}
+                            </option>
+                        {% endfor %}
+                    </select>
+                </div>
+
+                <div class="col-12 col-lg-4">
+                    <label class="form-label">Seleccionar Factura</label>
+                    <select class="form-select" id="invoiceSelect" disabled>
+                        <option value="">-- Seleccione una factura --</option>
+                    </select>
+                </div>
+
+                <div class="col-12 col-lg-3">
+                    <label class="form-label">Tipo de Gráfica</label>
+                    <select class="form-select" id="chartType">
+                        <option value="bar" selected>Barras</option>
+                        <option value="line">Líneas</option>
+                    </select>
+                </div>
+            </div>
+
+            <div class="d-flex justify-content-end mt-3">
+                <button class="btn btn-success" id="consultBtn" type="button" disabled>Consultar</button>
             </div>
         </div>
-
-        <table class="payments-table">
-            <thead>
-                <tr>
-                    <th>Cliente</th>
-                    <th>Factura</th>
-                    <th>Cuota</th>
-                    <th>Importe</th>
-                    <th>Fecha</th>
-                </tr>
-            </thead>
-            <tbody>
-                {% for p in payments %}
-                <tr onclick="showDetails('{{ p.quota.invoice.customer.name }} {{ p.quota.invoice.customer.lastname }}', '{{ p.quota.invoice.invoice_number }}', '{{ p.quota.number }}', '{{ p.amount }}', '{{ p.date }}')">
-                    <td>{{ p.quota.invoice.customer.name }} {{ p.quota.invoice.customer.lastname }}</td>
-                    <td>#{{ p.quota.invoice.invoice_number }}</td>
-                    <td>{{ p.quota.number }}</td>
-                    <td>${{ p.amount }}</td>
-                    <td>{{ p.date }}</td>
-                </tr>
-                {% empty %}
-                <tr><td colspan="5" style="text-align: center;">No hay pagos registrados</td></tr>
-                {% endfor %}
-            </tbody>
-        </table>
     </div>
 
-    <div class="side-panel" id="details-panel">
-        <h3>Detalles del Pago</h3>
-        <div class="detail-item"><span>Cliente:</span> <span id="detail-client">-</span></div>
-        <div class="detail-item"><span>Factura #:</span> <span id="detail-invoice">-</span></div>
-        <div class="detail-item"><span>Cuota:</span> <span id="detail-quota">-</span></div>
-        <div class="detail-item"><span>Importe:</span> <span id="detail-amount">-</span></div>
-        <div class="detail-item"><span>Fecha:</span> <span id="detail-date">-</span></div>
+    <div class="card history-card">
+        <div class="card-body p-4">
+            <div id="emptyState" class="history-empty">
+                <div class="icon">
+                    <span style="font-size: 34px; line-height: 1;">$</span>
+                </div>
+                <h5 class="mb-1">Selecciona un Cliente y Factura</h5>
+                <div>Utiliza los filtros superiores para consultar el historial de pagos</div>
+            </div>
+
+            <div id="results" class="d-none">
+                <div class="row g-4">
+                    <div class="col-12 col-lg-5">
+                        <div class="border rounded-3 p-3" style="border-color: var(--bs-border-color) !important;">
+                            <div style="height: 260px;">
+                                <canvas id="paymentsChart"></canvas>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="col-12 col-lg-7">
+                        <div class="table-responsive">
+                            <table class="table table-hover align-middle">
+                                <thead class="table-light">
+                                    <tr>
+                                        <th>Cliente</th>
+                                        <th>Factura</th>
+                                        <th>Cuota</th>
+                                        <th class="text-end">Importe</th>
+                                        <th>Fecha</th>
+                                    </tr>
+                                </thead>
+                                <tbody id="paymentsTbody"></tbody>
+                            </table>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
     </div>
 </div>
+{% endblock %}
 
-<script>
-    function showDetails(cliente, factura, cuota, importe, fecha) {
-        document.getElementById('detail-client').textContent = cliente;
-        document.getElementById('detail-invoice').textContent = factura;
-        document.getElementById('detail-quota').textContent = cuota;
-        document.getElementById('detail-amount').textContent = "$" + importe;
-        document.getElementById('detail-date').textContent = fecha;
-    }
-</script>
+{% block extra_scripts %}
+    <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.1/dist/chart.umd.min.js"></script>
+    <script>
+        let chartInstance = null;
+
+        function formatCurrency(value) {
+            try {
+                return new Intl.NumberFormat('es-CO', { style: 'currency', currency: 'COP', maximumFractionDigits: 0 }).format(value || 0);
+            } catch {
+                return '$' + (value || 0);
+            }
+        }
+
+        function setLoading(isLoading) {
+            const btn = document.getElementById('consultBtn');
+            btn.disabled = isLoading || !document.getElementById('invoiceSelect').value;
+            btn.textContent = isLoading ? 'Consultando...' : 'Consultar';
+        }
+
+        async function loadInvoices(customerId) {
+            const invoiceSelect = document.getElementById('invoiceSelect');
+            const consultBtn = document.getElementById('consultBtn');
+
+            invoiceSelect.innerHTML = '<option value="">-- Seleccione una factura --</option>';
+            invoiceSelect.disabled = true;
+            consultBtn.disabled = true;
+
+            if (!customerId) return;
+
+            try {
+                const page = document.getElementById('historyPage');
+                const templateUrl = page?.dataset?.invoicesUrlTemplate || '';
+
+                // templateUrl viene con un 0 como placeholder (ej: /invoice/.../0/)
+                // Reemplazo robusto del último segmento "0".
+                const invoicesUrl = templateUrl.replace(/\/0\/?$/, `/${customerId}/`);
+
+                const res = await fetch(invoicesUrl);
+                if (!res.ok) {
+                    invoiceSelect.disabled = false;
+                    return;
+                }
+
+                const data = await res.json();
+                const invoices = data.invoices || [];
+                if (invoices.length === 0) {
+                    const opt = document.createElement('option');
+                    opt.value = '';
+                    opt.textContent = 'No hay facturas a crédito para este cliente';
+                    invoiceSelect.appendChild(opt);
+                } else {
+                    invoices.forEach(inv => {
+                        const opt = document.createElement('option');
+                        opt.value = inv.id;
+                        opt.textContent = `#${inv.invoice_number} (${inv.date})`;
+                        invoiceSelect.appendChild(opt);
+                    });
+                }
+
+                invoiceSelect.disabled = false;
+                consultBtn.disabled = !invoiceSelect.value;
+            } catch (e) {
+                // Si falla el fetch, al menos habilitar el select para que el usuario no quede bloqueado.
+                invoiceSelect.disabled = false;
+            }
+
+            // Re-inicializar select2 para que refresque las opciones
+            if (window.jQuery && jQuery.fn.select2) {
+                jQuery(invoiceSelect).trigger('change.select2');
+            }
+        }
+
+        function renderTable(payments) {
+            const tbody = document.getElementById('paymentsTbody');
+            tbody.innerHTML = '';
+
+            if (!payments || payments.length === 0) {
+                const tr = document.createElement('tr');
+                tr.innerHTML = '<td colspan="5" class="text-center text-secondary py-4">No hay pagos registrados</td>';
+                tbody.appendChild(tr);
+                return;
+            }
+
+            payments.forEach(p => {
+                const tr = document.createElement('tr');
+                tr.innerHTML = `
+                    <td>${p.customer}</td>
+                    <td>#${p.invoice_number}</td>
+                    <td>${p.quota_number}</td>
+                    <td class="text-end">${formatCurrency(p.amount)}</td>
+                    <td>${p.date}</td>
+                `;
+                tbody.appendChild(tr);
+            });
+        }
+
+        function renderChart(type, labels, values) {
+            const ctx = document.getElementById('paymentsChart');
+            if (!ctx) return;
+
+            const rootStyles = getComputedStyle(document.documentElement);
+            const successRgb = (rootStyles.getPropertyValue('--bs-success-rgb') || '25,135,84').trim();
+            const bg = `rgba(${successRgb}, 0.25)`;
+            const border = `rgba(${successRgb}, 1)`;
+
+            if (chartInstance) {
+                chartInstance.destroy();
+                chartInstance = null;
+            }
+
+            chartInstance = new Chart(ctx, {
+                type,
+                data: {
+                    labels: labels || [],
+                    datasets: [{
+                        label: 'Total pagado por día',
+                        data: values || [],
+                        backgroundColor: bg,
+                        borderColor: border,
+                        borderWidth: 2,
+                        tension: 0.25,
+                        fill: type === 'line'
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    plugins: {
+                        legend: { display: false },
+                        tooltip: {
+                            callbacks: {
+                                label: (ctx) => formatCurrency(ctx.parsed.y)
+                            }
+                        }
+                    },
+                    scales: {
+                        y: {
+                            ticks: {
+                                callback: (v) => formatCurrency(v)
+                            }
+                        }
+                    }
+                }
+            });
+        }
+
+        async function consult() {
+            const customerId = document.getElementById('customerSelect').value;
+            const invoiceId = document.getElementById('invoiceSelect').value;
+            const chartType = document.getElementById('chartType').value;
+
+            if (!customerId || !invoiceId) return;
+
+            setLoading(true);
+            try {
+                const page = document.getElementById('historyPage');
+                const dataUrl = page?.dataset?.historyDataUrl || '/payment/history/data/';
+                const url = new URL(dataUrl, window.location.origin);
+                url.searchParams.set('customer_id', customerId);
+                url.searchParams.set('invoice_id', invoiceId);
+
+                const res = await fetch(url.toString());
+                if (!res.ok) throw new Error('No se pudo consultar');
+                const data = await res.json();
+
+                document.getElementById('emptyState').classList.add('d-none');
+                document.getElementById('results').classList.remove('d-none');
+
+                renderTable(data.payments);
+                renderChart(chartType, data.chart?.labels, data.chart?.values);
+            } catch (e) {
+                // volver al estado vacío si falla
+                document.getElementById('results').classList.add('d-none');
+                document.getElementById('emptyState').classList.remove('d-none');
+            } finally {
+                setLoading(false);
+            }
+        }
+
+        document.addEventListener('DOMContentLoaded', async () => {
+            const customerSelect = document.getElementById('customerSelect');
+            const invoiceSelect = document.getElementById('invoiceSelect');
+            const consultBtn = document.getElementById('consultBtn');
+
+            function onInvoiceChanged() {
+                const hasInvoice = !!invoiceSelect.value;
+                consultBtn.disabled = !hasInvoice;
+                if (hasInvoice) consult();
+            }
+
+            if (window.jQuery && jQuery.fn.select2) {
+                jQuery(customerSelect).select2({ width: '100%' });
+                jQuery(invoiceSelect).select2({ width: '100%' });
+
+                // Asegurar disparo al seleccionar en Select2
+                jQuery(customerSelect).on('select2:select', function () {
+                    loadInvoices(this.value);
+                });
+
+                // Bugfix: Select2 no siempre dispara el change nativo como esperamos
+                jQuery(invoiceSelect).on('select2:select', function () {
+                    onInvoiceChanged();
+                });
+            }
+
+            customerSelect.addEventListener('change', async () => {
+                await loadInvoices(customerSelect.value);
+            });
+
+            invoiceSelect.addEventListener('change', onInvoiceChanged);
+
+            document.getElementById('chartType').addEventListener('change', () => {
+                // Si ya hay resultados, re-consulta para re-renderizar con otro tipo
+                if (!invoiceSelect.value) return;
+                consult();
+            });
+
+            consultBtn.addEventListener('click', consult);
+
+            // Si viene preseleccionado (compatibilidad), cargar facturas y consultar
+            const preCustomer = customerSelect.value;
+            const page = document.getElementById('historyPage');
+            const preInvoice = page?.dataset?.selectedInvoiceId ? Number(page.dataset.selectedInvoiceId) : null;
+            if (preCustomer) {
+                await loadInvoices(preCustomer);
+                if (preInvoice) {
+                    invoiceSelect.value = String(preInvoice);
+                    if (window.jQuery && jQuery.fn.select2) {
+                        jQuery(invoiceSelect).trigger('change');
+                    }
+                    consultBtn.disabled = false;
+                    consult();
+                }
+            }
+        });
+    </script>
 {% endblock %}
