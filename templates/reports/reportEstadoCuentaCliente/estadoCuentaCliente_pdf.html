@@ -1,0 +1,173 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Estado de cuenta clientes</title>
+  <style>
+    body {
+      font-family: Arial, Helvetica, sans-serif;
+      font-size: 12px;
+      color: #111827;
+      margin: 24px;
+    }
+
+    .header {
+      display: flex;
+      justify-content: space-between;
+      align-items: flex-start;
+      gap: 16px;
+      margin-bottom: 16px;
+    }
+
+    h1 {
+      font-size: 18px;
+      margin: 0;
+    }
+
+    .sub {
+      margin-top: 4px;
+      color: #6b7280;
+      font-size: 12px;
+    }
+
+    .meta {
+      color: #6b7280;
+      font-size: 11px;
+      text-align: right;
+      white-space: nowrap;
+    }
+
+    .cards {
+      display: grid;
+      grid-template-columns: repeat(3, 1fr);
+      gap: 10px;
+      margin: 12px 0 14px 0;
+    }
+
+    .card {
+      border: 1px solid #e5e7eb;
+      border-radius: 10px;
+      padding: 12px;
+      background: #f9fafb;
+    }
+
+    .card .label {
+      color: #6b7280;
+      font-weight: 700;
+      font-size: 11px;
+    }
+
+    .card .value {
+      font-size: 16px;
+      font-weight: 800;
+      margin-top: 6px;
+    }
+
+    table {
+      width: 100%;
+      border-collapse: collapse;
+      margin-top: 8px;
+    }
+
+    thead th {
+      background: #f3f4f6;
+      border: 1px solid #e5e7eb;
+      padding: 8px;
+      text-align: left;
+      font-size: 11px;
+      white-space: nowrap;
+    }
+
+    tbody td {
+      border: 1px solid #e5e7eb;
+      padding: 7px 8px;
+      white-space: nowrap;
+    }
+
+    tfoot td {
+      border: 1px solid #e5e7eb;
+      padding: 8px;
+      background: #f9fafb;
+      font-weight: 800;
+      white-space: nowrap;
+    }
+
+    .muted { color: #6b7280; }
+    .right { text-align: right; }
+  </style>
+</head>
+<body>
+  <div class="header">
+    <div>
+      <h1>Estado de Cuentas</h1>
+      <div class="sub">Gestión y seguimiento de cuentas por cobrar</div>
+      {% if search or estado %}
+      <div class="sub">
+        {% if search %}Búsqueda: <strong>{{ search }}</strong>{% endif %}
+        {% if search and estado %} · {% endif %}
+        {% if estado %}Estado: <strong>{{ estado }}</strong>{% endif %}
+      </div>
+      {% endif %}
+    </div>
+    <div class="meta">
+      Generado: {{ generated_at|date:"d/m/Y H:i" }}
+    </div>
+  </div>
+
+  <div class="cards">
+    <div class="card">
+      <div class="label">Total Facturado</div>
+      <div class="value">$ {{ totales.facturado|floatformat:0 }}</div>
+    </div>
+    <div class="card">
+      <div class="label">Total Cobrado</div>
+      <div class="value">$ {{ totales.cobrado|floatformat:0 }}</div>
+    </div>
+    <div class="card">
+      <div class="label">Saldo Pendiente</div>
+      <div class="value">$ {{ totales.pendiente|floatformat:0 }}</div>
+    </div>
+  </div>
+
+  <table>
+    <thead>
+      <tr>
+        <th>Cliente</th>
+        <th>NIT</th>
+        <th>Factura</th>
+        <th>Fecha</th>
+        <th class="right">Total</th>
+        <th class="right">Pagado</th>
+        <th class="right">Saldo</th>
+        <th>Vencimiento</th>
+        <th>Estado</th>
+      </tr>
+    </thead>
+    <tbody>
+      {% for r in rows %}
+      <tr>
+        <td>{{ r.cliente }}</td>
+        <td class="muted">{{ r.nit }}</td>
+        <td>{{ r.factura }}</td>
+        <td class="muted">{{ r.fecha }}</td>
+        <td class="right">$ {{ r.total|floatformat:0 }}</td>
+        <td class="right">$ {{ r.pagado|floatformat:0 }}</td>
+        <td class="right">$ {{ r.saldo|floatformat:0 }}</td>
+        <td class="muted">{{ r.vencimiento }}</td>
+        <td>{{ r.estado }}</td>
+      </tr>
+      {% endfor %}
+    </tbody>
+    <tfoot>
+      <tr>
+        <td colspan="4">TOTALES</td>
+        <td class="right">$ {{ totales.facturado|floatformat:0 }}</td>
+        <td class="right">$ {{ totales.cobrado|floatformat:0 }}</td>
+        <td class="right">$ {{ totales.pendiente|floatformat:0 }}</td>
+        <td colspan="2"></td>
+      </tr>
+    </tfoot>
+  </table>
+</body>
+</html>

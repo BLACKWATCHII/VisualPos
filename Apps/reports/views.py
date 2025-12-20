@@ -1,5 +1,6 @@
 from django.shortcuts import render
 from django.http import JsonResponse, HttpResponse
+from django.db.models import Min, Q
 from django.db.models import Sum, F, DecimalField, ExpressionWrapper
 from django.db.models.functions import Coalesce
 from django.db.models.functions import TruncDate, TruncWeek, TruncMonth, TruncYear
@@ -23,6 +24,7 @@ from reportlab.lib.styles import getSampleStyleSheet
 from reportlab.platypus import SimpleDocTemplate, Table, TableStyle, Paragraph, Spacer
 
 from Invoice.models import Invoice, InvoiceItem
+from customer.models import Customer
 
 
 @login_required
@@ -615,5 +617,244 @@ def api_ventas_productos_descargar(request):
         return JsonResponse({'error': 'Formato inválido. Usa pdf o excel.'}, status=400)
     except ValueError as e:
         return JsonResponse({'error': str(e)}, status=400)
+    except Exception:
+        return JsonResponse({'error': 'Ocurrió un error generando la descarga.'}, status=500)
+
+
+# =========================
+# Estado de cuenta clientes
+# =========================
+
+ESTADOS_ESTADO_CUENTA = (
+    'Pagada',
+    'Pago Parcial',
+    'Vencida',
+    'Pendiente',
+)
+
+
+def _norm(value) -> str:
+    return (value or '').strip().lower()
+
+
+def _is_credit_invoice(inv: Invoice) -> bool:
+    pm = _norm(getattr(inv, 'payment_method', ''))
+    st = _norm(getattr(inv, 'status', ''))
+    return (pm in ('credit', 'credito', 'crédito')) or ('credit' in pm) or ('credito' in pm) or ('credito' in st) or ('crédito' in st)
+
+
+def _is_paid_status(inv: Invoice) -> bool:
+    st = _norm(getattr(inv, 'status', ''))
+    return st in ('paid', 'pagada', 'pagado')
+
+
+def _format_invoice_label(inv: Invoice) -> str:
+    num = getattr(inv, 'invoice_number', None)
+    try:
+        if num is not None:
+            return f"FAC-{int(num):03d}"
+    except Exception:
+        pass
+    return f"FAC-{inv.id}"
+
+
+def _compute_estado_cuenta_row(inv: Invoice, today: date):
+    customer = getattr(inv, 'customer', None)
+    customer_name = ''
+    nit = ''
+    if customer is not None:
+        customer_name = f"{getattr(customer, 'name', '')} {getattr(customer, 'lastname', '')}".strip() or str(customer)
+        nit = getattr(customer, 'cedula', '') or ''
+
+    total = Decimal(str(getattr(inv, 'total', 0) or 0))
+
+    is_credit = _is_credit_invoice(inv)
+    if is_credit:
+        pagado = Decimal(str(getattr(inv, 'total_pagado', 0) or 0))
+        vencimiento = getattr(inv, 'vencimiento', None)
+        if vencimiento is None:
+            try:
+                vencimiento = timezone.localdate(inv.date)
+            except Exception:
+                vencimiento = inv.date.date() if getattr(inv, 'date', None) else today
+    else:
+        pagado = total if _is_paid_status(inv) else Decimal('0.00')
+        try:
+            vencimiento = timezone.localdate(inv.date)
+        except Exception:
+            vencimiento = inv.date.date() if getattr(inv, 'date', None) else today
+
+    if pagado < 0:
+        pagado = Decimal('0.00')
+    saldo = total - pagado
+    if saldo < 0:
+        saldo = Decimal('0.00')
+
+    if saldo <= 0:
+        estado = 'Pagada'
+    else:
+        if isinstance(vencimiento, datetime):
+            venc_date = vencimiento.date()
+        else:
+            venc_date = vencimiento
+
+        if venc_date and venc_date < today:
+            estado = 'Vencida'
+        elif pagado > 0:
+            estado = 'Pago Parcial'
+        else:
+            estado = 'Pendiente'
+
+    try:
+        fecha_factura = timezone.localdate(inv.date)
+    except Exception:
+        fecha_factura = inv.date.date() if getattr(inv, 'date', None) else today
+
+    return {
+        'cliente': customer_name,
+        'nit': nit,
+        'factura': _format_invoice_label(inv),
+        'fecha': fecha_factura.strftime('%d/%m/%Y') if isinstance(fecha_factura, date) else str(fecha_factura),
+        'total': float(total),
+        'pagado': float(pagado),
+        'saldo': float(saldo),
+        'vencimiento': vencimiento.strftime('%d/%m/%Y') if isinstance(vencimiento, date) else str(vencimiento or ''),
+        'estado': estado,
+    }
+
+
+def _build_estado_cuenta_queryset(search: str):
+    qs = (
+        Invoice.objects
+        .exclude(status__in=EXCLUDED_STATUSES)
+        .select_related('customer')
+        .annotate(
+            total_pagado=Coalesce(Sum('payment_quotas__payments__amount'), Decimal('0.00')),
+            vencimiento=Min(
+                'payment_quotas__payment_date',
+                filter=Q(payment_quotas__is_paid=False, payment_quotas__number__gt=0),
+            ),
+        )
+        .order_by('customer__name', 'customer__lastname', 'date', 'id')
+    )
+
+    s = (search or '').strip()
+    if s:
+        # Buscar por nombre/apellido/cedula o etiqueta de factura (invoice_number)
+        qs = qs.filter(
+            Q(customer__name__icontains=s)
+            | Q(customer__lastname__icontains=s)
+            | Q(customer__cedula__icontains=s)
+            | Q(invoice_number__icontains=s)
+        )
+
+    return qs
+
+
+def _build_estado_cuenta_payload(search: str, estado: str):
+    today = timezone.localdate()
+    estado_filter = (estado or '').strip()
+
+    invoices = _build_estado_cuenta_queryset(search)
+
+    rows = []
+    total_facturado = Decimal('0.00')
+    total_cobrado = Decimal('0.00')
+    total_pendiente = Decimal('0.00')
+
+    for inv in invoices:
+        row = _compute_estado_cuenta_row(inv, today=today)
+        if estado_filter and estado_filter != 'Todos' and estado_filter != 'Todos los estados':
+            if row['estado'] != estado_filter:
+                continue
+
+        total_facturado += Decimal(str(row['total'] or 0))
+        total_cobrado += Decimal(str(row['pagado'] or 0))
+        total_pendiente += Decimal(str(row['saldo'] or 0))
+        rows.append(row)
+
+    return {
+        'totales': {
+            'facturado': float(total_facturado),
+            'cobrado': float(total_cobrado),
+            'pendiente': float(total_pendiente),
+        },
+        'rows': rows,
+        'meta': {
+            'count': len(rows),
+            'estados': list(ESTADOS_ESTADO_CUENTA),
+        }
+    }
+
+
+@login_required
+def estado_cuenta_clientes(request):
+    return render(request, 'reports/reportEstadoCuentaCliente/estadoCuentaCliente.html')
+
+
+@login_required
+def api_estado_cuenta_clientes_datos(request):
+    try:
+        search = request.GET.get('q', '')
+        estado = request.GET.get('estado', '')
+        payload = _build_estado_cuenta_payload(search=search, estado=estado)
+        return JsonResponse(payload)
+    except Exception:
+        return JsonResponse({'error': 'Ocurrió un error generando el estado de cuenta.'}, status=500)
+
+
+@login_required
+def api_estado_cuenta_clientes_descargar(request):
+    try:
+        search = request.GET.get('q', '')
+        estado = request.GET.get('estado', '')
+        formato = request.GET.get('formato', 'excel')
+
+        payload = _build_estado_cuenta_payload(search=search, estado=estado)
+        rows = payload.get('rows', [])
+        totales = payload.get('totales', {})
+
+        filename_base = 'estado_cuenta_clientes'
+        if estado:
+            filename_base += f"_{estado.replace(' ', '_').lower()}"
+
+        if formato in ('excel', 'csv'):
+            response = HttpResponse(content_type='text/csv; charset=utf-8')
+            response['Content-Disposition'] = f'attachment; filename="{filename_base}.csv"'
+            response.write('\ufeff')
+            writer = csv.writer(response)
+            writer.writerow(['Cliente', 'NIT', 'Factura', 'Fecha', 'Total', 'Pagado', 'Saldo', 'Vencimiento', 'Estado'])
+            for r in rows:
+                writer.writerow([
+                    r.get('cliente', ''),
+                    r.get('nit', ''),
+                    r.get('factura', ''),
+                    r.get('fecha', ''),
+                    f"{float(r.get('total', 0) or 0):.2f}",
+                    f"{float(r.get('pagado', 0) or 0):.2f}",
+                    f"{float(r.get('saldo', 0) or 0):.2f}",
+                    r.get('vencimiento', ''),
+                    r.get('estado', ''),
+                ])
+            writer.writerow([])
+            writer.writerow(['TOTALES', '', '', '', f"{float(totales.get('facturado', 0) or 0):.2f}", f"{float(totales.get('cobrado', 0) or 0):.2f}", f"{float(totales.get('pendiente', 0) or 0):.2f}", '', ''])
+            return response
+
+        if formato == 'pdf':
+            context = {
+                'rows': rows,
+                'totales': totales,
+                'search': (search or '').strip(),
+                'estado': (estado or '').strip(),
+                'generated_at': timezone.now(),
+            }
+
+            return _render_pdf_with_puppeteer(
+                'reports/reportEstadoCuentaCliente/estadoCuentaCliente_pdf.html',
+                context,
+                filename=f"{filename_base}.pdf",
+            )
+
+        return JsonResponse({'error': 'Formato inválido. Usa pdf o excel.'}, status=400)
     except Exception:
         return JsonResponse({'error': 'Ocurrió un error generando la descarga.'}, status=500)

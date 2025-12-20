@@ -1,0 +1,384 @@
+{% extends 'base.html' %}
+{% load static %}
+
+{% block title %}Estado de cuenta clientes{% endblock %}
+
+{% block extra_head %}
+<style>
+	.ec-container {
+		padding: 2rem;
+		background-color: #f8f9fa;
+		min-height: 100vh;
+	}
+
+	.ec-header h1 {
+		font-size: 2rem;
+		font-weight: 700;
+		color: #111827;
+		margin: 0;
+	}
+
+	.ec-header p {
+		color: #6b7280;
+		margin: 0.25rem 0 0 0;
+	}
+
+	.stats {
+		margin-top: 1.5rem;
+		display: grid;
+		grid-template-columns: repeat(3, minmax(0, 1fr));
+		gap: 1rem;
+	}
+
+	.stat-card {
+		border-radius: 0.75rem;
+		padding: 1.25rem 1.25rem;
+		color: white;
+		position: relative;
+		box-shadow: 0 8px 20px rgba(0,0,0,0.08);
+		overflow: hidden;
+	}
+
+	.stat-card .label {
+		font-size: 0.95rem;
+		opacity: 0.95;
+		margin: 0;
+	}
+
+	.stat-card .value {
+		font-size: 1.75rem;
+		font-weight: 800;
+		margin: 0.35rem 0 0 0;
+		letter-spacing: 0.2px;
+	}
+
+	.stat-card .icon {
+		position: absolute;
+		top: 1rem;
+		right: 1rem;
+		width: 34px;
+		height: 34px;
+		border-radius: 999px;
+		background: rgba(255,255,255,0.18);
+		display: flex;
+		align-items: center;
+		justify-content: center;
+		font-weight: 700;
+	}
+
+	.stat-blue { background: linear-gradient(135deg, #3b82f6 0%, #2563eb 100%); }
+	.stat-green { background: linear-gradient(135deg, #10b981 0%, #059669 100%); }
+	.stat-red { background: linear-gradient(135deg, #ef4444 0%, #dc2626 100%); }
+
+	.filters {
+		margin-top: 1.25rem;
+		background: white;
+		border-radius: 0.75rem;
+		padding: 1rem;
+		box-shadow: 0 1px 3px rgba(0,0,0,0.08);
+		border: 1px solid #e5e7eb;
+		display: flex;
+		gap: 0.75rem;
+		align-items: center;
+		flex-wrap: wrap;
+	}
+
+	.filter-input {
+		border: 1px solid #e5e7eb;
+		border-radius: 0.5rem;
+		padding: 0.65rem 0.85rem;
+		font-size: 0.95rem;
+		outline: none;
+		min-width: 260px;
+		background: white;
+	}
+
+	.filter-input:focus {
+		border-color: #10b981;
+		box-shadow: 0 0 0 3px rgba(16,185,129,0.12);
+	}
+
+	.filter-select {
+		border: 1px solid #e5e7eb;
+		border-radius: 0.5rem;
+		padding: 0.65rem 0.85rem;
+		font-size: 0.95rem;
+		outline: none;
+		background: white;
+		min-width: 200px;
+	}
+
+	.btn-download {
+		border: none;
+		border-radius: 0.5rem;
+		padding: 0.6rem 1rem;
+		font-weight: 600;
+		cursor: pointer;
+		color: white;
+		display: inline-flex;
+		align-items: center;
+		gap: 0.5rem;
+	}
+
+	.btn-excel { background: linear-gradient(135deg, #10b981 0%, #059669 100%); }
+	.btn-pdf { background: linear-gradient(135deg, #ef4444 0%, #dc2626 100%); }
+
+	.table-card {
+		margin-top: 1rem;
+		background: white;
+		border-radius: 0.75rem;
+		box-shadow: 0 1px 3px rgba(0,0,0,0.08);
+		border: 1px solid #e5e7eb;
+		overflow: hidden;
+	}
+
+	.table-wrap {
+		overflow-x: auto;
+	}
+
+	table.ec-table {
+		width: 100%;
+		border-collapse: separate;
+		border-spacing: 0;
+		min-width: 980px;
+	}
+
+	.ec-table thead th {
+		background: #f9fafb;
+		color: #374151;
+		font-size: 0.85rem;
+		text-transform: none;
+		font-weight: 700;
+		padding: 0.85rem 0.75rem;
+		border-bottom: 1px solid #e5e7eb;
+		white-space: nowrap;
+	}
+
+	.ec-table tbody td {
+		padding: 0.75rem 0.75rem;
+		border-bottom: 1px solid #f1f5f9;
+		font-size: 0.9rem;
+		color: #111827;
+		vertical-align: middle;
+		white-space: nowrap;
+	}
+
+	.ec-table tfoot td {
+		padding: 0.85rem 0.75rem;
+		font-weight: 800;
+		background: #f9fafb;
+		border-top: 1px solid #e5e7eb;
+		white-space: nowrap;
+	}
+
+	.muted {
+		color: #6b7280;
+	}
+
+	.link-inv {
+		color: #2563eb;
+		text-decoration: none;
+		font-weight: 700;
+	}
+
+	.badge {
+		display: inline-flex;
+		align-items: center;
+		padding: 0.25rem 0.6rem;
+		border-radius: 999px;
+		font-weight: 700;
+		font-size: 0.8rem;
+	}
+
+	.b-paid { background: rgba(16,185,129,0.15); color: #059669; }
+	.b-partial { background: rgba(245,158,11,0.18); color: #b45309; }
+	.b-overdue { background: rgba(239,68,68,0.15); color: #dc2626; }
+	.b-pending { background: rgba(59,130,246,0.14); color: #2563eb; }
+
+	.amt-green { color: #059669; font-weight: 700; }
+	.amt-red { color: #dc2626; font-weight: 800; }
+
+	.loading {
+		padding: 1.25rem;
+		text-align: center;
+		color: #6b7280;
+	}
+
+	@media (max-width: 980px) {
+		.stats { grid-template-columns: 1fr; }
+		.filter-input { min-width: 220px; flex: 1; }
+		.filter-select { flex: 1; }
+	}
+</style>
+{% endblock %}
+
+{% block content %}
+<br><br><br>
+<div class="ec-container">
+	<div class="ec-header">
+		<h1>Estado de Cuentas</h1>
+		<p>Gestión y seguimiento de cuentas por cobrar</p>
+	</div>
+
+	<div class="stats">
+		<div class="stat-card stat-blue">
+			<div class="icon">$</div>
+			<p class="label">Total Facturado</p>
+			<p class="value" id="ecTotalFacturado">$ 0</p>
+		</div>
+		<div class="stat-card stat-green">
+			<div class="icon">✓</div>
+			<p class="label">Total Cobrado</p>
+			<p class="value" id="ecTotalCobrado">$ 0</p>
+		</div>
+		<div class="stat-card stat-red">
+			<div class="icon">!</div>
+			<p class="label">Saldo Pendiente</p>
+			<p class="value" id="ecTotalPendiente">$ 0</p>
+		</div>
+	</div>
+
+	<div class="filters">
+		<input id="ecSearch" class="filter-input" type="text" placeholder="Buscar por cliente o NIT..." />
+		<select id="ecEstado" class="filter-select">
+			<option value="">Todos los estados</option>
+			<option value="Pagada">Pagada</option>
+			<option value="Pago Parcial">Pago Parcial</option>
+			<option value="Vencida">Vencida</option>
+			<option value="Pendiente">Pendiente</option>
+		</select>
+
+		<button id="ecBtnExcel" class="btn-download btn-excel" type="button">Excel</button>
+		<button id="ecBtnPdf" class="btn-download btn-pdf" type="button">PDF</button>
+	</div>
+
+	<div class="table-card">
+		<div class="table-wrap">
+			<table class="ec-table">
+				<thead>
+					<tr>
+						<th>Cliente</th>
+						<th>NIT</th>
+						<th>Factura</th>
+						<th>Fecha</th>
+						<th>Total</th>
+						<th>Pagado</th>
+						<th>Saldo</th>
+						<th>Vencimiento</th>
+						<th>Estado</th>
+					</tr>
+				</thead>
+				<tbody id="ecTbody">
+					<tr><td colspan="9" class="loading">Cargando...</td></tr>
+				</tbody>
+				<tfoot>
+					<tr>
+						<td colspan="4">TOTALES</td>
+						<td id="ecFootTotal">$ 0</td>
+						<td id="ecFootPagado">$ 0</td>
+						<td id="ecFootSaldo">$ 0</td>
+						<td colspan="2"></td>
+					</tr>
+				</tfoot>
+			</table>
+		</div>
+	</div>
+</div>
+{% endblock %}
+
+{% block extra_scripts %}
+<script>
+	function formatCOP(value) {
+		const num = Number(value || 0);
+		try {
+			return num.toLocaleString('es-CO', { style: 'currency', currency: 'COP', maximumFractionDigits: 0 });
+		} catch (e) {
+			return '$ ' + Math.round(num).toString();
+		}
+	}
+
+	function badgeClass(estado) {
+		if (estado === 'Pagada') return 'badge b-paid';
+		if (estado === 'Pago Parcial') return 'badge b-partial';
+		if (estado === 'Vencida') return 'badge b-overdue';
+		return 'badge b-pending';
+	}
+
+	function debounce(fn, wait) {
+		let t;
+		return function(...args) {
+			clearTimeout(t);
+			t = setTimeout(() => fn.apply(this, args), wait);
+		};
+	}
+
+	async function loadEstadoCuenta() {
+		const q = document.getElementById('ecSearch').value || '';
+		const estado = document.getElementById('ecEstado').value || '';
+		const url = `{% url 'api_estado_cuenta_clientes_datos' %}?q=${encodeURIComponent(q)}&estado=${encodeURIComponent(estado)}`;
+
+		const tbody = document.getElementById('ecTbody');
+		tbody.innerHTML = `<tr><td colspan="9" class="loading">Cargando...</td></tr>`;
+
+		const res = await fetch(url, { headers: { 'X-Requested-With': 'XMLHttpRequest' } });
+		const data = await res.json();
+
+		if (!res.ok || data.error) {
+			tbody.innerHTML = `<tr><td colspan="9" class="loading">${data.error || 'Error cargando datos'}</td></tr>`;
+			return;
+		}
+
+		const tot = data.totales || {};
+		document.getElementById('ecTotalFacturado').textContent = formatCOP(tot.facturado);
+		document.getElementById('ecTotalCobrado').textContent = formatCOP(tot.cobrado);
+		document.getElementById('ecTotalPendiente').textContent = formatCOP(tot.pendiente);
+		document.getElementById('ecFootTotal').textContent = formatCOP(tot.facturado);
+		document.getElementById('ecFootPagado').textContent = formatCOP(tot.cobrado);
+		document.getElementById('ecFootSaldo').textContent = formatCOP(tot.pendiente);
+
+		const rows = data.rows || [];
+		if (!rows.length) {
+			tbody.innerHTML = `<tr><td colspan="9" class="loading">No hay resultados</td></tr>`;
+			return;
+		}
+
+		tbody.innerHTML = rows.map(r => {
+			const total = formatCOP(r.total);
+			const pagado = formatCOP(r.pagado);
+			const saldo = formatCOP(r.saldo);
+			const pagadoCls = (Number(r.pagado || 0) > 0) ? 'amt-green' : 'muted';
+			const saldoCls = (Number(r.saldo || 0) > 0) ? 'amt-red' : 'muted';
+			return `
+				<tr>
+					<td>${(r.cliente || '').toString()}</td>
+					<td class="muted">${(r.nit || '').toString()}</td>
+					<td><a class="link-inv" href="#">${(r.factura || '').toString()}</a></td>
+					<td class="muted">${(r.fecha || '').toString()}</td>
+					<td>${total}</td>
+					<td class="${pagadoCls}">${pagado}</td>
+					<td class="${saldoCls}">${saldo}</td>
+					<td class="muted">${(r.vencimiento || '').toString()}</td>
+					<td><span class="${badgeClass(r.estado)}">${(r.estado || '').toString()}</span></td>
+				</tr>
+			`;
+		}).join('');
+	}
+
+	function download(formato) {
+		const q = document.getElementById('ecSearch').value || '';
+		const estado = document.getElementById('ecEstado').value || '';
+		const url = `{% url 'api_estado_cuenta_clientes_descargar' %}?formato=${encodeURIComponent(formato)}&q=${encodeURIComponent(q)}&estado=${encodeURIComponent(estado)}`;
+		window.location.href = url;
+	}
+
+	document.addEventListener('DOMContentLoaded', () => {
+		const debounced = debounce(loadEstadoCuenta, 350);
+		document.getElementById('ecSearch').addEventListener('input', debounced);
+		document.getElementById('ecEstado').addEventListener('change', loadEstadoCuenta);
+		document.getElementById('ecBtnExcel').addEventListener('click', () => download('excel'));
+		document.getElementById('ecBtnPdf').addEventListener('click', () => download('pdf'));
+		loadEstadoCuenta();
+	});
+</script>
+{% endblock %}
+
