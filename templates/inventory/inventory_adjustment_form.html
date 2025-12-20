@@ -317,6 +317,47 @@ body {
         {% endfor %}
     {% endif %}
 
+    <!-- Exportar reporte por fechas -->
+    <div class="modern-card shadow-lg border-0 rounded-lg mb-4 mt-4">
+        <div class="modern-header card-header bg-secondary text-white">
+            <h5 class="mb-0"><i class="bi bi-file-earmark-arrow-down me-2"></i>Exportar reporte (por fechas)</h5>
+        </div>
+        <div class="card-body" style="padding: 2rem;">
+            <form method="get" class="row g-3 align-items-end">
+                <div class="col-md-3">
+                    <label class="form-label"><i class="bi bi-calendar-event me-1"></i>Fecha inicio</label>
+                    <input type="date" class="modern-form-control form-control" name="fecha_inicio" required>
+                </div>
+
+                <div class="col-md-3">
+                    <label class="form-label"><i class="bi bi-calendar-check me-1"></i>Fecha fin</label>
+                    <input type="date" class="modern-form-control form-control" name="fecha_fin" required>
+                </div>
+
+                <div class="col-md-6 d-flex gap-2 flex-wrap">
+                    <button
+                        type="submit"
+                        class="modern-btn btn btn-success"
+                        formaction="{% url 'exportar_ajustes_inventario_pdf' %}">
+                        <i class="bi bi-file-earmark-pdf me-2"></i>Exportar PDF
+                    </button>
+
+                    <button
+                        type="submit"
+                        class="btn btn-outline-success"
+                        style="padding: 0.75rem 2rem; border-radius: 12px; font-weight: 600; text-transform: uppercase; letter-spacing: 0.5px;"
+                        formaction="{% url 'exportar_ajustes_inventario_excel' %}">
+                        <i class="bi bi-file-earmark-excel me-2"></i>Exportar Excel
+                    </button>
+                </div>
+            </form>
+
+            <small class="text-muted d-block mt-3">
+                Selecciona un rango de fechas y elige el formato a exportar.
+            </small>
+        </div>
+    </div>
+
     <!-- Tabla de historial -->
     <div class="modern-card shadow-lg border-0 rounded-lg">
         <div class="modern-header card-header bg-secondary text-white">
