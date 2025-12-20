@@ -268,7 +268,7 @@ body {
             <h4 class="mb-0"><i class="bi bi-sliders me-2"></i>Ajuste de Inventario</h4>
         </div>
         <div class="card-body" style="padding: 2rem;">
-            <form method="post" class="needs-validation" novalidate>
+            <form method="post" class="needs-validation" id="inventoryAdjustmentForm" novalidate>
                 {% csrf_token %}
                 
                 <div class="row">
@@ -304,8 +304,8 @@ body {
                     </div>
                 </div>
 
-                <button type="submit" class="modern-btn btn btn-success">
-                    <i class="bi bi-save me-2"></i>Guardar ajuste
+                <button type="submit" class="modern-btn btn btn-success" id="saveAdjustmentBtn">
+                    <i class="bi bi-save me-2"></i><span class="btn-label">Guardar ajuste</span>
                 </button>
             </form>
         </div>
@@ -451,6 +451,32 @@ body {
 
 <script>
 document.addEventListener('DOMContentLoaded', function() {
+    const form = document.getElementById('inventoryAdjustmentForm');
+    const saveBtn = document.getElementById('saveAdjustmentBtn');
+    const saveBtnLabel = saveBtn ? saveBtn.querySelector('.btn-label') : null;
+    const originalBtnHtml = saveBtn ? saveBtn.innerHTML : null;
+
+    function setBtnLoading(isLoading, text) {
+        if (!saveBtn) return;
+        if (isLoading) {
+            saveBtn.disabled = true;
+            saveBtn.innerHTML = `
+                <span class="spinner-border spinner-border-sm me-2" role="status" aria-hidden="true"></span>
+                <span class="btn-label">${text || 'Procesando...'}</span>
+            `;
+        } else {
+            saveBtn.disabled = false;
+            if (originalBtnHtml) saveBtn.innerHTML = originalBtnHtml;
+        }
+    }
+
+    // Animación mientras guarda
+    if (form) {
+        form.addEventListener('submit', function() {
+            setBtnLoading(true, 'Guardando...');
+        });
+    }
+
     const productSearch = document.getElementById('productSearch');
     const productItems = document.querySelectorAll('.product-item');
     const selectedProductId = document.getElementById('selectedProductId');
@@ -512,6 +538,52 @@ document.addEventListener('DOMContentLoaded', function() {
             }
         }
     });
+
+    // Descarga automática del comprobante y "actualización" (limpiar estado) después.
+    const downloadUrl = "{{ download_url|default:'' }}";
+    if (downloadUrl) {
+        setBtnLoading(true, 'Descargando...');
+
+        const parseFilename = (contentDisposition) => {
+            if (!contentDisposition) return null;
+            // Ej: attachment; filename="Recibo_Ajuste_Inventario_AJI-2025-0001.pdf"
+            const match = /filename\*=UTF-8''([^;]+)|filename="?([^";]+)"?/i.exec(contentDisposition);
+            const filename = (match && (match[1] || match[2])) ? (match[1] || match[2]) : null;
+            return filename ? decodeURIComponent(filename) : null;
+        };
+
+        fetch(downloadUrl, { credentials: 'same-origin' })
+            .then(async (res) => {
+                if (!res.ok) throw new Error('No se pudo generar el comprobante.');
+                const blob = await res.blob();
+                const filename = parseFilename(res.headers.get('content-disposition')) || 'Recibo_Ajuste_Inventario.pdf';
+
+                const url = window.URL.createObjectURL(blob);
+                const a = document.createElement('a');
+                a.href = url;
+                a.download = filename;
+                document.body.appendChild(a);
+                a.click();
+                a.remove();
+                window.URL.revokeObjectURL(url);
+            })
+            .catch((err) => {
+                console.error(err);
+                alert('No se pudo descargar el comprobante. Revisa la consola para más detalles.');
+            })
+            .finally(() => {
+                // Quitar el query param download para evitar re-descarga al refrescar
+                const url = new URL(window.location.href);
+                url.searchParams.delete('download');
+                window.history.replaceState({}, '', url.toString());
+
+                // Limpiar formulario y botón
+                if (form) form.reset();
+                if (selectedProductId) selectedProductId.value = '';
+                if (selectedProductName) selectedProductName.value = '';
+                setBtnLoading(false);
+            });
+    }
 });
 </script>
 
