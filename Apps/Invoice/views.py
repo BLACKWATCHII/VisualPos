@@ -30,11 +30,12 @@ from functools import wraps
 from customer.sendEmail import send_email_with_attachment
 from dateutil.relativedelta import relativedelta
 from .utils import get_total_pagado, get_total_financiar, get_valor_cuota, get_saldo_pendiente, get_quotas_modified
-from django.views.decorators.http import require_GET
+from django.views.decorators.http import require_GET, require_POST
 from django.db.models.functions import TruncDate
 import threading
 from django.urls import reverse
 from django.http import HttpResponseRedirect
+from django.utils.http import url_has_allowed_host_and_scheme
 
 
 def _norm_text(value) -> str:
@@ -1145,6 +1146,9 @@ def render_pdf_inline_with_puppeteer(template_src, context, filename="ReciboPago
 def pay_quota(request, quota_id):
     quota = get_object_or_404(PaymentQuota, id=quota_id)
 
+    if getattr(quota, 'number', None) == 0:
+        return HttpResponseBadRequest("La cuota inicial no se puede pagar desde este módulo")
+
     if request.method == 'POST':
         try:
             pay_amount = Decimal(request.POST.get('amount'))
@@ -1262,6 +1266,107 @@ def pay_quota(request, quota_id):
         return response
 
     return HttpResponseNotAllowed(['POST'])
+
+
+@login_required
+@require_POST
+def reverse_quota(request, quota_id):
+    """Revierte una cuota ya pagada: elimina los pagos asociados y deja la cuota como pendiente."""
+    quota = get_object_or_404(
+        PaymentQuota.objects.select_related('invoice', 'invoice__customer'),
+        pk=quota_id,
+    )
+
+    if getattr(quota, 'number', None) == 0:
+        return HttpResponseBadRequest("La cuota inicial no se puede anular desde este módulo")
+
+    if not quota.is_paid:
+        return HttpResponseBadRequest("La cuota no está marcada como pagada")
+
+    reversed_amount = quota.paid_amount
+    if reversed_amount <= 0:
+        return HttpResponseBadRequest("No hay pagos registrados para anular")
+
+    with transaction.atomic():
+        quota.payments.all().delete()
+        quota.is_paid = False
+        quota.save(update_fields=['is_paid'])
+
+    context = {
+        'quota': quota,
+        'invoice': quota.invoice,
+        'reversed_amount': reversed_amount,
+        'reversed_at': datetime.now(),
+    }
+
+    pdf_path = render_pdf_inline_with_puppeteer(
+        'PaymentQuota/Receipt_ticket_cancel.html',
+        context,
+        filename="Comprobante_Anulacion_Cuota.pdf",
+        return_path=True
+    )
+
+    # Leer bytes para responder inmediatamente (evita condiciones de carrera con el hilo).
+    with open(pdf_path, 'rb') as f:
+        pdf_bytes = f.read()
+
+    # Enviar email en segundo plano.
+    destinatario = getattr(quota.invoice.customer, 'email', None)
+    nombre_cliente = getattr(quota.invoice.customer, 'name', '')
+    referencia = f"#{quota.invoice.id}"
+    fecha_hoy = datetime.now().strftime('%d/%m/%Y')
+    attachment_name = f"Anulacion_Cuota_{quota.id}.pdf"
+
+    def _enviar_y_limpiar():
+        try:
+            if destinatario:
+                send_email_with_attachment(
+                    destinatario=destinatario,
+                    asunto="Anulación de cuota - Comprobante incluido",
+                    contenido_texto=(
+                        f"Hola {nombre_cliente},\n\n"
+                        "Tu cuota ha sido anulada y la misma quedó nuevamente pendiente.\n\n"
+                        "En este correo encontrarás el comprobante de anulación adjunto.\n\n"
+                        f"Detalles:\n"
+                        f"• Fecha: {fecha_hoy}\n"
+                        f"• Referencia: {referencia}\n\n"
+                        "Equipo CELUPRO CO"
+                    ),
+                    contenido_html=(
+                        f"<div style='font-family: -apple-system, BlinkMacSystemFont, \"Segoe UI\", Roboto, \"Helvetica Neue\", Arial, sans-serif; max-width: 600px; margin: 0 auto; background-color: #ffffff;'>"
+                        f"<div style='background: linear-gradient(135deg, #ef4444 0%, #b91c1c 100%); padding: 30px; text-align: center;'>"
+                        f"<h1 style='color: #ffffff; margin: 0; font-size: 24px; font-weight: 700;'>CELUPRO CO</h1>"
+                        f"</div>"
+                        f"<div style='padding: 30px;'>"
+                        f"<h2 style='color: #1a202c; margin: 0 0 18px 0; font-size: 20px; font-weight: 700;'>Anulación registrada</h2>"
+                        f"<p style='color: #4a5568; font-size: 15px; line-height: 1.6; margin: 0 0 18px 0;'>Hola <strong>{nombre_cliente}</strong>,</p>"
+                        f"<p style='color: #4a5568; font-size: 15px; line-height: 1.6; margin: 0 0 18px 0;'>Se registró la anulación de una cuota. La cuota quedó nuevamente en estado <strong>Pendiente</strong>.</p>"
+                        f"<div style='background-color: #fff5f5; border-left: 4px solid #ef4444; padding: 16px; margin: 0 0 18px 0; border-radius: 4px;'>"
+                        f"<div style='color:#4a5568; font-size: 14px;'><b>Fecha:</b> {fecha_hoy}</div>"
+                        f"<div style='color:#4a5568; font-size: 14px;'><b>Referencia:</b> {referencia}</div>"
+                        f"</div>"
+                        f"<p style='color: #4a5568; font-size: 14px; line-height: 1.6; margin: 0;'>📎 Comprobante adjunto en PDF.</p>"
+                        f"</div>"
+                        f"<div style='background-color: #f7fafc; padding: 20px; text-align: center; border-top: 1px solid #e2e8f0;'>"
+                        f"<p style='color: #718096; font-size: 13px; margin: 0;'>Gracias por tu confianza.</p>"
+                        f"</div>"
+                        f"</div>"
+                    ),
+                    attachment_path=pdf_path,
+                    attachment_name=attachment_name,
+                )
+        finally:
+            try:
+                if os.path.exists(pdf_path):
+                    os.remove(pdf_path)
+            except Exception:
+                pass
+
+    threading.Thread(target=_enviar_y_limpiar, daemon=True).start()
+
+    response = HttpResponse(pdf_bytes, content_type='application/pdf')
+    response['Content-Disposition'] = f'attachment; filename="{attachment_name}"'
+    return response
 
 @login_required
 def download_quota_receipt(request, quota_id):
