@@ -228,11 +228,21 @@
                                                 </td>
                                             <td>
                                                 <div class="d-flex">
+                                                    <!-- Botón Editar -->
+                                                    <a
+                                                        class="btn btn-outline-secondary btn-sm action-btn me-1"
+                                                        href="{% url 'edit_invoice' invoice.id %}"
+                                                        title="Editar factura"
+                                                        {% if invoice.status == 'Anulada' %}aria-disabled="true" tabindex="-1"{% endif %}>
+                                                        <i class="bi bi-pencil-square"></i>
+                                                    </a>
+
                                                     <!-- Botón de Descargar PDF -->
                                                     <button 
                                                         class="btn btn-outline-danger btn-sm action-btn me-1 btn-download-invoice"
                                                         data-url="{% url 'invoice_pdf' invoice.id %}">
                                                         <i class="bi bi-file-earmark-arrow-down-fill"></i>
+
                                                     </button>
                                                     <!-- Botón de Preview -->
                                                     <button class="btn btn-outline-primary btn-sm action-btn" 
