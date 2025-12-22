@@ -1,0 +1,222 @@
+{% load humanize %}
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Comprobante de Anulación - Cuota #{{ quota.id }}</title>
+    <style>
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+
+        body {
+            font-family: 'Arial', sans-serif;
+            background: white;
+            margin: 0;
+            padding: 0;
+        }
+
+        .receipt-container {
+            width: 100%;
+            max-width: 400px;
+            margin: 0 auto;
+            padding: 30px;
+        }
+
+        .receipt-header {
+            background: #ef4444;
+            color: white;
+            padding: 25px;
+            text-align: center;
+            border-radius: 15px 15px 0 0;
+            margin-bottom: 0;
+        }
+
+        .receipt-icon {
+            width: 50px;
+            height: 50px;
+            background: rgba(255, 255, 255, 0.2);
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            margin: 0 auto 15px;
+            font-size: 24px;
+        }
+
+        .receipt-title {
+            font-size: 20px;
+            font-weight: bold;
+            margin-bottom: 5px;
+        }
+
+        .receipt-subtitle {
+            font-size: 14px;
+            opacity: 0.95;
+        }
+
+        .receipt-body {
+            background: white;
+            border: 2px solid #ef4444;
+            border-top: none;
+            border-radius: 0 0 15px 15px;
+            padding: 25px;
+        }
+
+        .company-info {
+            text-align: center;
+            margin-bottom: 25px;
+            padding-bottom: 20px;
+            border-bottom: 2px dashed #ddd;
+        }
+
+        .company-name {
+            font-size: 18px;
+            font-weight: bold;
+            color: #333;
+            margin-bottom: 5px;
+        }
+
+        .info-section { margin-bottom: 20px; }
+
+        .info-row {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 12px;
+            padding: 8px 0;
+            border-bottom: 1px solid #f0f0f0;
+        }
+
+        .info-row:last-child { border-bottom: none; }
+
+        .info-label {
+            font-size: 14px;
+            color: #666;
+            font-weight: 500;
+        }
+
+        .info-value {
+            font-size: 14px;
+            color: #333;
+            font-weight: 600;
+            text-align: right;
+        }
+
+        .amount-section {
+            background: #fff5f5;
+            border: 2px solid #fecaca;
+            border-radius: 12px;
+            padding: 20px;
+            margin: 25px 0;
+            text-align: center;
+        }
+
+        .amount-label {
+            font-size: 14px;
+            color: #666;
+            margin-bottom: 8px;
+        }
+
+        .amount-value {
+            font-size: 30px;
+            font-weight: bold;
+            color: #b91c1c;
+        }
+
+        .status-section {
+            background: #fff7ed;
+            border: 2px solid #fb923c;
+            border-radius: 12px;
+            padding: 15px;
+            text-align: center;
+            margin: 25px 0;
+        }
+
+        .status-text {
+            font-size: 16px;
+            font-weight: bold;
+            color: #9a3412;
+        }
+
+        .thank-you {
+            text-align: center;
+            margin-top: 25px;
+            padding-top: 20px;
+            border-top: 2px dashed #ddd;
+        }
+
+        .thank-you-text {
+            font-size: 15px;
+            color: #666;
+            font-style: italic;
+            text-align: center;
+        }
+
+        .footer {
+            text-align: center;
+            margin-top: 20px;
+            font-size: 12px;
+            color: #888;
+        }
+    </style>
+</head>
+<body>
+    <div class="receipt-container">
+        <div class="receipt-header">
+            <div class="receipt-icon">✕</div>
+            <h1 class="receipt-title">Anulación de Cuota</h1>
+            <p class="receipt-subtitle">Comprobante de reversa</p>
+        </div>
+
+        <div class="receipt-body">
+            <div class="company-info">
+                <div class="company-name">CELUPRO CO</div>
+            </div>
+
+            <div class="info-section">
+                <div class="info-row">
+                    <span class="info-label">Factura:</span>
+                    <span class="info-value">#{{ invoice.invoice_number }}</span>
+                </div>
+
+                <div class="info-row">
+                    <span class="info-label">Cliente:</span>
+                    <span class="info-value">{{ invoice.customer.name }} {{ invoice.customer.lastname }}</span>
+                </div>
+
+                <div class="info-row">
+                    <span class="info-label">Cuota:</span>
+                    <span class="info-value">#{{ quota.id }}</span>
+                </div>
+
+                <div class="info-row">
+                    <span class="info-label">Vencimiento:</span>
+                    <span class="info-value">{{ quota.payment_date }}</span>
+                </div>
+
+                <div class="info-row">
+                    <span class="info-label">Fecha de anulación:</span>
+                    <span class="info-value">{{ reversed_at|date:"d/m/Y H:i" }}</span>
+                </div>
+            </div>
+
+            <div class="amount-section">
+                <div class="amount-label">Monto reversado</div>
+                <div class="amount-value">${{ reversed_amount|floatformat:2|intcomma }}</div>
+            </div>
+
+            <div class="status-section">
+                <div class="status-text">La cuota quedó en estado: PENDIENTE</div>
+            </div>
+
+            <div class="thank-you">
+                <p class="thank-you-text">Conserve este comprobante para soporte.</p>
+            </div>
+
+            <div class="footer">
+                Comprobante generado el {{ "now"|date:"d/m/Y" }} a las {{ "now"|date:"H:i" }}
+            </div>
+        </div>
+    </div>
+</body>
+</html>

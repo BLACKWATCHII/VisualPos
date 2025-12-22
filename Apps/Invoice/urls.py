@@ -13,6 +13,7 @@ urlpatterns = [
     path('edit-transaction/<int:transaction_id>/', views.edit_type_transaction, name='edit_transaction'),
     path('delete-transaction/<int:transaction_id>/', views.delete_type_transaction, name='delete_transaction'),
     path('quota/pay/<int:quota_id>/', views.pay_quota, name='pay_quota'),
+    path('quota/reverse/<int:quota_id>/', views.reverse_quota, name='reverse_quota'),
     path('invoice/quota/receipt/<int:quota_id>/', views.download_quota_receipt, name='download_quota_receipt'),
     path('payment/history/', views.payment_history, name='payment_history'),
     path('payment/history/invoices/<int:customer_id>/', views.payment_history_invoices, name='payment_history_invoices'),
