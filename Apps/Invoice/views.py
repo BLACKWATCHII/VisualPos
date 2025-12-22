@@ -33,6 +33,8 @@ from .utils import get_total_pagado, get_total_financiar, get_valor_cuota, get_s
 from django.views.decorators.http import require_GET
 from django.db.models.functions import TruncDate
 import threading
+from django.urls import reverse
+from django.http import HttpResponseRedirect
 
 
 def _norm_text(value) -> str:
@@ -45,7 +47,6 @@ def _norm_text(value) -> str:
 def _is_credit_invoice(invoice: Invoice) -> bool:
     pm = _norm_text(getattr(invoice, 'payment_method', ''))
     st = _norm_text(getattr(invoice, 'status', ''))
-    # _norm_text elimina acentos, ased que "Cre9dito" -> "credito"
     return (pm in ('credit', 'credito')) or ('credit' in pm) or ('credito' in pm) or ('credito' in st)
 
 
@@ -408,7 +409,8 @@ def edit_invoice(request, invoice_id):
                 return redirect('edit_invoice', invoice_id=invoice.id)
 
         messages.success(request, 'Factura actualizada correctamente.')
-        return redirect('report_invoice')
+        url = reverse('edit_invoice', kwargs={'invoice_id': invoice.id})
+        return HttpResponseRedirect(f"{url}?saved=1&print=1")
 
 def render_to_pdf(template_src, context_dict={}):
     template = get_template(template_src)
