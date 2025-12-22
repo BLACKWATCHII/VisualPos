@@ -26,6 +26,17 @@
 
     {% include '_navbar.html' %}
 
+      {% if messages %}
+      <div class="container-fluid" style="margin-top: 5rem; padding: 0 2rem;">
+            {% for message in messages %}
+                  <div class="alert alert-{% if message.tags %}{{ message.tags }}{% else %}info{% endif %} alert-dismissible fade show" role="alert">
+                        {{ message }}
+                        <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Cerrar"></button>
+                  </div>
+            {% endfor %}
+      </div>
+      {% endif %}
+
     {% block content %}{% endblock %}
 
     <!-- jQuery -->

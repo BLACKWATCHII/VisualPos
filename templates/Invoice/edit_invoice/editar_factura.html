@@ -171,6 +171,13 @@
 	background: #f8f9fa;
 	font-weight: 600;
 }
+
+.toast-container {
+	position: fixed;
+	top: 5.5rem;
+	right: 1rem;
+	z-index: 1080;
+}
 </style>
 {% endblock %}
 
@@ -301,7 +308,12 @@
 			<div class="row">
 				<div class="col-md-6">
 					<div class="form-floating">
-						<input type="number" id="quotas" name="quotas" class="form-control" placeholder="1" min="1" value="{{ invoice.quotas|default_if_none:'' }}">
+						<div class="input-group">
+							<input type="number" id="quotas" name="quotas" class="form-control" placeholder="1" min="1" value="{{ invoice.quotas|default_if_none:'' }}">
+							<button type="button" id="open-quotas-modal" class="btn btn-outline-success" data-bs-toggle="modal" data-bs-target="#quotasModal">
+								Modificar cuotas
+							</button>
+						</div>
 						<label>Número de cuotas</label>
 					</div>
 				</div>
@@ -454,60 +466,10 @@
 			</div>
 		</div>
 
-		<!-- Cuotas (solo crédito) -->
-		<div id="quota-section" style="display:none;" class="mt-4">
-			<div class="section-title">Cuotas financiadas</div>
-			<div class="quota-table">
-				<table class="table table-striped mb-0">
-					<thead>
-						<tr>
-							<th style="width: 10%">#</th>
-							<th style="width: 25%">Fecha</th>
-							<th style="width: 25%">Monto</th>
-							<th style="width: 20%">Pagado</th>
-							<th style="width: 20%">Estado</th>
-						</tr>
-					</thead>
-					<tbody>
-						{% for q in quotas_list %}
-							<tr>
-								<td>{{ q.number }}</td>
-								<td>
-									{% if q.is_paid or q.paid_amount > 0 %}
-										<input type="date" class="form-control" value="{{ q.payment_date|date:'Y-m-d' }}" disabled>
-									{% else %}
-										<input type="hidden" name="quota_id" value="{{ q.id }}">
-										<input type="date" name="quota_date" class="form-control" value="{{ q.payment_date|date:'Y-m-d' }}">
-									{% endif %}
-								</td>
-								<td>
-									{% if q.is_paid or q.paid_amount > 0 %}
-										<input type="text" class="form-control" value="{{ q.amount|floatformat:2 }}" disabled>
-									{% else %}
-										<input type="number" step="0.01" min="0" name="quota_amount" class="form-control" value="{{ q.amount|floatformat:2 }}">
-									{% endif %}
-								</td>
-								<td>${{ q.paid_amount|floatformat:2 }}</td>
-								<td>
-									{% if q.is_paid %}
-										<span class="badge bg-success">Pagada</span>
-									{% elif q.paid_amount > 0 %}
-										<span class="badge bg-warning text-dark">Parcial</span>
-									{% else %}
-										<span class="badge bg-secondary">Pendiente</span>
-									{% endif %}
-								</td>
-							</tr>
-						{% empty %}
-							<tr>
-								<td colspan="5" class="text-center text-muted p-3">Esta factura no tiene cuotas registradas.</td>
-							</tr>
-						{% endfor %}
-					</tbody>
-				</table>
-			</div>
-			<small class="text-muted d-block mt-2">
-				Las cuotas deben sumar exactamente el monto a financiar (sin domicilio).
+		<!-- Cuotas (solo crédito): ahora se editan en modal -->
+		<div id="quota-section" style="display:none;" class="mt-2">
+			<small class="text-muted d-block">
+				Usa <strong>Modificar cuotas</strong> para editar fechas y montos.
 			</small>
 		</div>
 
@@ -517,6 +479,22 @@
 			<button type="submit" class="btn btn-save">Guardar cambios</button>
 		</div>
 	</form>
+</div>
+
+<!-- Toast de validación de cuotas -->
+<div class="toast-container">
+	<div id="quotaToast" class="toast align-items-center text-bg-success border-0" role="alert" aria-live="assertive" aria-atomic="true">
+		<div class="d-flex">
+			<div class="toast-body" id="quotaToastBody">Valores correctos.</div>
+			<button type="button" class="btn-close btn-close-white me-2 m-auto" data-bs-dismiss="toast" aria-label="Cerrar"></button>
+		</div>
+	</div>
+	<div id="saveToast" class="toast align-items-center text-bg-success border-0 mt-2" role="alert" aria-live="assertive" aria-atomic="true">
+		<div class="d-flex">
+			<div class="toast-body" id="saveToastBody">Cambios guardados correctamente.</div>
+			<button type="button" class="btn-close btn-close-white me-2 m-auto" data-bs-dismiss="toast" aria-label="Cerrar"></button>
+		</div>
+	</div>
 </div>
 
 <!-- Modal de búsqueda de clientes -->
@@ -557,6 +535,83 @@
 		</div>
 	</div>
 </div>
+
+<!-- Modal de cuotas (solo crédito) -->
+<div class="modal fade" id="quotasModal" tabindex="-1" aria-labelledby="quotasModalLabel" aria-hidden="true">
+	<div class="modal-dialog modal-lg">
+		<div class="modal-content">
+			<div class="modal-header">
+				<h5 class="modal-title" id="quotasModalLabel">Cuotas financiadas</h5>
+				<button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Cerrar"></button>
+			</div>
+			<div class="modal-body">
+				<div class="d-flex justify-content-between align-items-center mb-2">
+					<div class="text-muted">
+						Las cuotas deben sumar exactamente el monto a financiar (sin domicilio).
+					</div>
+					<div>
+						<strong id="quotaSumLabel">Suma cuotas: $0</strong>
+					</div>
+				</div>
+
+				<div class="quota-table">
+					<table class="table table-striped mb-0" id="quotasTable">
+						<thead>
+							<tr>
+								<th style="width: 10%">#</th>
+								<th style="width: 30%">Fecha</th>
+								<th style="width: 30%">Monto</th>
+								<th style="width: 15%">Pagado</th>
+								<th style="width: 15%">Estado</th>
+							</tr>
+						</thead>
+						<tbody>
+							{% for q in quotas_list %}
+								<tr class="quota-row" data-quota-id="{{ q.id }}" data-number="{{ q.number }}" data-locked="{% if q.is_paid or q.paid_amount > 0 %}1{% else %}0{% endif %}" data-amount="{{ q.amount|floatformat:2 }}">
+									<td>{{ q.number }}</td>
+									<td>
+										{% if q.is_paid or q.paid_amount > 0 %}
+											<input type="date" class="form-control" value="{{ q.payment_date|date:'Y-m-d' }}" disabled>
+										{% else %}
+											<input type="hidden" name="quota_id" value="{{ q.id }}" form="invoice-form">
+											<input type="date" name="quota_date" class="form-control" value="{{ q.payment_date|date:'Y-m-d' }}" form="invoice-form">
+										{% endif %}
+									</td>
+									<td>
+										{% if q.is_paid or q.paid_amount > 0 %}
+											<input type="text" class="form-control" value="{{ q.amount|floatformat:2 }}" disabled>
+										{% else %}
+											<input type="text" class="form-control quota-amount-display" inputmode="decimal" autocomplete="off" placeholder="0" value="{{ q.amount|floatformat:2 }}">
+											<input type="hidden" name="quota_amount" class="quota-amount" value="{{ q.amount|floatformat:2 }}" form="invoice-form">
+										{% endif %}
+									</td>
+									<td>${{ q.paid_amount|floatformat:2 }}</td>
+									<td>
+										{% if q.is_paid %}
+											<span class="badge bg-success">Pagada</span>
+										{% elif q.paid_amount > 0 %}
+											<span class="badge bg-warning text-dark">Parcial</span>
+										{% else %}
+											<span class="badge bg-secondary">Pendiente</span>
+										{% endif %}
+									</td>
+								</tr>
+							{% empty %}
+								<tr>
+									<td colspan="5" class="text-center text-muted p-3">Esta factura no tiene cuotas registradas.</td>
+								</tr>
+							{% endfor %}
+						</tbody>
+					</table>
+				</div>
+				<small class="text-muted d-block mt-2" id="quotasModalHint"></small>
+			</div>
+			<div class="modal-footer">
+				<button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cerrar</button>
+			</div>
+		</div>
+	</div>
+</div>
 {% endblock %}
 
 {% block extra_scripts %}
@@ -572,6 +627,74 @@ $(document).ready(function(){
 	function formatCOPInteger(value) {
 		const n = Number(value) || 0;
 		return n.toLocaleString('es-CO', { maximumFractionDigits: 0 });
+	}
+
+	function parseMoneyToNumber(value) {
+		if (value === null || value === undefined) return 0;
+		let s = String(value).trim();
+		if (!s) return 0;
+		s = s.replace(/\$/g, '').replace(/\s/g, '');
+
+		const hasDot = s.includes('.');
+		const hasComma = s.includes(',');
+		if (hasDot && hasComma) {
+			s = s.replace(/\./g, '').replace(',', '.');
+		} else if (hasComma && !hasDot) {
+			if (/^\d{1,3}(,\d{3})+$/.test(s)) {
+				s = s.replace(/,/g, '');
+			} else {
+				s = s.replace(',', '.');
+			}
+		} else if (hasDot && !hasComma) {
+			if (/^\d{1,3}(\.\d{3})+$/.test(s)) {
+				s = s.replace(/\./g, '');
+			} else if (/^\d+(\.\d{1,2})$/.test(s)) {
+			} else {
+				s = s.replace(/\./g, '');
+			}
+		}
+		s = s.replace(/[^0-9.]/g, '');
+		const parts = s.split('.');
+		if (parts.length > 2) {
+			s = parts[0] + '.' + parts.slice(1).join('');
+		}
+		const n = Number(s);
+		return isNaN(n) ? 0 : n;
+	}
+
+	function formatCOPDecimal(value) {
+		const n = Number(value) || 0;
+		return n.toLocaleString('es-CO', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
+	}
+
+	function showQuotaToast(ok, message) {
+		const el = document.getElementById('quotaToast');
+		const body = document.getElementById('quotaToastBody');
+		if (!el || !body || typeof bootstrap === 'undefined') return;
+		body.textContent = message;
+		el.classList.remove('text-bg-success', 'text-bg-danger', 'text-bg-warning');
+		el.classList.add(ok ? 'text-bg-success' : 'text-bg-danger');
+		const toast = bootstrap.Toast.getOrCreateInstance(el, { delay: 3500 });
+		toast.show();
+	}
+
+	function hideQuotaToast() {
+		const el = document.getElementById('quotaToast');
+		if (!el || typeof bootstrap === 'undefined') return;
+		try {
+			const toast = bootstrap.Toast.getOrCreateInstance(el);
+			toast.hide();
+		} catch (e) {
+		}
+	}
+
+	function showSaveToast(message) {
+		const el = document.getElementById('saveToast');
+		const body = document.getElementById('saveToastBody');
+		if (!el || !body || typeof bootstrap === 'undefined') return;
+		body.textContent = message || 'Cambios guardados correctamente.';
+		const toast = bootstrap.Toast.getOrCreateInstance(el, { delay: 3500 });
+		toast.show();
 	}
 
 	function bindMoneyInput(displaySelector, hiddenSelector) {
@@ -601,6 +724,186 @@ $(document).ready(function(){
 
 	const syncDelivery = bindMoneyInput('#delivery_amount_display', '#delivery_amount');
 	const syncInitialFee = bindMoneyInput('#initial_fee_value_display', '#initial_quota_amount');
+
+	// =============================
+	// Cuotas (modal)
+	// =============================
+	let lastFinancedAmount = 0;
+	let quotaTouched = false;
+	let lastQuotaToastOk = null;
+	let quotaBalanceTimer = null;
+
+	function getLockedQuotasTotal() {
+		let total = 0;
+		$('#quotasTable tbody tr.quota-row').each(function(){
+			const locked = String($(this).data('locked') || '0') === '1';
+			if (!locked) return;
+			const amt = parseMoneyToNumber($(this).data('amount'));
+			total += amt;
+		});
+		return total;
+	}
+
+	function getLockedQuotasCount() {
+		let c = 0;
+		$('#quotasTable tbody tr.quota-row').each(function(){
+			const locked = String($(this).data('locked') || '0') === '1';
+			if (locked) c += 1;
+		});
+		return c;
+	}
+
+	function getEditableQuotaRows() {
+		return $('#quotasTable tbody tr.quota-row').filter(function(){
+			return String($(this).data('locked') || '0') !== '1';
+		});
+	}
+
+	function setQuotaRowAmount($row, amountNumber) {
+		const safe = Math.max(0, Number(amountNumber) || 0);
+		const $hidden = $row.find('input.quota-amount');
+		const $display = $row.find('input.quota-amount-display');
+		if ($hidden.length) $hidden.val(safe.toFixed(2));
+		if ($display.length) $display.val(formatCOPDecimal(safe));
+	}
+
+	function syncQuotaHiddenFromDisplay($row) {
+		const $display = $row.find('input.quota-amount-display');
+		const $hidden = $row.find('input.quota-amount');
+		if (!$display.length || !$hidden.length) return;
+		const n = parseMoneyToNumber($display.val());
+		$hidden.val((Number(n) || 0).toFixed(2));
+		$display.val(formatCOPDecimal(n));
+	}
+
+	function getQuotaSumAllVisible() {
+		let sum = 0;
+		$('#quotasTable tbody tr.quota-row:visible').each(function(){
+			const locked = String($(this).data('locked') || '0') === '1';
+			if (locked) {
+				sum += parseMoneyToNumber($(this).data('amount'));
+				return;
+			}
+			const $hidden = $(this).find('input.quota-amount');
+			sum += parseMoneyToNumber($hidden.val());
+		});
+		return sum;
+	}
+
+	function updateQuotaValidationUI(showToast) {
+		const financed = Number(lastFinancedAmount) || 0;
+		const sum = getQuotaSumAllVisible();
+		$('#quotaSumLabel').text('Suma cuotas: $' + formatCOPDecimal(sum));
+
+		const diff = (sum - financed);
+		const abs = Math.abs(diff);
+		const ok = abs < 0.005; // tolerancia por redondeos
+
+		let msg = '';
+		if (ok) {
+			msg = 'Valores correctos: la suma coincide con el monto a financiar.';
+		} else if (diff > 0) {
+			msg = 'La suma no está correcta. Te estás pasando por $' + formatCOPDecimal(abs) + ' (monto a financiar: $' + formatCOPDecimal(financed) + ').';
+		} else {
+			msg = 'La suma no está correcta. Aún falta $' + formatCOPDecimal(abs) + ' (monto a financiar: $' + formatCOPDecimal(financed) + ').';
+		}
+
+		$('#quotasModalHint').text(msg);
+
+		if (showToast) {
+			// Evita mensajes contradictorios: solo notifica cuando cambia el estado ok/error.
+			if (lastQuotaToastOk === null || ok !== lastQuotaToastOk) {
+				showQuotaToast(ok, msg);
+				lastQuotaToastOk = ok;
+			}
+		} else {
+			// Mientras escribe, ocultar cualquier toast anterior para no dejar mensajes “viejos”.
+			hideQuotaToast();
+		}
+	}
+
+	function applyDesiredQuotaCountUI() {
+		// Ajusta visibilidad de filas en el modal seg fan el n famero deseado.
+		// Nota: si el usuario aumenta cuotas, las nuevas se crear e1n al guardar (no existen a fan en el DOM).
+		const desired = parseInt($('#quotas').val(), 10) || 0;
+		const lockedCount = getLockedQuotasCount();
+		const totalCurrent = $('#quotasTable tbody tr.quota-row').length;
+		const editableRows = getEditableQuotaRows();
+
+		if (desired > 0 && desired < lockedCount) {
+			$('#quotas').val(String(lockedCount));
+			showQuotaToast(false, 'No puedes poner menos cuotas que las ya pagadas/parciales (' + lockedCount + ').');
+			return applyDesiredQuotaCountUI();
+		}
+
+		// Mostrar siempre bloqueadas; para las editables, ocultar desde el final si sobran.
+		editableRows.show();
+		if (desired > 0) {
+			const desiredEditable = Math.max(0, desired - lockedCount);
+			const currentEditable = editableRows.length;
+			if (currentEditable > desiredEditable) {
+				// Ocultar las  faltimas para simular que se eliminar e1n al guardar.
+				editableRows.slice(desiredEditable).hide();
+			}
+			if (desired > totalCurrent) {
+				const addN = desired - totalCurrent;
+				$('#quotasModalHint').text('Al guardar, se crearán ' + addN + ' cuota(s) adicional(es). Los montos se ajustarán automáticamente.');
+			}
+		}
+	}
+
+	function redistributeQuotaAmounts() {
+		// Reparte (monto a financiar - total bloqueado) entre filas editables visibles.
+		const financed = Number(lastFinancedAmount) || 0;
+		const lockedTotal = getLockedQuotasTotal();
+		const remaining = Math.max(0, financed - lockedTotal);
+		const editableVisible = getEditableQuotaRows().filter(':visible');
+		const n = editableVisible.length;
+		if (!n) {
+			updateQuotaValidationUI(false);
+			return;
+		}
+
+		const per = Math.floor((remaining / n) * 100) / 100; // 2 decimales hacia abajo
+		let running = 0;
+		editableVisible.each(function(index){
+			if (index < n - 1) {
+				setQuotaRowAmount($(this), per);
+				running += per;
+			} else {
+				setQuotaRowAmount($(this), Math.round((remaining - running) * 100) / 100);
+			}
+		});
+		updateQuotaValidationUI(true);
+	}
+
+	function balanceAfterManualEdit($editedRow, showToast = true) {
+		// Ajusta autom e1ticamente la  faltima cuota editable visible para que la suma total
+		// coincida con el monto a financiar (respetando cuotas bloqueadas).
+		const financed = Number(lastFinancedAmount) || 0;
+		const lockedTotal = getLockedQuotasTotal();
+		const editableVisible = getEditableQuotaRows().filter(':visible');
+		if (!editableVisible.length) return;
+
+		let $balancer = editableVisible.last();
+		if ($editedRow && $balancer.is($editedRow) && editableVisible.length > 1) {
+			$balancer = editableVisible.eq(editableVisible.length - 2);
+		}
+
+		// Suma de cuotas editables visibles excepto el balancer
+		let others = 0;
+		editableVisible.each(function(){
+			const $row = $(this);
+			if ($row.is($balancer)) return;
+			others += parseMoneyToNumber($row.find('input.quota-amount').val());
+		});
+
+		let newAmt = financed - lockedTotal - others;
+		if (!isFinite(newAmt)) newAmt = 0;
+		if (newAmt < 0) newAmt = 0;
+		setQuotaRowAmount($balancer, Math.round(newAmt * 100) / 100);
+		updateQuotaValidationUI(!!showToast);
+	}
 
 	function initItemSelect() {
 		if ($.fn.select2) {
@@ -778,8 +1081,56 @@ $(document).ready(function(){
 		const isCredit = pm.includes('credito') || pm.includes('credit');
 		if (isCredit) {
 			const financiar = Math.max(0, totalProductos - initialFee);
+			lastFinancedAmount = financiar;
 			$('#financedAmountPreview').text('$' + financiar.toLocaleString('es-CO', { minimumFractionDigits: 2, maximumFractionDigits: 2 }));
+			// Si el usuario no ha tocado montos manualmente, auto-ajustar.
+			applyDesiredQuotaCountUI();
+			if (!quotaTouched) {
+				redistributeQuotaAmounts();
+			} else {
+				updateQuotaValidationUI(false);
+			}
 		}
+	}
+
+	// Eventos cuotas
+	$('#quotas').on('input change', function(){
+		quotaTouched = false; // al cambiar n famero de cuotas, se asume auto-reparto
+		applyDesiredQuotaCountUI();
+		redistributeQuotaAmounts();
+	});
+
+	$(document).on('input', '.quota-amount-display', function(){
+		quotaTouched = true;
+		const $row = $(this).closest('tr.quota-row');
+		// Formatear suave mientras escribe
+		const n = parseMoneyToNumber($(this).val());
+		$row.find('input.quota-amount').val((Number(n) || 0).toFixed(2));
+		updateQuotaValidationUI(false);
+
+		clearTimeout(quotaBalanceTimer);
+		quotaBalanceTimer = setTimeout(function(){
+			balanceAfterManualEdit($row, false);
+		}, 350);
+	});
+
+	$(document).on('blur', '.quota-amount-display', function(){
+		const $row = $(this).closest('tr.quota-row');
+		clearTimeout(quotaBalanceTimer);
+		syncQuotaHiddenFromDisplay($row);
+		balanceAfterManualEdit($row, true);
+	});
+
+	// Al abrir el modal, sincronizar formato y validaci f3n
+	const quotasModalEl = document.getElementById('quotasModal');
+	if (quotasModalEl) {
+		quotasModalEl.addEventListener('shown.bs.modal', function(){
+			applyDesiredQuotaCountUI();
+			getEditableQuotaRows().each(function(){
+				syncQuotaHiddenFromDisplay($(this));
+			});
+			updateQuotaValidationUI(true);
+		});
 	}
 
 	// Agregar nueva l ednea de producto
@@ -853,6 +1204,25 @@ $(document).ready(function(){
 	}
 
 	calculateTotals();
+
+	// Post-save behavior: mostrar mensaje y abrir PDF actualizado
+	try {
+		const params = new URLSearchParams(window.location.search);
+		if (params.get('saved') === '1') {
+			showSaveToast('Cambios guardados correctamente.');
+			if (params.get('print') === '1') {
+				window.open("{% url 'invoice_pdf' invoice.id %}", '_blank');
+			}
+			// Limpiar query params para evitar repetir al recargar
+			params.delete('saved');
+			params.delete('print');
+			const newQs = params.toString();
+			const newUrl = window.location.pathname + (newQs ? ('?' + newQs) : '') + window.location.hash;
+			window.history.replaceState({}, document.title, newUrl);
+		}
+	} catch (e) {
+		// no-op
+	}
 });
 </script>
 {% endblock %}
