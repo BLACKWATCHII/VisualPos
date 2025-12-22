@@ -34,6 +34,382 @@ from django.views.decorators.http import require_GET
 from django.db.models.functions import TruncDate
 import threading
 
+
+def _norm_text(value) -> str:
+    text = str(value or '')
+    text = unicodedata.normalize('NFKD', text)
+    text = ''.join(ch for ch in text if not unicodedata.combining(ch))
+    return text.strip().lower()
+
+
+def _is_credit_invoice(invoice: Invoice) -> bool:
+    pm = _norm_text(getattr(invoice, 'payment_method', ''))
+    st = _norm_text(getattr(invoice, 'status', ''))
+    # _norm_text elimina acentos, ased que "Cre9dito" -> "credito"
+    return (pm in ('credit', 'credito')) or ('credit' in pm) or ('credito' in pm) or ('credito' in st)
+
+
+def _parse_decimal(value, default=Decimal('0.00')) -> Decimal:
+    if value is None:
+        return default
+    try:
+        s = str(value).strip()
+        if not s:
+            return default
+        s = s.replace('$', '').replace(',', '').replace(' ', '')
+        return Decimal(s)
+    except Exception:
+        return default
+
+
+def _parse_int(value, default=0) -> int:
+    try:
+        return int(str(value).strip())
+    except Exception:
+        return default
+
+
+@login_required
+def edit_invoice(request, invoice_id):
+    invoice = get_object_or_404(
+        Invoice.objects
+        .select_related('customer', 'transaction_type')
+        .prefetch_related('items', 'payment_quotas', 'payment_quotas__payments'),
+        pk=invoice_id
+    )
+
+    items = Item.objects.all()
+    transaction_types = TransactionType.objects.all()
+
+    if request.method == 'GET':
+        form = InvoiceForm(instance=invoice)
+        credit = _is_credit_invoice(invoice)
+        quotas = list(invoice.payment_quotas.filter(number__gt=0).order_by('number')) if credit else []
+        total_financiar = get_total_financiar(invoice) if credit else None
+        total_pagado = get_total_pagado(invoice) if credit else None
+
+        return render(request, 'Invoice/edit_invoice/editar_factura.html', {
+            'form': form,
+            'invoice': invoice,
+            'items': items,
+            'invoice_items': list(invoice.items.select_related('item').all()),
+            'transaction_types': transaction_types,
+            'is_credit': credit,
+            'quotas_list': quotas,
+            'total_financiar': total_financiar,
+            'total_pagado': total_pagado,
+        })
+
+    if request.method != 'POST':
+        return HttpResponseNotAllowed(['GET', 'POST'])
+
+    # =============================
+    # POST: actualizar factura
+    # =============================
+    with transaction.atomic():
+        form = InvoiceForm(request.POST, instance=invoice)
+        if not form.is_valid():
+            messages.error(request, 'Formulario inve1lido. Verifique los datos del cliente.')
+            return redirect('edit_invoice', invoice_id=invoice.id)
+
+        new_payment_method = (request.POST.get('payment_method') or '').strip()
+        new_notes = request.POST.get('notes') or request.POST.get('subject') or ''
+        discount_percent = _parse_decimal(request.POST.get('discount-percent'), Decimal('0.00'))
+        if discount_percent < 0:
+            discount_percent = Decimal('0.00')
+        if discount_percent > 100:
+            discount_percent = Decimal('100.00')
+
+        # Domicilio
+        has_delivery = request.POST.get('has_delivery')
+        delivery_value = _parse_decimal(request.POST.get('delivery_amount'), Decimal('0.00')) if has_delivery else Decimal('0.00')
+        if delivery_value < 0:
+            delivery_value = Decimal('0.00')
+
+        # Cuota inicial
+        initial_quota_value = _parse_decimal(request.POST.get('initial_quota_amount'), Decimal('0.00'))
+        if initial_quota_value < 0:
+            initial_quota_value = Decimal('0.00')
+
+        # Transaccif3n (NO cambiar consecutivo)
+        transaction_type_id = request.POST.get('transaction_type')
+        if transaction_type_id:
+            try:
+                invoice.transaction_type = TransactionType.objects.get(id=transaction_type_id)
+            except TransactionType.DoesNotExist:
+                pass
+
+        # =============================
+        # Items y stock: calcular diff
+        # =============================
+        old_qty_by_item_id = {}
+        for it in invoice.items.all():
+            try:
+                old_qty_by_item_id[it.item_id] = old_qty_by_item_id.get(it.item_id, 0) + int(it.quantity or 0)
+            except Exception:
+                continue
+
+        posted_item_ids = request.POST.getlist('item_id')
+        posted_quantities = request.POST.getlist('quantity')
+        posted_prices = request.POST.getlist('price')
+
+        new_lines = []
+        new_qty_by_item_id = {}
+        sub_total = Decimal('0.00')
+
+        for item_id, qty, price in zip(posted_item_ids, posted_quantities, posted_prices):
+            if not item_id:
+                continue
+            q = _parse_int(qty, 0)
+            p = _parse_decimal(price, Decimal('0.00'))
+            if q <= 0:
+                continue
+            if p < 0:
+                p = Decimal('0.00')
+            new_lines.append((int(item_id), q, p))
+            new_qty_by_item_id[int(item_id)] = new_qty_by_item_id.get(int(item_id), 0) + q
+            sub_total += (Decimal(q) * p)
+
+        if not new_lines:
+            messages.error(request, 'Debe incluir al menos un producto/servicio.')
+            return redirect('edit_invoice', invoice_id=invoice.id)
+
+        # Aplicar descuento sobre productos (no incluye domicilio)
+        total_productos = sub_total
+        if discount_percent and discount_percent > 0:
+            total_productos = total_productos - (total_productos * (discount_percent / Decimal('100')))
+        if total_productos < 0:
+            total_productos = Decimal('0.00')
+
+        # Determinar si la factura es/cre9dito
+        next_is_credit = _norm_text(new_payment_method) in ('credito', 'credit')
+        current_is_credit = _is_credit_invoice(invoice)
+
+        # Si intenta cambiar modalidad, ser conservador si hay historial de pagos
+        if current_is_credit != next_is_credit:
+            has_any_payments = Early_Payment.objects.filter(quota__invoice=invoice).exists()
+            has_any_quotas = invoice.payment_quotas.filter(number__gt=0).exists()
+            if has_any_payments or has_any_quotas:
+                messages.error(request, 'No se puede cambiar el me9todo de pago porque la factura tiene cuotas/pagos registrados.')
+                return redirect('edit_invoice', invoice_id=invoice.id)
+
+        # =============================
+        # Ajustar stock segfan diferencias
+        # =============================
+        all_item_ids = set(old_qty_by_item_id.keys()) | set(new_qty_by_item_id.keys())
+        if all_item_ids:
+            stock_items = list(Item.objects.select_for_update().filter(id__in=all_item_ids))
+            stock_map = {i.id: i for i in stock_items}
+
+            for item_id in all_item_ids:
+                old_q = int(old_qty_by_item_id.get(item_id, 0) or 0)
+                new_q = int(new_qty_by_item_id.get(item_id, 0) or 0)
+                diff = new_q - old_q
+                if diff == 0:
+                    continue
+                item = stock_map.get(item_id)
+                if not item:
+                    messages.error(request, 'Producto inve1lido en la factura.')
+                    return redirect('edit_invoice', invoice_id=invoice.id)
+                # Si diff > 0, se necesita me1s stock; si diff < 0, se devuelve stock.
+                new_stock = int(item.Stock or 0) - diff
+                if new_stock < 0:
+                    messages.error(request, f'Stock insuficiente para {item.Name}. Disponible: {item.Stock}')
+                    return redirect('edit_invoice', invoice_id=invoice.id)
+                item.Stock = new_stock
+                item.save()
+
+        # Reemplazar items
+        invoice.items.all().delete()
+        for item_id, q, p in new_lines:
+            item = Item.objects.get(id=item_id)
+            InvoiceItem.objects.create(
+                invoice=invoice,
+                item=item,
+                quantity=q,
+                price=p,
+            )
+
+        # =============================
+        # Guardar encabezado factura
+        # =============================
+        invoice = form.save(commit=False)
+        invoice.notes = new_notes
+        invoice.discount = discount_percent
+        invoice.delivery_amount = delivery_value
+        invoice.initial_fee = initial_quota_value
+
+        if next_is_credit:
+            invoice.payment_method = 'Credito'
+            invoice.status = 'Credito'
+            invoice.payment_frequency = request.POST.get('payment_frequency')
+            invoice.quotas = _parse_int(request.POST.get('quotas'), 0)
+        else:
+            # Contado
+            # Guardar el valor seleccionado (Efectivo/Transferencia/etc). Cualquier valor != Credito se trata como contado.
+            invoice.payment_method = new_payment_method or (invoice.payment_method or 'Contado')
+            invoice.status = request.POST.get('status') or invoice.status or 'Pagada'
+            invoice.payment_frequency = None
+            invoice.quotas = None
+
+        invoice.total = (total_productos + delivery_value).quantize(Decimal('0.01'))
+        invoice.save()
+
+        # =============================
+        # Validaciones y actualizacif3n de cuotas (si cre9dito)
+        # =============================
+        if next_is_credit:
+            total_financiar = get_total_financiar(invoice)
+            total_pagado = get_total_pagado(invoice)
+
+            if total_financiar < total_pagado:
+                messages.error(request, 'No se puede disminuir el monto a financiar por debajo de lo ya pagado.')
+                transaction.set_rollback(True)
+                return redirect('edit_invoice', invoice_id=invoice.id)
+
+            # Cuotas existentes
+            financed_quotas = list(invoice.payment_quotas.filter(number__gt=0).order_by('number'))
+            prev_count = len(financed_quotas)
+
+            locked_quota_ids = set()
+            for q in financed_quotas:
+                if q.is_paid or (q.paid_amount and q.paid_amount > 0):
+                    locked_quota_ids.add(q.id)
+
+            desired_count = _parse_int(request.POST.get('quotas'), len(financed_quotas))
+            if desired_count < 0:
+                desired_count = 0
+
+            # No permitir quedar con menos cuotas que las bloqueadas
+            if desired_count < len([q for q in financed_quotas if q.id in locked_quota_ids]):
+                messages.error(request, 'No puede reducir el nfamero de cuotas por debajo de las cuotas ya pagadas/parciales.')
+                transaction.set_rollback(True)
+                return redirect('edit_invoice', invoice_id=invoice.id)
+
+            # Ajustar cantidad de cuotas (agregar/eliminar solo no bloqueadas, desde el final)
+            if desired_count < len(financed_quotas):
+                to_remove = len(financed_quotas) - desired_count
+                removable = [q for q in reversed(financed_quotas) if q.id not in locked_quota_ids]
+                for q in removable[:to_remove]:
+                    q.delete()
+
+            elif desired_count > len(financed_quotas):
+                add_n = desired_count - len(financed_quotas)
+                payment_frequency = request.POST.get('payment_frequency') or invoice.payment_frequency or 'Mensual'
+                start_date = date.today()
+                try:
+                    last = invoice.payment_quotas.filter(number__gt=0).order_by('-number').first()
+                    if last and last.payment_date:
+                        start_date = last.payment_date
+                except Exception:
+                    pass
+
+                # Generar fechas nuevas (a partir de la faltima fecha conocida)
+                fechas = calcular_fechas_cuotas(start_date, add_n, payment_frequency, tiene_cuota_inicial=False)
+                # Ojo: usar max manual para el prf3ximo nfamero.
+                max_num = 0
+                try:
+                    max_obj = invoice.payment_quotas.filter(number__gt=0).order_by('-number').first()
+                    max_num = int(max_obj.number) if max_obj else 0
+                except Exception:
+                    max_num = 0
+
+                for i, fecha in enumerate(fechas, start=1):
+                    PaymentQuota.objects.create(
+                        invoice=invoice,
+                        number=max_num + i,
+                        amount=Decimal('0.00'),
+                        payment_date=fecha,
+                        is_paid=False
+                    )
+
+            # Ahora actualizar montos/fechas segfan POST
+            quota_ids = request.POST.getlist('quota_id')
+            quota_amounts = request.POST.getlist('quota_amount')
+            quota_dates = request.POST.getlist('quota_date')
+
+            # Normalizar inputs
+            posted_map = {}
+            for qid, amt, dt in zip(quota_ids, quota_amounts, quota_dates):
+                qid_i = _parse_int(qid, 0)
+                if not qid_i:
+                    continue
+                posted_map[qid_i] = {
+                    'amount': _parse_decimal(amt, Decimal('0.00')),
+                    'date': dt,
+                }
+
+            # Refrescar cuotas tras cambios de cantidad
+            financed_quotas = list(invoice.payment_quotas.filter(number__gt=0).order_by('number'))
+
+            # Auto-repartir montos cuando cambif3 el nfamero de cuotas o cuando faltan montos en el POST.
+            # Regla: la suma de cuotas (number>0) debe ser EXACTAMENTE total_financiar.
+            locked_total = sum((q.amount or Decimal('0.00')) for q in financed_quotas if q.id in locked_quota_ids)
+            remaining = (total_financiar - locked_total)
+            if remaining < 0:
+                remaining = Decimal('0.00')
+
+            unlocked = [q for q in financed_quotas if q.id not in locked_quota_ids]
+            unlocked_ids = {q.id for q in unlocked}
+            missing_any = any(qid not in posted_map for qid in unlocked_ids)
+            if (desired_count != prev_count) or missing_any:
+                if unlocked:
+                    per = (remaining / Decimal(len(unlocked))).quantize(Decimal('0.01'))
+                    # Ajuste por redondeo en la faltima cuota
+                    running = Decimal('0.00')
+                    for idx, q in enumerate(unlocked):
+                        if idx < len(unlocked) - 1:
+                            q.amount = per
+                            running += per
+                        else:
+                            q.amount = (remaining - running).quantize(Decimal('0.01'))
+                        if q.amount < (q.paid_amount or Decimal('0.00')):
+                            messages.error(request, f'La cuota #{q.number} no puede ser menor a lo ya pagado en esa cuota.')
+                            transaction.set_rollback(True)
+                            return redirect('edit_invoice', invoice_id=invoice.id)
+                        q.save()
+
+            # Aplicar cambios
+            for q in financed_quotas:
+                data = posted_map.get(q.id)
+                if not data:
+                    continue
+
+                # No permitir bajar monto por debajo de lo ya pagado en esa cuota
+                if data['amount'] < (q.paid_amount or Decimal('0.00')):
+                    messages.error(request, f'La cuota #{q.number} no puede ser menor a lo ya pagado en esa cuota.')
+                    transaction.set_rollback(True)
+                    return redirect('edit_invoice', invoice_id=invoice.id)
+
+                if (q.id in locked_quota_ids) and (data['amount'] != q.amount):
+                    messages.error(request, f'La cuota #{q.number} ya tiene pagos y no se puede modificar su monto.')
+                    transaction.set_rollback(True)
+                    return redirect('edit_invoice', invoice_id=invoice.id)
+
+                if q.id not in locked_quota_ids:
+                    q.amount = data['amount'].quantize(Decimal('0.01'))
+                    try:
+                        if data['date']:
+                            q.payment_date = datetime.strptime(data['date'], '%Y-%m-%d').date()
+                    except Exception:
+                        pass
+                    q.save()
+
+            # Validar que las cuotas cubran exactamente el monto financiado
+            sum_quotas = invoice.payment_quotas.filter(number__gt=0).aggregate(total=Sum('amount'))['total'] or Decimal('0.00')
+            sum_quotas = Decimal(str(sum_quotas))
+
+            if sum_quotas.quantize(Decimal('0.01')) != total_financiar.quantize(Decimal('0.01')):
+                messages.error(
+                    request,
+                    f'Las cuotas financiadas deben sumar exactamente {total_financiar:.2f}. Actualmente suman {sum_quotas:.2f}.'
+                )
+                transaction.set_rollback(True)
+                return redirect('edit_invoice', invoice_id=invoice.id)
+
+        messages.success(request, 'Factura actualizada correctamente.')
+        return redirect('report_invoice')
+
 def render_to_pdf(template_src, context_dict={}):
     template = get_template(template_src)
     html  = template.render(context_dict)
