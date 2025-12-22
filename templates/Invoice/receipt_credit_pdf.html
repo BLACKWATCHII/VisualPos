@@ -928,7 +928,13 @@
           </div>
           <div class="credit-info-item">
             <div class="credit-info-label">Valor por Cuota</div>
-            <div class="credit-info-value">${{ cuota_valor|intcomma }}</div>
+            <div class="credit-info-value">
+              {% if quotas_modified %}
+                Cuotas modificadas
+              {% else %}
+                ${{ cuota_valor|intcomma }}
+              {% endif %}
+            </div>
           </div>
           <div class="credit-info-item">
             <div class="credit-info-label">Frecuencia de Pago</div>
@@ -1027,7 +1033,12 @@
     <div class="invoice-footer">
       <div class="footer-section">
         <h4>💳 Información de Crédito</h4>
-        <p><strong>{{ invoice.quotas }} cuotas de ${{ cuota_valor|intcomma }}</strong></p>
+        {% if quotas_modified %}
+          <p><strong>{{ invoice.quotas }} cuotas</strong></p>
+          <p><strong>Cuotas modificadas, verificar el detalle abajo..</strong></p>
+        {% else %}
+          <p><strong>{{ invoice.quotas }} cuotas de ${{ cuota_valor|intcomma }}</strong></p>
+        {% endif %}
         <p>Frecuencia: {{ invoice.payment_frequency }}</p>
         <p>Soporte: <strong>+57 3005034055</strong></p>
       </div>
@@ -1094,7 +1105,13 @@
         </div>
         <div class="summary-card">
           <div class="summary-card-label">Valor por Cuota</div>
-          <div class="summary-card-value">${{ cuota_valor|intcomma }}</div>
+          <div class="summary-card-value">
+            {% if quotas_modified %}
+              Cuotas modificadas
+            {% else %}
+              ${{ cuota_valor|intcomma }}
+            {% endif %}
+          </div>
         </div>
         <div class="summary-card">
           <div class="summary-card-label">Cuotas Pagadas</div>

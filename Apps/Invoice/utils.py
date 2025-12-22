@@ -3,6 +3,47 @@ from django.db.models import Sum
 from .models import Early_Payment
 
 
+def get_quotas_modified(invoice, expected_quota_amount: Decimal | None = None) -> bool:
+    """Detecta si las cuotas del crédito fueron modificadas.
+
+    Heurística: si existen cuotas (number>0) y sus montos no son uniformes con respecto
+    al valor esperado por cuota, se considera "modificado" y no se debe mostrar
+    "valor por cuota" fijo en el PDF.
+    """
+    try:
+        if invoice.payment_method != 'Credito':
+            return False
+    except Exception:
+        return False
+
+    try:
+        cuotas = list(invoice.payment_quotas.filter(number__gt=0))
+    except Exception:
+        return False
+
+    if len(cuotas) <= 1:
+        return False
+
+    if expected_quota_amount is None:
+        expected_quota_amount = get_valor_cuota(invoice)
+
+    try:
+        expected = Decimal(str(expected_quota_amount)).quantize(Decimal('0.01'))
+    except Exception:
+        expected = Decimal('0.00')
+
+    tolerance = Decimal('0.01')
+    for q in cuotas:
+        try:
+            amt = Decimal(str(q.amount or 0)).quantize(Decimal('0.01'))
+        except Exception:
+            amt = Decimal('0.00')
+        if (amt - expected).copy_abs() >= tolerance:
+            return True
+
+    return False
+
+
 def _get_items_subtotal(invoice) -> Decimal:
     """Subtotal de productos (sin domicilio), basado en items."""
     try:

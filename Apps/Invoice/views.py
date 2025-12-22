@@ -29,7 +29,7 @@ import unicodedata
 from functools import wraps
 from customer.sendEmail import send_email_with_attachment
 from dateutil.relativedelta import relativedelta
-from .utils import get_total_pagado, get_total_financiar, get_valor_cuota, get_saldo_pendiente
+from .utils import get_total_pagado, get_total_financiar, get_valor_cuota, get_saldo_pendiente, get_quotas_modified
 from django.views.decorators.http import require_GET
 from django.db.models.functions import TruncDate
 import threading
@@ -938,11 +938,13 @@ def invoice_pdf(request, invoice_id):
         total_financiar = get_total_financiar(invoice)
         cuota_valor = get_valor_cuota(invoice)
         saldo_pendiente = get_saldo_pendiente(invoice)
+        quotas_modified = get_quotas_modified(invoice, expected_quota_amount=cuota_valor)
     else:
         template = 'invoice/receipt_pdf.html'
         total_financiar = None
         cuota_valor = None
         saldo_pendiente = invoice.total
+        quotas_modified = False
 
     response = render_pdf_with_puppeteer(
         template,
@@ -953,6 +955,7 @@ def invoice_pdf(request, invoice_id):
             'total_financiar': total_financiar,
             'cuota_valor': cuota_valor,
             'saldo_pendiente': saldo_pendiente,
+            'quotas_modified': quotas_modified,
         },
         filename=f"Factura_{invoice.invoice_number}.pdf"
     )
@@ -996,6 +999,8 @@ def preview_invoice(request, invoice_id):
         primera_cuota = invoice.payment_quotas.filter(number__gt=0).first()
         cuota_valor = round(primera_cuota.amount, 2) if primera_cuota else 0
 
+        quotas_modified = get_quotas_modified(invoice)
+
         cuotas_pagadas = invoice.payment_quotas.filter(is_paid=True).count()
         total_cuotas = invoice.payment_quotas.count()
 
@@ -1007,6 +1012,7 @@ def preview_invoice(request, invoice_id):
             'total_restante': total_financiar,
             'cuotas_pagadas': cuotas_pagadas,
             'total_cuotas': total_cuotas,
+            'quotas_modified': quotas_modified,
         })
 
     # =============================
@@ -1742,6 +1748,7 @@ def generate_temp_invoice_pdf_safe(invoice):
         total_financiar = get_total_financiar(invoice)
         cuota_valor = get_valor_cuota(invoice)
         saldo_pendiente = get_saldo_pendiente(invoice)
+        quotas_modified = get_quotas_modified(invoice, expected_quota_amount=cuota_valor)
 
         html_content = render_to_string(
             template,
@@ -1752,6 +1759,7 @@ def generate_temp_invoice_pdf_safe(invoice):
                 'total_financiar': total_financiar,
                 'cuota_valor': cuota_valor,
                 'saldo_pendiente': saldo_pendiente,
+                'quotas_modified': quotas_modified,
             }
         )
 
