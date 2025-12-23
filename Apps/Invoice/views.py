@@ -1524,21 +1524,69 @@ def invoice_detail_ajax(request, invoice_id):
             'subtotal': float(item.price * item.quantity),
         })
 
+    pdf_url = None
+    if invoice.status == 'Anulada':
+        pdf_url = reverse('canceled_invoice_pdf', args=[invoice.id])
+
     data = {
         'id': invoice.id,
         'status': invoice.status,
         'customer': f"{invoice.customer.name} {invoice.customer.lastname}",
         'total': float(invoice.total),
         'date': invoice.date.strftime('%Y-%m-%d'),
-        'items': item_list
+        'items': item_list,
+        'pdf_url': pdf_url,
     }
     return JsonResponse(data)
 
 @login_required
 def canceled_invoice_pdf_view(request, invoice_id):
     invoice = get_object_or_404(Invoice, id=invoice_id)
-    html = render_to_string('invoice/receipt_pdf_cancel.html', {'invoice': invoice})
-    return HttpResponse(html)
+
+    if invoice.status != 'Anulada':
+        return HttpResponse('La factura no está anulada.', status=400)
+
+    canceled = None
+    try:
+        canceled = invoice.cancellation
+    except Exception:
+        canceled = CanceledInvoice.objects.filter(original_invoice=invoice).first()
+
+    pdf_filename = f"factura_cancelada_{invoice.id}.pdf"
+    pdf_path = os.path.join(settings.MEDIA_ROOT, pdf_filename)
+    os.makedirs(settings.MEDIA_ROOT, exist_ok=True)
+
+    if not os.path.exists(pdf_path):
+        html_id = str(uuid.uuid4())
+        html_path = os.path.join(settings.BASE_DIR, 'tmp', f"{html_id}.html")
+        os.makedirs(os.path.dirname(html_path), exist_ok=True)
+
+        html_content = render_to_string('invoice/receipt_pdf_cancel.html', {
+            'invoice': invoice,
+            'canceled': canceled,
+            'now': datetime.now().strftime('%d/%m/%Y %H:%M'),
+        })
+        with open(html_path, 'w', encoding='utf-8') as f:
+            f.write(html_content)
+
+        script_path = os.path.join(settings.BASE_DIR, 'pdfgen', 'generate_pdf.js')
+        result = subprocess.run(
+            ['node', script_path, html_path, pdf_path],
+            capture_output=True,
+            text=True
+        )
+
+        if os.path.exists(html_path):
+            os.remove(html_path)
+
+        if result.returncode != 0 or not os.path.exists(pdf_path):
+            print("STDOUT:", result.stdout)
+            print("STDERR:", result.stderr)
+            return HttpResponse('Error generando PDF de anulación.', status=500)
+
+    response = FileResponse(open(pdf_path, 'rb'), content_type='application/pdf')
+    response['Content-Disposition'] = f'attachment; filename="{pdf_filename}"'
+    return response
 
 
 

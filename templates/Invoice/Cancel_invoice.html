@@ -266,6 +266,27 @@
         box-shadow: var(--shadow-hover);
     }
 
+    .download-btn {
+        background: linear-gradient(135deg, var(--primary-color) 0%, var(--primary-light) 100%);
+        color: white;
+        border: none;
+        padding: 14px 28px;
+        border-radius: 12px;
+        font-weight: 600;
+        cursor: pointer;
+        transition: all 0.3s ease;
+        margin-top: 16px;
+        display: flex;
+        align-items: center;
+        gap: 8px;
+    }
+
+    .download-btn:hover {
+        background: linear-gradient(135deg, var(--primary-dark) 0%, var(--primary-color) 100%);
+        transform: translateY(-2px);
+        box-shadow: var(--shadow-hover);
+    }
+
     .no-results {
         text-align: center;
         padding: 40px 20px;
@@ -625,6 +646,19 @@ function formatCurrency(value) {
     }).format(value);
 }
 
+function downloadCanceledInvoicePDF(pdfUrl, invoiceId) {
+    if (!pdfUrl) {
+        showToast('error', 'No hay PDF disponible para esta factura');
+        return;
+    }
+    const link = document.createElement('a');
+    link.href = pdfUrl;
+    link.download = `factura_cancelada_${invoiceId}.pdf`;
+    document.body.appendChild(link);
+    link.click();
+    document.body.removeChild(link);
+}
+
 function getCookie(name) {
     let cookieValue = null;
     if (document.cookie && document.cookie !== '') {
@@ -817,6 +851,12 @@ function loadInvoiceDetail(invoiceId) {
                     <div class="alert alert-danger mt-3">
                         <strong>⚠️ Esta factura ya ha sido anulada</strong>
                     </div>
+                    ${data.pdf_url ? `
+                        <button class="download-btn" data-pdf-url="${data.pdf_url}" onclick="downloadCanceledInvoicePDF(this.dataset.pdfUrl, ${data.id})">
+                            <span>📥</span>
+                            Descargar PDF de anulación
+                        </button>
+                    ` : ``}
                 `}
             `;
         })
