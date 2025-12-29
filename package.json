@@ -1,5 +1,13 @@
 {
+  "scripts": {
+    "whatsapp": "node baileys/server.cjs"
+  },
   "dependencies": {
+    "baileys": "^7.0.0-rc.9",
+    "express": "^4.21.2",
+    "multer": "^1.4.5-lts.1",
     "puppeteer": "^24.15.0"
+    ,
+    "qrcode": "^1.5.4"
   }
 }

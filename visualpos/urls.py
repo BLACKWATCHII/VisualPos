@@ -20,6 +20,7 @@ urlpatterns = [
     path('invoice/', include('Invoice.urls')),
     path('inventory/', include('inventory.urls')),
     path('reports/', include('reports.urls')),
+    path('whatsapp/', include('whatsapp.urls')),
 ]
 
 if settings.DEBUG:

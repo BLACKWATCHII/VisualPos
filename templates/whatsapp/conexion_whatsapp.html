@@ -1,0 +1,140 @@
+{% extends 'base.html' %}
+{% load static %}
+
+{% block content %}
+<br>
+<br>
+<br>
+<div class="container py-4">
+	<div class="row justify-content-center">
+		<div class="col-12 col-md-8 col-lg-6">
+			<div class="card shadow-sm">
+				<div class="card-body">
+					<h4 class="mb-2">Conexión WhatsApp</h4>
+					<p class="text-muted mb-3">Escanea el QR con WhatsApp → <b>Dispositivos vinculados</b>.</p>
+
+					<div class="d-flex align-items-center gap-2 mb-3">
+						<span class="badge" id="waBadge">Cargando…</span>
+						<small class="text-muted" id="waInfo"></small>
+					</div>
+
+					<div class="d-flex justify-content-end mb-3">
+						<button type="button" class="btn btn-outline-danger btn-sm" id="waDisconnectBtn" disabled>
+							Desconectar WhatsApp
+						</button>
+					</div>
+
+					<div class="text-center">
+						<img id="qrImg" alt="QR WhatsApp" style="max-width: 320px; width: 100%; display:none;" />
+						<div id="qrPlaceholder" class="text-muted" style="padding: 24px 0;">Esperando QR…</div>
+					</div>
+
+					<hr />
+
+					<div class="small text-muted">
+						<div>1) Ejecuta el servicio: <code>npm run whatsapp</code></div>
+						<div>2) Mantén esa consola abierta para que no se desconecte.</div>
+					</div>
+				</div>
+			</div>
+		</div>
+	</div>
+</div>
+
+<script>
+	const badge = document.getElementById('waBadge');
+	const info = document.getElementById('waInfo');
+	const qrImg = document.getElementById('qrImg');
+	const qrPlaceholder = document.getElementById('qrPlaceholder');
+	const disconnectBtn = document.getElementById('waDisconnectBtn');
+
+	function setBadge(text, cls) {
+		badge.textContent = text;
+		badge.className = 'badge ' + cls;
+	}
+
+	function getCookie(name) {
+		const value = `; ${document.cookie}`;
+		const parts = value.split(`; ${name}=`);
+		if (parts.length === 2) return parts.pop().split(';').shift();
+		return null;
+	}
+
+	async function disconnectWhatsapp() {
+		disconnectBtn.disabled = true;
+		try {
+			const res = await fetch('{% url "whatsapp_logout" %}', {
+				method: 'POST',
+				headers: {
+					'X-CSRFToken': getCookie('csrftoken') || '',
+				},
+			});
+			const data = await res.json().catch(() => ({}));
+			if (!res.ok) {
+				setBadge('Error', 'bg-danger');
+				info.textContent = data.error || 'No se pudo desconectar.';
+				return;
+			}
+
+			setBadge('Desconectado', 'bg-secondary');
+			info.textContent = data.message || 'Sesión cerrada. Se generará un nuevo QR.';
+			await poll();
+		} catch (e) {
+			setBadge('Error', 'bg-danger');
+			info.textContent = String(e);
+		} finally {
+			// poll() re-habilita según estado
+		}
+	}
+
+	disconnectBtn.addEventListener('click', disconnectWhatsapp);
+
+	async function poll() {
+		try {
+			const res = await fetch('{% url "whatsapp_qr_status" %}', { cache: 'no-store' });
+			const data = await res.json();
+
+			if (!res.ok) {
+				setBadge('Servicio caído', 'bg-danger');
+				info.textContent = data.error || 'No se pudo consultar el servicio.';
+				qrImg.style.display = 'none';
+				qrPlaceholder.style.display = 'block';
+				qrPlaceholder.textContent = 'Levanta el servicio Node (npm run whatsapp).';
+				disconnectBtn.disabled = true;
+				return;
+			}
+
+			if (data.connected) {
+				setBadge('Conectado', 'bg-success');
+				info.textContent = data.user?.id ? ('Cuenta: ' + data.user.id) : '';
+				qrImg.style.display = 'none';
+				qrPlaceholder.style.display = 'block';
+				qrPlaceholder.textContent = 'WhatsApp conectado. Ya puedes enviar facturas.';
+				disconnectBtn.disabled = false;
+				return;
+			}
+
+			setBadge('Esperando QR', 'bg-warning text-dark');
+			info.textContent = data.connection ? ('Estado: ' + data.connection) : '';
+			disconnectBtn.disabled = true;
+
+			if (data.qr_data_url) {
+				qrImg.src = data.qr_data_url;
+				qrImg.style.display = 'block';
+				qrPlaceholder.style.display = 'none';
+			} else {
+				qrImg.style.display = 'none';
+				qrPlaceholder.style.display = 'block';
+				qrPlaceholder.textContent = 'Generando QR…';
+			}
+		} catch (e) {
+			setBadge('Error', 'bg-danger');
+			info.textContent = String(e);
+			disconnectBtn.disabled = true;
+		}
+	}
+
+	poll();
+	setInterval(poll, 2000);
+</script>
+{% endblock %}

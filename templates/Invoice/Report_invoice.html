@@ -245,18 +245,17 @@
 
                                                     </button>
                                                     <!-- Botón de Preview -->
-                                                    <button class="btn btn-outline-primary btn-sm action-btn" 
-                                                        onclick="showDetails(
-                                                            '{{ invoice.customer_full_name }}',
-                                                            '#{{ invoice.invoice_number }}',
-                                                            '{{ invoice.quotas }}',
-                                                            '{{ invoice.delivery_amount|intcomma|default:0 }}',
-                                                            '{% if invoice.payment_method == "Credito" %}{{ invoice.total_restante }}{% else %}{{ invoice.total }}{% endif %}',
-                                                            '{{ invoice.date }}',
-                                                            '{{ invoice.id }}',
-                                                            '{{ invoice.payment_method }}',
-                                                            '{{ invoice.initial_fee|default:0 }}'
-                                                        )">
+                                                    <button class="btn btn-outline-primary btn-sm action-btn"
+                                                        data-customer="{{ invoice.customer_full_name }}"
+                                                        data-invoice-number="#{{ invoice.invoice_number }}"
+                                                        data-quota="{{ invoice.quotas }}"
+                                                        data-delivery="{{ invoice.delivery_amount|default:0 }}"
+                                                        data-amount="{% if invoice.payment_method == 'Credito' %}{{ invoice.total_restante }}{% else %}{{ invoice.total }}{% endif %}"
+                                                        data-date="{{ invoice.date }}"
+                                                        data-invoice-id="{{ invoice.id }}"
+                                                        data-payment-method="{{ invoice.payment_method }}"
+                                                        data-initial-fee="{{ invoice.initial_fee|default:0 }}"
+                                                        onclick="showDetailsFromButton(this)">
                                                         <i class="bi bi-eye"></i>
                                                     </button>
                                                     
@@ -266,7 +265,10 @@
                                                         <button type="button" 
                                                             class="btn btn-outline-success btn-sm action-btn"
                                                             data-url="{% url 'send_invoice' invoice.id %}"
-                                                            onclick="sendInvoiceEmail(this, '{{ invoice.customer_full_name }}', '{{ invoice.customer_email|default:'' }}')"
+                                                            data-whatsapp-url="{% url 'send_invoice_whatsapp' invoice.id %}"
+                                                            data-customer-name="{{ invoice.customer_full_name }}"
+                                                            data-customer-email="{{ invoice.customer_email|default:'' }}"
+                                                            onclick="openSendModal(this)"
                                                             {% if invoice.status == 'Anulada' %}disabled{% endif %}>
                                                             <i class="bi bi-send"></i>
                                                         </button>
@@ -329,6 +331,42 @@
                 </div>
             </div>
         </div>    
+
+        <!-- Modal Enviar (Correo / WhatsApp) -->
+        <div class="modal fade" id="sendInvoiceModal" tabindex="-1" aria-labelledby="sendInvoiceModalLabel" aria-hidden="true">
+            <div class="modal-dialog modal-dialog-centered">
+                <div class="modal-content">
+                    <div class="modal-header">
+                        <h5 class="modal-title" id="sendInvoiceModalLabel">Enviar factura</h5>
+                        <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Cerrar"></button>
+                    </div>
+                    <div class="modal-body">
+                        <div class="mb-3">
+                            <div class="text-muted" style="font-size: 0.95rem;">
+                                Cliente: <strong id="sendInvoiceCustomerName"></strong>
+                            </div>
+                            <div class="text-muted" style="font-size: 0.95rem;">
+                                Email: <span id="sendInvoiceCustomerEmail"></span>
+                            </div>
+                        </div>
+
+                        <div class="form-check form-switch mb-2">
+                            <input class="form-check-input" type="checkbox" id="sendByEmailSwitch" checked>
+                            <label class="form-check-label" for="sendByEmailSwitch">Enviar por correo</label>
+                        </div>
+
+                        <div class="form-check form-switch">
+                            <input class="form-check-input" type="checkbox" id="sendByWhatsappSwitch">
+                            <label class="form-check-label" for="sendByWhatsappSwitch">Enviar por WhatsApp</label>
+                        </div>
+                    </div>
+                    <div class="modal-footer">
+                        <button type="button" class="btn btn-outline-secondary" data-bs-dismiss="modal">Cancelar</button>
+                        <button type="button" class="btn btn-success" id="btnConfirmSendInvoice">Enviar</button>
+                    </div>
+                </div>
+            </div>
+        </div>
     </div>
 </div>
 
@@ -341,6 +379,66 @@
 
 <script>
 $(document).ready(function () {
+    // =============================
+    // Modal Enviar (Correo / WhatsApp)
+    // =============================
+    const sendCtx = {
+        emailUrl: null,
+        whatsappUrl: null,
+        customerName: '',
+        customerEmail: ''
+    };
+
+    function getCookie(name) {
+        const value = `; ${document.cookie}`;
+        const parts = value.split(`; ${name}=`);
+        if (parts.length === 2) return parts.pop().split(';').shift();
+        return null;
+    }
+
+    async function postWithCsrf(url) {
+        const csrfToken = getCookie('csrftoken') || document.querySelector('[name=csrfmiddlewaretoken]')?.value;
+        if (!csrfToken) throw new Error('Token CSRF no encontrado. Recargue la página.');
+
+        const formData = new FormData();
+        formData.append('csrfmiddlewaretoken', csrfToken);
+
+        const resp = await fetch(url, {
+            method: 'POST',
+            body: formData,
+            headers: { 'X-Requested-With': 'XMLHttpRequest' },
+        });
+
+        let payload = null;
+        try {
+            payload = await resp.json();
+        } catch (e) {
+            payload = { success: false, message: await resp.text() };
+        }
+
+        if (!resp.ok || payload?.success === false) {
+            throw new Error(payload?.message || `HTTP ${resp.status}: ${resp.statusText}`);
+        }
+
+        return payload;
+    }
+
+    window.openSendModal = function(buttonElement) {
+        sendCtx.emailUrl = buttonElement.getAttribute('data-url');
+        sendCtx.whatsappUrl = buttonElement.getAttribute('data-whatsapp-url');
+        sendCtx.customerName = buttonElement.getAttribute('data-customer-name') || '';
+        sendCtx.customerEmail = buttonElement.getAttribute('data-customer-email') || '';
+
+        document.getElementById('sendInvoiceCustomerName').textContent = sendCtx.customerName || '-';
+        document.getElementById('sendInvoiceCustomerEmail').textContent = sendCtx.customerEmail || 'Sin email registrado';
+
+        // Defaults: correo ON, WhatsApp OFF
+        document.getElementById('sendByEmailSwitch').checked = true;
+        document.getElementById('sendByWhatsappSwitch').checked = false;
+
+        new bootstrap.Modal(document.getElementById('sendInvoiceModal')).show();
+    };
+
     window.showDetails = function(cliente, factura, cuota, delivery, importe, fecha, invoiceId, metodoPago, cuotaInicial) {
         document.getElementById('detailCustomer').textContent = cliente;
         document.getElementById('detailInvoiceNumber').textContent = factura;
@@ -383,6 +481,20 @@ $(document).ready(function () {
         document.getElementById('btnPreviewInvoice').setAttribute('data-invoice-id', invoiceId);
 
         new bootstrap.Modal(document.getElementById('invoiceModal')).show();
+    };
+
+    window.showDetailsFromButton = function(btn) {
+        const cliente = btn.getAttribute('data-customer') || '';
+        const factura = btn.getAttribute('data-invoice-number') || '';
+        const cuota = btn.getAttribute('data-quota') || '';
+        const delivery = btn.getAttribute('data-delivery') || '0';
+        const importe = btn.getAttribute('data-amount') || '0';
+        const fecha = btn.getAttribute('data-date') || '';
+        const invoiceId = btn.getAttribute('data-invoice-id') || '';
+        const metodoPago = btn.getAttribute('data-payment-method') || '';
+        const cuotaInicial = btn.getAttribute('data-initial-fee') || '0';
+
+        window.showDetails(cliente, factura, cuota, delivery, importe, fecha, invoiceId, metodoPago, cuotaInicial);
     };
 
     $('#invoiceTable').DataTable({
@@ -428,6 +540,61 @@ $(document).ready(function () {
             }
         });
     };
+
+    document.getElementById('btnConfirmSendInvoice').addEventListener('click', async function () {
+        const btn = this;
+        const sendEmail = document.getElementById('sendByEmailSwitch').checked;
+        const sendWhatsapp = document.getElementById('sendByWhatsappSwitch').checked;
+
+        if (!sendEmail && !sendWhatsapp) {
+            Swal.fire({
+                icon: 'warning',
+                title: 'Seleccione una opción',
+                text: 'Debe elegir correo, WhatsApp o ambas.',
+                confirmButtonColor: '#3085d6'
+            });
+            return;
+        }
+
+        btn.disabled = true;
+        const originalText = btn.textContent;
+        btn.textContent = 'Enviando...';
+
+        const tasks = [];
+        if (sendEmail) {
+            tasks.push(
+                postWithCsrf(sendCtx.emailUrl)
+                    .then(r => ({ channel: 'Correo', ok: true, message: r.message || 'Enviado' }))
+                    .catch(e => ({ channel: 'Correo', ok: false, message: e.message }))
+            );
+        }
+        if (sendWhatsapp) {
+            tasks.push(
+                postWithCsrf(sendCtx.whatsappUrl)
+                    .then(r => ({ channel: 'WhatsApp', ok: true, message: r.message || 'Enviado' }))
+                    .catch(e => ({ channel: 'WhatsApp', ok: false, message: e.message }))
+            );
+        }
+
+        const results = await Promise.all(tasks);
+        const okAll = results.every(r => r.ok);
+
+        const html = results.map(r => {
+            const icon = r.ok ? '✅' : '❌';
+            const msg = (r.message || '').toString();
+            return `<div style="text-align:left; margin: 6px 0;">${icon} <b>${r.channel}:</b> ${msg}</div>`;
+        }).join('');
+
+        Swal.fire({
+            icon: okAll ? 'success' : 'error',
+            title: okAll ? 'Envío completado' : 'Envío con errores',
+            html,
+            confirmButtonColor: '#3085d6'
+        });
+
+        btn.disabled = false;
+        btn.textContent = originalText;
+    });
 });
 document.getElementById('btnPreviewInvoice').addEventListener('click', function (e) {
     e.preventDefault();
@@ -437,138 +604,6 @@ document.getElementById('btnPreviewInvoice').addEventListener('click', function 
     document.getElementById('invoicePreviewIframe').src = iframeUrl;
     new bootstrap.Modal(document.getElementById('previewInvoiceModal')).show();
 });
-function sendInvoiceEmail(buttonElement, customerName, customerEmail) {
-    const invoiceUrl = buttonElement.getAttribute('data-url');
-    console.log('🚀 Iniciando envío de factura:', { invoiceUrl, customerName, customerEmail });
-
-    if (!customerEmail) {
-        Swal.fire({
-            icon: 'error',
-            title: 'Error',
-            text: 'El cliente no tiene un correo electrónico registrado.',
-            confirmButtonColor: '#3085d6'
-        });
-        return;
-    }
-
-    Swal.fire({
-        title: `¿Enviar factura a ${customerName}?`,
-        html: `<b>Email:</b> ${customerEmail}`,
-        icon: 'question',
-        showCancelButton: true,
-        confirmButtonColor: '#3085d6',
-        cancelButtonColor: '#d33',
-        confirmButtonText: 'Sí, enviar',
-        cancelButtonText: 'Cancelar'
-    }).then((result) => {
-        if (result.isConfirmed) {
-            proceedWithEmailSending(invoiceUrl, customerName, customerEmail, buttonElement);
-        }
-    });
-}
-
-function proceedWithEmailSending(url, customerName, customerEmail, button) {
-    const originalHTML = button.innerHTML;
-    button.disabled = true;
-    button.innerHTML = '<i class="bi bi-hourglass-split"></i> Enviando...';
-
-    const timeoutId = setTimeout(() => {
-        button.disabled = false;
-        button.innerHTML = originalHTML;
-        Swal.fire({
-            icon: 'error',
-            title: 'Timeout',
-            html: 'La operación está tomando demasiado tiempo.<br><br><b>Posibles causas:</b><br>• Problema con la generación del PDF<br>• Error en configuración de email<br>• Problema de conexión<br><br>Revise la consola del servidor para más detalles.',
-            confirmButtonColor: '#3085d6'
-        });
-    }, 60000);
-
-    const csrfToken = document.querySelector('[name=csrfmiddlewaretoken]')?.value;
-
-    if (!csrfToken) {
-        clearTimeout(timeoutId);
-        button.disabled = false;
-        button.innerHTML = originalHTML;
-        Swal.fire({
-            icon: 'error',
-            title: 'Error de seguridad',
-            text: 'Token CSRF no encontrado. Recargue la página.',
-            confirmButtonColor: '#3085d6'
-        });
-        return;
-    }
-
-    const formData = new FormData();
-    formData.append('csrfmiddlewaretoken', csrfToken);
-
-    const controller = new AbortController();
-    const timeoutSignal = setTimeout(() => controller.abort(), 55000);
-
-    fetch(url, {
-        method: 'POST',
-        body: formData,
-        headers: {
-            'X-Requested-With': 'XMLHttpRequest',
-        },
-        signal: controller.signal
-    })
-    .then(response => {
-        clearTimeout(timeoutSignal);
-        if (!response.ok) throw new Error(`HTTP ${response.status}: ${response.statusText}`);
-        return response.json();
-    })
-    .then(data => {
-        if (data.success) {
-            Swal.fire({
-                icon: 'success',
-                title: 'Éxito',
-                text: data.message,
-                confirmButtonColor: '#3085d6'
-            });
-        } else {
-            Swal.fire({
-                icon: 'error',
-                title: 'Error',
-                text: data.message,
-                confirmButtonColor: '#3085d6'
-            });
-        }
-    })
-    .catch(error => {
-        clearTimeout(timeoutSignal);
-        let errorTitle = 'Error';
-        let errorMessage = 'Error desconocido';
-        if (error.name === 'AbortError') {
-            errorTitle = 'Timeout';
-            errorMessage = 'La operación fue cancelada por timeout (55s).<br><br><b>Revise:</b><br>• Configuración de email<br>• Generación de PDF<br>• Logs del servidor';
-        } else if (error.message.includes('HTTP 404')) {
-            errorTitle = 'No encontrado';
-            errorMessage = 'URL no encontrada. Verifique la configuración de <code>urls.py</code> y la vista.';
-        } else if (error.message.includes('HTTP 500')) {
-            errorTitle = 'Error del servidor';
-            errorMessage = 'Error interno del servidor. Revise los logs de Django.';
-        } else if (error.message.includes('HTTP 403')) {
-            errorTitle = 'Permisos denegados';
-            errorMessage = 'Token CSRF inválido o usuario no autenticado.';
-        } else if (error.message.includes('NetworkError') || error.message.includes('Failed to fetch')) {
-            errorTitle = 'Error de red';
-            errorMessage = 'No se pudo conectar con el servidor.<br><br>Verifique su conexión o que el servidor esté ejecutándose.';
-        }
-
-        Swal.fire({
-            icon: 'error',
-            title: errorTitle,
-            html: errorMessage,
-            confirmButtonColor: '#3085d6'
-        });
-    })
-    .finally(() => {
-        clearTimeout(timeoutId);
-        clearTimeout(timeoutSignal);
-        button.disabled = false;
-        button.innerHTML = originalHTML;
-    });
-}
 $(document).on('click', '.btn-download-invoice', function (e) {
     e.preventDefault();
 

@@ -45,7 +45,8 @@ INSTALLED_APPS = [
     'Apps.tax',
     'Apps.Invoice',
     'Apps.inventory',
-    'Apps.reports'
+    'Apps.reports',
+    'whatsapp'
 ]
 
 MIDDLEWARE = [
