@@ -139,3 +139,7 @@ dist/
 .cache/           
 /tmp/       
 *.tmp           
+
+#node-js build output
+auth/
+__init__.py
