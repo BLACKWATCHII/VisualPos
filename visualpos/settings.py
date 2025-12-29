@@ -143,6 +143,10 @@ STATICFILES_DIRS = [
 MEDIA_URL = '/media/'
 MEDIA_ROOT = os.path.join(BASE_DIR, 'media')
 
+# WhatsApp/Baileys service (Node)
+# En Docker Compose debe apuntar al nombre del servicio, p.ej. http://whatsapp:3030
+BAILEYS_URL = os.getenv('BAILEYS_URL', 'http://127.0.0.1:3030')
+
 # Default primary key field type
 # https://docs.djangoproject.com/en/4.1/ref/settings/#default-auto-field
 
