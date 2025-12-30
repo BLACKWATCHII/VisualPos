@@ -10,7 +10,7 @@ const AUTH_DIR = process.env.BAILEYS_AUTH_DIR || path.join(__dirname, 'auth');
 
 const FIXED_MESSAGE =
   process.env.WHATSAPP_FIXED_MESSAGE ||
-  'Hola, gracias por tu compra. Adjunto factura.';
+  'Hola buen dia, gracias por tu compra. Adjunto factura.';
 
 const app = express();
 app.use(express.json({ limit: '15mb' }));
