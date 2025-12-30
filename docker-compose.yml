@@ -1,13 +1,14 @@
 services:
   django:
-    build: ./django
+    build: .
     container_name: django_app
     ports:
       - "8000:8000"
     volumes:
-      - ./django:/app
+      - .:/app
     depends_on:
       - whatsapp
+    restart: unless-stopped
 
   whatsapp:
     build: ./baileys
