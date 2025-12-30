@@ -2,11 +2,11 @@ FROM nikolaik/python-nodejs:python3.11-nodejs20
 
 WORKDIR /app
 
-# Copiar manifests
+# Copiar manifests de WhatsApp
 COPY package*.json ./
 
 # Instalar dependencias
-RUN npm install --production
+RUN npm install --omit=dev
 
 # Copiar código
 COPY . .

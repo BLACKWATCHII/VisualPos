@@ -4,8 +4,6 @@ services:
     container_name: django_app
     ports:
       - "8000:8000"
-    volumes:
-      - .:/app
     depends_on:
       - whatsapp
     restart: unless-stopped
@@ -15,6 +13,4 @@ services:
     container_name: whatsapp_baileys
     ports:
       - "3030:3030"
-    volumes:
-      - ./baileys:/app
     restart: unless-stopped
