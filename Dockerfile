@@ -1,27 +1,30 @@
-# Imagen base con Python y Node.js
+# Imagen base
 FROM nikolaik/python-nodejs:python3.11-nodejs20
 
 # Instalar Chromium
 RUN apt-get update && apt-get install -y chromium && apt-get clean
 
-# Directorio de trabajo
 WORKDIR /app
 
-# Copiar archivos del proyecto
+# Copiar SOLO package.json primero (mejor cache)
+COPY baileys/package*.json ./baileys/
+
+# Instalar dependencias Node.js en la carpeta correcta
+RUN cd baileys && npm install --production
+
+# Copiar el resto del proyecto
 COPY . .
 
-# Instalar dependencias Python
+# Dependencias Python
 RUN pip install --no-cache-dir -r requirements.txt
 
-# Instalar dependencias Node.js (incluye Puppeteer)
-RUN npm install --production
-
-# Configurar Puppeteer para usar el Chromium instalado
+# Puppeteer config
 ENV PUPPETEER_EXECUTABLE_PATH=/usr/bin/chromium
 ENV PUPPETEER_SKIP_DOWNLOAD=true
 
-# Exponer puerto Django
+# Puertos
 EXPOSE 8000
+EXPOSE 3030
 
-# Comando principal
+# Django por defecto
 CMD ["python", "manage.py", "runserver", "0.0.0.0:8000"]

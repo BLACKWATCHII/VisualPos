@@ -1,28 +1,19 @@
-version: '3.9'
 services:
   django:
-    build: .
-    container_name: visualpos_app
+    build: ./django
+    container_name: django_app
     ports:
       - "8000:8000"
     volumes:
-      - .:/app
-    environment:
-      - BAILEYS_URL=http://whatsapp:3030
+      - ./django:/app
     depends_on:
       - whatsapp
-    restart: always
 
   whatsapp:
-    build: .
-    container_name: visualpos_whatsapp
-    command: npm run whatsapp
-    volumes:
-      - .:/app
-    environment:
-      - BAILEYS_HOST=0.0.0.0
-      - BAILEYS_PORT=3030
-    # Opcional: exponer el servicio fuera de Docker para debug (QR/health)
+    build: ./baileys
+    container_name: whatsapp_baileys
     ports:
       - "3030:3030"
-    restart: always
+    volumes:
+      - ./baileys:/app
+    restart: unless-stopped
