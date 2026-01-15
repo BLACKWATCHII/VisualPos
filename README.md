@@ -62,6 +62,33 @@ Vesion python ---> 3.11.0
    python manage.py runserver
    ```
 
+## 🐳 Docker (Django + WhatsApp/Baileys)
+
+Este proyecto usa un servicio Node (Baileys) para WhatsApp en el puerto `3030`.
+
+Punto clave del error de tu captura:
+- `http://whatsapp:3030` **solo existe dentro de Docker Compose** (es el nombre DNS del servicio en la red de Compose).
+- Si ejecutas Django en Windows (fuera de Docker) y apuntas a `whatsapp`, te dará `NameResolutionError: Failed to resolve 'whatsapp'`.
+
+### Opción A: Todo dentro de Docker Compose (recomendado)
+1. Levanta ambos servicios:
+   ```sh
+   docker compose up --build
+   ```
+2. Abre Django: `http://localhost:8000`
+
+En esta opción, Django se comunica con Baileys usando `BAILEYS_URL=http://whatsapp:3030` (ya está configurado en `docker-compose.yml`).
+
+### Opción B: Django en Windows + Baileys en Docker
+1. Levanta solo WhatsApp/Baileys:
+   ```sh
+   docker compose up --build whatsapp
+   ```
+2. En Windows, configura `BAILEYS_URL` a:
+   - `http://127.0.0.1:3030` (o `http://localhost:3030`)
+
+En esta opción NO uses `http://whatsapp:3030` porque ese hostname no se resuelve en tu máquina host.
+
 ## Extra📢
 
 Command Delete file migrations and cache

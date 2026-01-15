@@ -5,7 +5,10 @@ const multer = require('multer');
 const QRCode = require('qrcode');
 
 const PORT = parseInt(process.env.BAILEYS_PORT || process.env.PORT || '3030', 10);
-const HOST = process.env.BAILEYS_HOST || '127.0.0.1';
+// En Docker, si se queda en 127.0.0.1 NO es accesible desde otros contenedores ni por el port mapping.
+// Mantenemos 127.0.0.1 para dev local, y 0.0.0.0 para contenedor.
+const DEFAULT_HOST = fs.existsSync('/.dockerenv') ? '0.0.0.0' : '127.0.0.1';
+const HOST = process.env.BAILEYS_HOST || DEFAULT_HOST;
 const AUTH_DIR = process.env.BAILEYS_AUTH_DIR || path.join(__dirname, 'auth');
 
 const FIXED_MESSAGE =

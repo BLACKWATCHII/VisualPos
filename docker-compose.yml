@@ -4,6 +4,9 @@ services:
     container_name: django_app
     ports:
       - "8000:8000"
+    environment:
+      # Dentro de Docker Compose, el host correcto es el nombre del servicio.
+      - BAILEYS_URL=http://whatsapp:3030
     depends_on:
       - whatsapp
     restart: unless-stopped
@@ -13,4 +16,12 @@ services:
     container_name: whatsapp_baileys
     ports:
       - "3030:3030"
+    environment:
+      # Importante: en Docker debe escuchar en todas las interfaces.
+      - BAILEYS_HOST=0.0.0.0
+      - BAILEYS_PORT=3030
+      - BAILEYS_AUTH_DIR=/app/auth
+    volumes:
+      - ./baileys/auth:/app/auth
+      - ./baileys/uploads:/app/uploads
     restart: unless-stopped
