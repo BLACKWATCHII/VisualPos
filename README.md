@@ -20,7 +20,7 @@ Berserker is a sales software designed to optimize and streamline the commercial
 
 - **Backend**: Django
 - **Frontend**: HTML, CSS, Pure JavaScript
-- **Database**: SQLite
+- **Database**: SQLite (dev) / MySQL (prod)
 
 ## 📌 Installation and Setup
 
@@ -45,6 +45,16 @@ Vesion python ---> 3.11.0
    pip install -r requirements.txt
    ```
 5. Configure the environment in the `.env` file.
+
+   MySQL (Hostinger / producción):
+   - `DB_ENGINE=mysql`
+   - `DB_NAME=...`
+   - `DB_USER=...`
+   - `DB_PASSWORD=...`
+   - `DB_HOST=srvXXX.hstgr.io` (o la IP)
+   - `DB_PORT=3306`
+
+   Nota: en Hostinger asegúrate de habilitar el acceso remoto (Remote MySQL) para el host/IP desde donde se conectará tu app.
 
 6. Makemigrations
    - python manage.py makemigrations customer

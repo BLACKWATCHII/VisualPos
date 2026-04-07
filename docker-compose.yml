@@ -3,10 +3,17 @@ services:
     build: .
     container_name: django_app
     ports:
-      - "8000:8000"
+      - "8083:8000"
     environment:
       # Dentro de Docker Compose, el host correcto es el nombre del servicio.
       - BAILEYS_URL=http://whatsapp:3030
+      # Base de datos (remota en Hostinger). Define estas variables en tu entorno.
+      # - DB_ENGINE=mysql
+      # - DB_NAME=...
+      # - DB_USER=...
+      # - DB_PASSWORD=...
+      # - DB_HOST=srvXXX.hstgr.io
+      # - DB_PORT=3306
     depends_on:
       - whatsapp
     restart: unless-stopped

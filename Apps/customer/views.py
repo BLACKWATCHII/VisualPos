@@ -289,22 +289,38 @@ def cargar_datos_excel(request):
     if request.method == 'POST' and request.FILES.get('archivo'):
         archivo = request.FILES['archivo']
         cedulas_repetidas = []
+        filas_con_error = 0
 
         try:
-            df = pd.read_excel(archivo, dtype={'Cedula': str})
+            df = pd.read_excel(archivo)
+            df.columns = [str(c).strip() for c in df.columns]
 
-            df = df.dropna(subset=['Cedula'])
+            cedula_col = next((c for c in ['Cedula', 'Cédula', 'cedula', 'cédula'] if c in df.columns), None)
+            if not cedula_col:
+                return JsonResponse({'status': 'error', 'message': "El archivo no tiene la columna 'Cedula'."})
 
-            cedulas_existentes = set(Customer.objects.values_list('cedula', flat=True))
+            df = df.dropna(subset=[cedula_col])
+
+            # Fuerza cédula como texto para no perder ceros ni formato
+            df[cedula_col] = df[cedula_col].astype(str).str.strip()
+
+            cedulas_existentes = set(str(x).strip() for x in Customer.objects.values_list('cedula', flat=True))
+            cedulas_en_archivo = set()
 
             customers_nuevos = []
             for _, row in df.iterrows():
-                cedula = str(row.get('Cedula', '')).strip()
-                if cedula in cedulas_existentes:
-                    cedulas_repetidas.append(cedula)
+                cedula = safe_strip(row.get(cedula_col, ''))
+                if not cedula:
+                    filas_con_error += 1
                     continue
 
+                if cedula in cedulas_existentes or cedula in cedulas_en_archivo:
+                    cedulas_repetidas.append(cedula)
+                    continue
+                cedulas_en_archivo.add(cedula)
+
                 try:
+                    income_val = row.get('Ingreso mensual', row.get('Ingresos', 0))
                     customers_nuevos.append(
                         Customer(
                             name=safe_strip(row.get('Nombre', '')),
@@ -314,7 +330,7 @@ def cargar_datos_excel(request):
                             neighborhood=safe_strip(row.get('Barrio', '')),
                             address=safe_strip(row.get('Direccion', '')),
                             email=safe_strip(row.get('Email', '')),
-                            income=float(row.get('Ingreso mensual', 0) or 0),
+                            income=safe_float(income_val, 0),
                             source_of_income=safe_strip(row.get('Fuente de ingreso', '')),
                             employment_situation=safe_strip(row.get('Situacion laboral', '')),
                             producto_solicitados=safe_strip(row.get('Producto solicitado', ''))
@@ -322,16 +338,25 @@ def cargar_datos_excel(request):
                     )
                 except Exception as e:
                     print(f"Error procesando fila {row.to_dict()}: {e}")
+                    filas_con_error += 1
                     continue
 
+            insertados = 0
             if customers_nuevos:
-                Customer.objects.bulk_create(customers_nuevos)
+                try:
+                    Customer.objects.bulk_create(customers_nuevos)
+                    insertados = len(customers_nuevos)
+                except Exception as e:
+                    return JsonResponse({'status': 'error', 'message': f'Error guardando en base de datos: {e}'})
+
+            if insertados == 0 and filas_con_error > 0:
+                return JsonResponse({'status': 'error', 'message': 'No se importó ningún registro. Revisa el archivo o los datos vacíos.', 'errores': filas_con_error})
 
             if cedulas_repetidas:
                 mensaje = f"Los siguientes registros no fueron importados porque ya existen: {', '.join(cedulas_repetidas)}"
-                return JsonResponse({'status': 'warning', 'message': mensaje, 'duplicados': cedulas_repetidas})
+                return JsonResponse({'status': 'warning', 'message': mensaje, 'duplicados': cedulas_repetidas, 'insertados': insertados, 'errores': filas_con_error})
             else:
-                return JsonResponse({'status': 'success', 'message': 'Datos cargados correctamente.'})
+                return JsonResponse({'status': 'success', 'message': f'Datos cargados correctamente. Insertados: {insertados}.', 'insertados': insertados, 'errores': filas_con_error})
 
         except Exception as e:
             return JsonResponse({'status': 'error', 'message': str(e)})
@@ -339,5 +364,29 @@ def cargar_datos_excel(request):
     return JsonResponse({'status': 'error', 'message': 'No se recibió ningún archivo.'})
 
 def safe_strip(value):
-    return str(value).strip() if value is not None else ''
+    if value is None:
+        return ''
+    try:
+        if pd.isna(value):
+            return ''
+    except Exception:
+        pass
+    text = str(value).strip()
+    if text.lower() in {'nan', 'none', 'null'}:
+        return ''
+    return text
+
+
+def safe_float(value, default=0.0):
+    if value is None:
+        return default
+    try:
+        if pd.isna(value):
+            return default
+    except Exception:
+        pass
+    try:
+        return float(str(value).strip())
+    except Exception:
+        return default
 

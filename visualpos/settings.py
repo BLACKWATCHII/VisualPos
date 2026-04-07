@@ -87,8 +87,16 @@ X_FRAME_OPTIONS = 'SAMEORIGIN'
 
 DATABASES = {
     'default': {
-        'ENGINE': 'django.db.backends.sqlite3',
-        'NAME': BASE_DIR / 'Berserker.sqlite3',
+        'ENGINE': 'django.db.backends.mysql',
+        'NAME': 'u731822027_berserkerdev',
+        'USER': 'u731822027_berserpro',
+        'PASSWORD': 'Diosesamor1030',
+        'HOST': 'srv652.hstgr.io',
+        'PORT': '3306',
+        'OPTIONS': {
+            'charset': 'utf8mb4',
+        },
+        'CONN_MAX_AGE': 60,
     }
 }
 
