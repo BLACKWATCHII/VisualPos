@@ -96,11 +96,13 @@ DATABASES = {
         'OPTIONS': {
             'charset': 'utf8mb4',
             'connect_timeout': 10,
-            'read_timeout': 30,
-            'write_timeout': 30,
+            'read_timeout': 60,
+            'write_timeout': 60,
+            'init_command': "SET SESSION sql_mode='STRICT_TRANS_TABLES'",
         },
-        'CONN_MAX_AGE': 60,
+        'CONN_MAX_AGE': 30,
         'CONN_HEALTH_CHECKS': True,
+        'AUTOCOMMIT': True,
     }
 }
 

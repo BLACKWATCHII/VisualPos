@@ -9,12 +9,18 @@ const path = require('path');
 
     const browser = await puppeteer.launch({
         headless: true,
-        args: ['--no-sandbox', '--disable-setuid-sandbox'],
+        args: [
+            '--no-sandbox', 
+            '--disable-setuid-sandbox',
+            '--disable-dev-shm-usage',  // Mejora rendimiento en Linux
+            '--disable-gpu',             // Mejora rendimiento general
+        ],
     });
 
     const page = await browser.newPage();
     const html = fs.readFileSync(inputPath, 'utf8');
-    await page.setContent(html, { waitUntil: 'networkidle0' });
+    // Usar 'load' en lugar de 'networkidle0' para ser más rápido
+    await page.setContent(html, { waitUntil: 'load' });
 
     await page.pdf({
         path: outputPath,

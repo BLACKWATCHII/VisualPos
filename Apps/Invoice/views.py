@@ -597,11 +597,12 @@ def create_invoice(request):
 
 def create_invoice_credit(request, form):
     """Maneja la creación de facturas a crédito"""
-
+    
     sub_total = Decimal('0.00')
 
     with transaction.atomic():
         invoice = form.save(commit=False)
+        
         items = request.POST.getlist('item_id')
         quantities = request.POST.getlist('quantity')
         prices = request.POST.getlist('price')
@@ -755,6 +756,7 @@ def create_invoice_credit(request, form):
 def create_invoice_cash(request, form):
     """Maneja la creación de facturas de contado"""
     sub_total = 0
+    should_download_pdf = request.POST.get('download') == 'pdf'
     
     with transaction.atomic():
         invoice = form.save(commit=False)
@@ -824,19 +826,19 @@ def create_invoice_cash(request, form):
                 item.Stock -= int(qty)
                 item.save()
 
-        # Generar PDF si se pidió
-        if request.POST.get('download') == 'pdf':
-            return render_pdf_with_puppeteer(
-                'invoice/receipt_pdf.html',
-                {
-                    'invoice': invoice,
-                    'sub_total': sub_total,
-                    'total_restante': invoice.total - (invoice.delivery_amount or 0),
-                },
-                filename=f"Factura_Contado_{invoice.invoice_number}.pdf"
-            )
+    # Generar PDF DESPUÉS de la transacción
+    if should_download_pdf:
+        return render_pdf_with_puppeteer(
+            'invoice/receipt_pdf.html',
+            {
+                'invoice': invoice,
+                'sub_total': sub_total,
+                'total_restante': invoice.total - (invoice.delivery_amount or 0),
+            },
+            filename=f"Factura_Contado_{invoice.invoice_number}.pdf"
+        )
 
-        return redirect('report_invoice')
+    return redirect('report_invoice')
 
 @login_required
 def invoices_report(request):

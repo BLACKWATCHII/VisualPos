@@ -5,7 +5,7 @@ from .models import Invoice, InvoiceItem
 class InvoiceForm(forms.ModelForm):
     class Meta:
         model = Invoice
-        fields = ['customer']
+        fields = ['customer', 'invoice_date']
 
 InvoiceItemFormSet = inlineformset_factory(
     Invoice,

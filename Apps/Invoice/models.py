@@ -19,6 +19,7 @@ class TransactionType(models.Model):
 class Invoice(models.Model):
     customer = models.ForeignKey(Customer, on_delete=models.CASCADE)
     date = models.DateTimeField(auto_now_add=True)
+    invoice_date = models.DateField(blank=True, null=True, help_text="Fecha de la factura seleccionada por el usuario")
     total = models.DecimalField(max_digits=10, decimal_places=2)
     discount = models.DecimalField(max_digits=5, decimal_places=2, default=0)
     payment_method = models.CharField(

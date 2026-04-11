@@ -259,7 +259,7 @@
             </div>
             <div class="col-md-4">
                 <div class="form-floating">
-                    <input type="date" id="due_date" name="due_date" class="form-control" required>
+                    <input type="date" id="invoice_date" name="invoice_date" class="form-control" required>
                     <label>Fecha</label>
                 </div>
             </div>
@@ -790,10 +790,10 @@ $('#add-line').click(function(e){
     // Inicializar cálculos
     calculateTotals();
     
-    // Inicializar fecha actual
-    if(!$('#due_date').val()) {
+    // Inicializar fecha actual (solo si está vacía)
+    if(!$('#invoice_date').val()) {
         var today = new Date().toISOString().split('T')[0];
-        $('#due_date').val(today);
+        $('#invoice_date').val(today);
     }
     
     // Inicializar número de documento
