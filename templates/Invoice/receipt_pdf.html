@@ -541,7 +541,7 @@
       <div class="top-info-grid">
         <div class="info-block">
           <h3>Fecha de Factura</h3>
-          <p class="highlight">{{ invoice.date }}</p>
+          <p class="highlight">{% if invoice.invoice_date %}{{ invoice.invoice_date }}{% else %}{{ invoice.date }}{% endif %}</p>
           <h3 style="margin-top: 15px;">Método de Pago</h3>
           <p>{{ invoice.payment_method }}</p>
         </div>

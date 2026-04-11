@@ -219,8 +219,8 @@
 			</div>
 			<div class="col-md-4">
 				<div class="form-floating">
-					<input type="date" class="form-control" value="{{ invoice.date|date:'Y-m-d' }}" disabled>
-					<label>Fecha (solo informativo)</label>
+					<input type="date" id="invoice_date" name="invoice_date" class="form-control" value="{% if invoice.invoice_date %}{{ invoice.invoice_date|date:'Y-m-d' }}{% else %}{{ invoice.date|date:'Y-m-d' }}{% endif %}" required>
+					<label>Fecha</label>
 				</div>
 			</div>
 		</div>

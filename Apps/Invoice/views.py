@@ -36,6 +36,7 @@ import threading
 from django.urls import reverse
 from django.http import HttpResponseRedirect
 from django.utils.http import url_has_allowed_host_and_scheme
+from django.utils.dateparse import parse_date
 
 
 def _norm_text(value) -> str:
@@ -69,6 +70,18 @@ def _parse_int(value, default=0) -> int:
         return int(str(value).strip())
     except Exception:
         return default
+
+
+def _get_effective_invoice_date(invoice: Invoice):
+    """Fecha elegida por el usuario; si no existe, usa fecha de creación."""
+    if getattr(invoice, 'invoice_date', None):
+        return invoice.invoice_date
+
+    created_at = getattr(invoice, 'date', None)
+    if created_at is None:
+        return date.today()
+
+    return created_at.date() if hasattr(created_at, 'date') else created_at
 
 
 @login_required
@@ -236,6 +249,9 @@ def edit_invoice(request, invoice_id):
         # Guardar encabezado factura
         # =============================
         invoice = form.save(commit=False)
+        selected_invoice_date = parse_date((request.POST.get('invoice_date') or '').strip())
+        if selected_invoice_date:
+            invoice.invoice_date = selected_invoice_date
         invoice.notes = new_notes
         invoice.discount = discount_percent
         invoice.delivery_amount = delivery_value
@@ -298,7 +314,7 @@ def edit_invoice(request, invoice_id):
             elif desired_count > len(financed_quotas):
                 add_n = desired_count - len(financed_quotas)
                 payment_frequency = request.POST.get('payment_frequency') or invoice.payment_frequency or 'Mensual'
-                start_date = date.today()
+                start_date = _get_effective_invoice_date(invoice)
                 try:
                     last = invoice.payment_quotas.filter(number__gt=0).order_by('-number').first()
                     if last and last.payment_date:
@@ -602,6 +618,9 @@ def create_invoice_credit(request, form):
 
     with transaction.atomic():
         invoice = form.save(commit=False)
+        selected_invoice_date = parse_date((request.POST.get('invoice_date') or '').strip())
+        if selected_invoice_date:
+            invoice.invoice_date = selected_invoice_date
         
         items = request.POST.getlist('item_id')
         quantities = request.POST.getlist('quantity')
@@ -688,7 +707,7 @@ def create_invoice_credit(request, form):
         if invoice.quotas > 0 and total_financiar > 0:
             cuota_valor = (total_financiar / invoice.quotas).quantize(Decimal('0.01'))
 
-            start_date = invoice.date or date.today()
+            start_date = _get_effective_invoice_date(invoice)
             fechas = calcular_fechas_cuotas(
                 start_date,
                 invoice.quotas,
@@ -715,7 +734,7 @@ def create_invoice_credit(request, form):
                 invoice=invoice,
                 number=0,
                 amount=pago_inicial_total,
-                payment_date=date.today(),
+                payment_date=_get_effective_invoice_date(invoice),
                 is_paid=True
             )
 
@@ -760,6 +779,9 @@ def create_invoice_cash(request, form):
     
     with transaction.atomic():
         invoice = form.save(commit=False)
+        selected_invoice_date = parse_date((request.POST.get('invoice_date') or '').strip())
+        if selected_invoice_date:
+            invoice.invoice_date = selected_invoice_date
 
         items = request.POST.getlist('item_id')
         quantities = request.POST.getlist('quantity')
@@ -892,7 +914,7 @@ def invoices_report(request):
         # ===============================
         invoice_list.append({
             'id': invoice.id,
-            'date': invoice.date.strftime('%Y-%m-%d') if invoice.date else '',
+            'date': _get_effective_invoice_date(invoice).strftime('%Y-%m-%d'),
             'invoice_number': invoice.invoice_number,
             'customer_name': customer.name if customer else '',
             'customer_last_name': customer.lastname if customer else '',
@@ -1436,7 +1458,7 @@ def payment_history_invoices(request, customer_id):
             {
                 'id': inv.id,
                 'invoice_number': inv.invoice_number,
-                'date': inv.date.strftime('%Y-%m-%d'),
+                'date': _get_effective_invoice_date(inv).strftime('%Y-%m-%d'),
                 'payment_method': inv.payment_method,
             }
             for inv in invoices
@@ -1535,7 +1557,7 @@ def invoice_detail_ajax(request, invoice_id):
         'status': invoice.status,
         'customer': f"{invoice.customer.name} {invoice.customer.lastname}",
         'total': float(invoice.total),
-        'date': invoice.date.strftime('%Y-%m-%d'),
+        'date': _get_effective_invoice_date(invoice).strftime('%Y-%m-%d'),
         'items': item_list,
         'pdf_url': pdf_url,
     }
