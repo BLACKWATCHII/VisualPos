@@ -250,7 +250,7 @@
                                                         data-invoice-number="#{{ invoice.invoice_number }}"
                                                         data-quota="{{ invoice.quotas }}"
                                                         data-delivery="{{ invoice.delivery_amount|default:0 }}"
-                                                        data-amount="{% if invoice.payment_method == 'Credito' %}{{ invoice.total_restante }}{% else %}{{ invoice.total }}{% endif %}"
+                                                        data-amount="{% if invoice.payment_method == 'Credito' %}{{ invoice.saldo_pendiente }}{% else %}{{ invoice.total }}{% endif %}"
                                                         data-date="{{ invoice.date }}"
                                                         data-invoice-id="{{ invoice.id }}"
                                                         data-payment-method="{{ invoice.payment_method }}"

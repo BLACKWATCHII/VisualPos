@@ -92,6 +92,61 @@ def get_valor_cuota(invoice):
     return Decimal('0.00')
 
 
+def get_valor_cuota_display(invoice, expected_quota_amount: Decimal | None = None) -> dict:
+    """Retorna datos de visualizacion para mostrar valor de cuota en PDF/HTML.
+
+    Siempre devuelve valores numericos:
+    - is_range=False: mostrar un valor unico (value)
+    - is_range=True: mostrar rango min-max (min, max)
+    """
+    if expected_quota_amount is None:
+        expected_quota_amount = get_valor_cuota(invoice)
+
+    try:
+        expected = Decimal(str(expected_quota_amount)).quantize(Decimal('0.01'))
+    except Exception:
+        expected = Decimal('0.00')
+
+    try:
+        cuotas = list(invoice.payment_quotas.filter(number__gt=0))
+    except Exception:
+        cuotas = []
+
+    if not cuotas:
+        return {
+            'is_range': False,
+            'value': expected,
+            'min': expected,
+            'max': expected,
+        }
+
+    amounts = []
+    for q in cuotas:
+        try:
+            amounts.append(Decimal(str(q.amount or 0)).quantize(Decimal('0.01')))
+        except Exception:
+            amounts.append(Decimal('0.00'))
+
+    min_amount = min(amounts)
+    max_amount = max(amounts)
+    tolerance = Decimal('0.01')
+
+    if (max_amount - min_amount).copy_abs() >= tolerance:
+        return {
+            'is_range': True,
+            'value': min_amount,
+            'min': min_amount,
+            'max': max_amount,
+        }
+
+    return {
+        'is_range': False,
+        'value': min_amount,
+        'min': min_amount,
+        'max': max_amount,
+    }
+
+
 def get_total_pagado(invoice):
     total = Early_Payment.objects.filter(
         quota__invoice=invoice

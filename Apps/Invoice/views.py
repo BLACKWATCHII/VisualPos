@@ -29,7 +29,14 @@ import unicodedata
 from functools import wraps
 from customer.sendEmail import send_email_with_attachment
 from dateutil.relativedelta import relativedelta
-from .utils import get_total_pagado, get_total_financiar, get_valor_cuota, get_saldo_pendiente, get_quotas_modified
+from .utils import (
+    get_total_pagado,
+    get_total_financiar,
+    get_valor_cuota,
+    get_saldo_pendiente,
+    get_quotas_modified,
+    get_valor_cuota_display,
+)
 from django.views.decorators.http import require_GET, require_POST
 from django.db.models.functions import TruncDate
 import threading
@@ -793,12 +800,18 @@ def create_invoice_credit(request, form):
         # PDF
         # =============================
         if should_download_pdf:
+            cuota_display = get_valor_cuota_display(invoice, expected_quota_amount=cuota_valor)
             pdf_context = {
                 'invoice': invoice,
                 'sub_total': sub_total,
                 'total_financiar': total_financiar,
                 'total_pagado_hoy': pago_inicial_total,
                 'cuota_valor': cuota_valor,
+                'quotas_modified': cuota_display['is_range'],
+                'cuota_display_is_range': cuota_display['is_range'],
+                'cuota_display_value': cuota_display['value'],
+                'cuota_display_min': cuota_display['min'],
+                'cuota_display_max': cuota_display['max'],
             }
             pdf_filename = f"Factura_Credito_{invoice.invoice_number}.pdf"
 
@@ -1015,12 +1028,19 @@ def invoice_pdf(request, invoice_id):
         cuota_valor = get_valor_cuota(invoice)
         saldo_pendiente = get_saldo_pendiente(invoice)
         quotas_modified = get_quotas_modified(invoice, expected_quota_amount=cuota_valor)
+        cuota_display = get_valor_cuota_display(invoice, expected_quota_amount=cuota_valor)
     else:
         template = 'invoice/receipt_pdf.html'
         total_financiar = None
         cuota_valor = None
         saldo_pendiente = invoice.total
         quotas_modified = False
+        cuota_display = {
+            'is_range': False,
+            'value': Decimal('0.00'),
+            'min': Decimal('0.00'),
+            'max': Decimal('0.00'),
+        }
 
     response = render_pdf_with_puppeteer(
         template,
@@ -1032,6 +1052,10 @@ def invoice_pdf(request, invoice_id):
             'cuota_valor': cuota_valor,
             'saldo_pendiente': saldo_pendiente,
             'quotas_modified': quotas_modified,
+            'cuota_display_is_range': cuota_display['is_range'],
+            'cuota_display_value': cuota_display['value'],
+            'cuota_display_min': cuota_display['min'],
+            'cuota_display_max': cuota_display['max'],
         },
         filename=f"Factura_{invoice.invoice_number}.pdf"
     )
@@ -1072,10 +1096,10 @@ def preview_invoice(request, invoice_id):
             2
         )
 
-        primera_cuota = invoice.payment_quotas.filter(number__gt=0).first()
-        cuota_valor = round(primera_cuota.amount, 2) if primera_cuota else 0
+        cuota_valor = get_valor_cuota(invoice)
 
-        quotas_modified = get_quotas_modified(invoice)
+        quotas_modified = get_quotas_modified(invoice, expected_quota_amount=cuota_valor)
+        cuota_display = get_valor_cuota_display(invoice, expected_quota_amount=cuota_valor)
 
         cuotas_pagadas = invoice.payment_quotas.filter(is_paid=True).count()
         total_cuotas = invoice.payment_quotas.count()
@@ -1089,6 +1113,10 @@ def preview_invoice(request, invoice_id):
             'cuotas_pagadas': cuotas_pagadas,
             'total_cuotas': total_cuotas,
             'quotas_modified': quotas_modified,
+            'cuota_display_is_range': cuota_display['is_range'],
+            'cuota_display_value': cuota_display['value'],
+            'cuota_display_min': cuota_display['min'],
+            'cuota_display_max': cuota_display['max'],
         })
 
     # =============================
@@ -1977,6 +2005,7 @@ def generate_temp_invoice_pdf_safe(invoice):
         cuota_valor = get_valor_cuota(invoice)
         saldo_pendiente = get_saldo_pendiente(invoice)
         quotas_modified = get_quotas_modified(invoice, expected_quota_amount=cuota_valor)
+        cuota_display = get_valor_cuota_display(invoice, expected_quota_amount=cuota_valor)
 
         html_content = render_to_string(
             template,
@@ -1988,6 +2017,10 @@ def generate_temp_invoice_pdf_safe(invoice):
                 'cuota_valor': cuota_valor,
                 'saldo_pendiente': saldo_pendiente,
                 'quotas_modified': quotas_modified,
+                'cuota_display_is_range': cuota_display['is_range'],
+                'cuota_display_value': cuota_display['value'],
+                'cuota_display_min': cuota_display['min'],
+                'cuota_display_max': cuota_display['max'],
             }
         )
 
