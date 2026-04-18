@@ -84,6 +84,48 @@ def _get_effective_invoice_date(invoice: Invoice):
     return created_at.date() if hasattr(created_at, 'date') else created_at
 
 
+def _normalize_payment_frequency(frecuencia: str) -> str:
+    value = _norm_text(frecuencia)
+    if 'quinc' in value:
+        return 'quincenal'
+    if 'seman' in value:
+        return 'semanal'
+    return 'mensual'
+
+
+def _last_day_of_month(base_date: date) -> date:
+    return (base_date.replace(day=1) + relativedelta(months=1)) - timedelta(days=1)
+
+
+def _next_quincenal_due_date(base_date: date, min_gap_days: int = 3) -> date:
+    """
+    Regla de negocio quincenal:
+    - Las fechas objetivo son 15 y último día de mes.
+    - Si faltan menos de `min_gap_days` días para el próximo corte,
+      se mueve al siguiente corte para no dejar una cuota "encimada".
+    """
+    if base_date.day < 15:
+        candidate = base_date.replace(day=15)
+    else:
+        candidate = _last_day_of_month(base_date)
+
+    # Siempre tomar el siguiente corte, nunca el mismo día.
+    if candidate <= base_date:
+        if candidate.day == 15:
+            candidate = _last_day_of_month(base_date)
+        else:
+            candidate = (candidate + timedelta(days=1)).replace(day=15)
+
+    # Si está demasiado cerca, saltar al corte siguiente.
+    if (candidate - base_date).days < int(min_gap_days):
+        if candidate.day == 15:
+            candidate = _last_day_of_month(candidate)
+        else:
+            candidate = (candidate + timedelta(days=1)).replace(day=15)
+
+    return candidate
+
+
 @login_required
 def edit_invoice(request, invoice_id):
     invoice = get_object_or_404(
@@ -537,43 +579,34 @@ def delete_type_transaction(request, transaction_id):
 def calcular_fechas_cuotas(start_date, cuotas, frecuencia, tiene_cuota_inicial=False):
     """
     Calcula las fechas de pago de las cuotas según la frecuencia.
-    Si tiene_cuota_inicial=True, la primera cuota financiada comienza
-    en el siguiente período de pago (mensual, quincenal o semanal).
+    Reglas actuales:
+    - Mensual: primera cuota al mismo día del mes siguiente.
+    - Quincenal: cortes el 15 y fin de mes, con margen mínimo de 3 días.
+    - Semanal: mantiene lógica histórica (si hay cuota inicial, arranca +1 semana).
     """
+    if not start_date or cuotas <= 0:
+        return []
+
+    frecuencia = _normalize_payment_frequency(frecuencia)
     fechas = []
 
-    # Si ya se pagó una cuota inicial, mover la fecha de inicio al próximo período
-    if tiene_cuota_inicial:
-        if frecuencia == 'Mensual':
-            start_date += relativedelta(months=1)
-        elif frecuencia == 'Quincenal':
-            # Si hoy es antes del 15, empezar el 15; si ya pasó, ir al fin de mes
-            if start_date.day <= 15:
-                start_date = start_date.replace(day=15)
-            else:
-                # Ir al último día del mes
-                next_month = (start_date.replace(day=1) + relativedelta(months=1))
-                start_date = next_month - timedelta(days=1)
-        elif frecuencia == 'Semanal':
+    if frecuencia == 'semanal' and tiene_cuota_inicial:
             start_date += timedelta(weeks=1)
 
     # Calcular fechas según frecuencia
-    if frecuencia == 'Mensual':
+    if frecuencia == 'mensual':
+        first_date = start_date + relativedelta(months=1)
         for i in range(cuotas):
-            fechas.append(start_date + relativedelta(months=i))
+            fechas.append(first_date + relativedelta(months=i))
 
-    elif frecuencia == 'Quincenal':
+    elif frecuencia == 'quincenal':
         current = start_date
         for i in range(cuotas):
-            dia = current.day
-            if dia <= 15:
-                quincena = current.replace(day=15)
-            else:
-                quincena = (current.replace(day=1) + relativedelta(months=1)) - timedelta(days=1)
+            quincena = _next_quincenal_due_date(current, min_gap_days=3)
             fechas.append(quincena)
-            current = quincena + timedelta(days=1)
+            current = quincena
 
-    elif frecuencia == 'Semanal':
+    elif frecuencia == 'semanal':
         for i in range(cuotas):
             fechas.append(start_date + timedelta(weeks=i))
 
