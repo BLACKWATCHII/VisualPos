@@ -613,8 +613,11 @@ def create_invoice(request):
 
 def create_invoice_credit(request, form):
     """Maneja la creación de facturas a crédito"""
-    
+
     sub_total = Decimal('0.00')
+    should_download_pdf = request.POST.get('download') == 'pdf'
+    pdf_context = None
+    pdf_filename = None
 
     with transaction.atomic():
         invoice = form.save(commit=False)
@@ -756,20 +759,35 @@ def create_invoice_credit(request, form):
         # =============================
         # PDF
         # =============================
-        if request.POST.get('download') == 'pdf':
-            return render_pdf_with_puppeteer(
-                'invoice/receipt_credit_pdf.html',
-                {
-                    'invoice': invoice,
-                    'sub_total': sub_total,
-                    'total_financiar': total_financiar,
-                    'total_pagado_hoy': pago_inicial_total,
-                    'cuota_valor': cuota_valor,
-                },
-                filename=f"Factura_Credito_{invoice.invoice_number}.pdf"
+        if should_download_pdf:
+            pdf_context = {
+                'invoice': invoice,
+                'sub_total': sub_total,
+                'total_financiar': total_financiar,
+                'total_pagado_hoy': pago_inicial_total,
+                'cuota_valor': cuota_valor,
+            }
+            pdf_filename = f"Factura_Credito_{invoice.invoice_number}.pdf"
+
+    # Generar PDF DESPUÉS de la transacción
+    if should_download_pdf and pdf_context and pdf_filename:
+        # Re-cargar con relaciones para que el template no dispare N+1 queries.
+        invoice_id = getattr(pdf_context.get('invoice'), 'id', None)
+        if invoice_id:
+            pdf_context['invoice'] = (
+                Invoice.objects
+                .select_related('customer', 'transaction_type')
+                .prefetch_related('items', 'payment_quotas')
+                .get(pk=invoice_id)
             )
 
-        return redirect('report_invoice')
+        return render_pdf_with_puppeteer(
+            'invoice/receipt_credit_pdf.html',
+            pdf_context,
+            filename=pdf_filename
+        )
+
+    return redirect('report_invoice')
 
 
 def create_invoice_cash(request, form):
