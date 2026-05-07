@@ -1,4 +1,4 @@
-{% load humanize %}
+{% load humanize static %}
 <!DOCTYPE html>
 <html lang="es">
 <head>
@@ -511,12 +511,20 @@
 
     .signature-line {
       border-bottom: 2px solid #333;
-      width: 180px;
+      width: 200px;
       margin-bottom: 5px;
-      font-family: 'Brush Script MT', cursive;
-      font-size: 20px;
-      color: #000000;
       padding-bottom: 3px;
+      display: flex;
+      align-items: flex-end;
+    }
+
+    .signature-line img {
+      display: block;
+      width: 200px;
+      height: 150px;
+      object-fit: contain;
+      transform: scale(1.08);
+      transform-origin: left bottom;
     }
 
     .signature-name {
@@ -981,7 +989,9 @@
         <div class="thank-you-section">
           <p>Gracias por tu compra</p>
           <div class="signature-area">
-            <div class="signature-line">CELUPRO CO</div>
+            <div class="signature-line">
+              <img src="{% static 'img/firmaYurleynew.png' %}" alt="Firma">
+            </div>
             <div class="signature-name">GERENTE GENERAL</div>
             <div class="signature-title">Gerente</div>
           </div>
