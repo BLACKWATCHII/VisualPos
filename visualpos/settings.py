@@ -167,6 +167,10 @@ MEDIA_ROOT = os.path.join(BASE_DIR, 'media')
 # En Docker Compose debe apuntar al nombre del servicio, p.ej. http://whatsapp:3030
 BAILEYS_URL = os.getenv('BAILEYS_URL', 'http://127.0.0.1:3030')
 
+# Login propio de la app (sin esto Django redirige a /accounts/login/, que no existe)
+LOGIN_URL = 'signin'
+LOGIN_REDIRECT_URL = 'Dasboard'
+
 # Datos de la empresa que se imprimen en facturas y cotizaciones.
 # Se pueden sobreescribir por variable de entorno sin tocar código.
 COMPANY_NAME = os.getenv('COMPANY_NAME', 'CELUPRO CO')

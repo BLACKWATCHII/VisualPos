@@ -3,6 +3,7 @@ from django.contrib.auth import login, logout, authenticate
 from django.contrib.auth.models import User
 from django.db import IntegrityError
 from django.contrib.auth.decorators import login_required
+from django.utils.http import url_has_allowed_host_and_scheme
 from .form import CustomUserCreationForm, CustomAuthenticationForm
 from django.db.models import Count
 from item.models import Item
@@ -154,6 +155,10 @@ def signin(request):
             user = authenticate(username=username, password=password)
             if user is not None:
                 login(request, user)
+                # Volver a la página que pidió antes de iniciar sesión (?next=), si es de este sitio
+                next_url = request.POST.get('next') or request.GET.get('next')
+                if next_url and url_has_allowed_host_and_scheme(next_url, allowed_hosts={request.get_host()}, require_https=request.is_secure()):
+                    return redirect(next_url)
                 return redirect('Dasboard')
             else:
                 messages.error(request, "Incorrect username or password.")

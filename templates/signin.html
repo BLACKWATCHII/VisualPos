@@ -12,6 +12,7 @@
 
     <form action="/signin/" method="POST" class="auth-form">
       {% csrf_token %}
+      <input type="hidden" name="next" value="{{ request.GET.next|default:'' }}">
       <input type="text" name="username" placeholder="Correo o usuario" required>
       <input type="password" name="password" placeholder="Contraseña" required>
 
