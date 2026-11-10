@@ -52,6 +52,17 @@
           <a class="nav-link" href="{% url 'create_invoice' %}"><i class="bi bi-receipt-cutoff"></i> Facturacion</a>
         </li>
 
+        <!-- Cotizaciones -->
+        <li class="nav-item dropdown mx-1">
+          <a class="nav-link dropdown-toggle" href="#" id="cotizacionesDropdown" role="button" data-bs-toggle="dropdown">
+            <i class="bi bi-file-earmark-text"></i> Cotizaciones
+          </a>
+          <ul class="dropdown-menu dropdown-menu-dark">
+            <li><a class="dropdown-item" href="{% url 'quote_list' %}">Ver cotizaciones</a></li>
+            <li><a class="dropdown-item" href="{% url 'quote_create' %}">Nueva cotización</a></li>
+          </ul>
+        </li>
+
         <!-- Reportes -->
         <li class="nav-item mx-1">
           <a class="nav-link" href="{% url 'menu_reportes' %}"><i class="bi bi-bar-chart-line"></i> Reportes</a>
@@ -107,9 +118,7 @@
   </div>
 </nav>
 
-<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/sweetalert2@11/dist/sweetalert2.min.css">
-<script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
-<script src="{% static 'js/homePages/navbar.js' %}"></script>
+<!-- SweetAlert2 y navbar.js se cargan una sola vez desde base.html -->
 
 <!-- Botón de Ayuda -->
 <!-- <a href="https://tu-wiki.com/ayuda" target="_blank" class="btn-ayuda shadow">

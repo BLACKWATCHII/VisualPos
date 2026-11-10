@@ -1,0 +1,60 @@
+{# Campos del cliente: compartido por crear y editar #}
+<form method="post" action="{{ form_action }}" enctype="multipart/form-data" id="customerForm" novalidate>
+    {% csrf_token %}
+    <div class="row g-4">
+        <div class="col-lg-7">
+            <div class="panel h-100">
+                <h2 class="panel-title"><i class="bi bi-person"></i> Datos personales</h2>
+                <div class="row g-3">
+                    <div class="col-md-6">
+                        <label class="form-label" for="{{ form.name.id_for_label }}">Nombre <span class="text-danger">*</span></label>
+                        {{ form.name }}
+                    </div>
+                    <div class="col-md-6">
+                        <label class="form-label" for="{{ form.lastname.id_for_label }}">Apellido <span class="text-danger">*</span></label>
+                        {{ form.lastname }}
+                    </div>
+                    <div class="col-md-6">
+                        <label class="form-label" for="{{ form.cedula.id_for_label }}">Cédula <span class="text-danger">*</span></label>
+                        {{ form.cedula }}
+                    </div>
+                    <div class="col-md-6">
+                        <label class="form-label" for="{{ form.phone.id_for_label }}">Teléfono <span class="text-danger">*</span></label>
+                        {{ form.phone }}
+                    </div>
+                    <div class="col-12">
+                        <label class="form-label" for="{{ form.email.id_for_label }}">Correo electrónico <span class="text-danger">*</span></label>
+                        {{ form.email }}
+                        {% if is_new %}<div class="form-text">Se le enviará un correo de bienvenida.</div>{% endif %}
+                    </div>
+                </div>
+            </div>
+        </div>
+        <div class="col-lg-5">
+            <div class="panel">
+                <h2 class="panel-title"><i class="bi bi-house"></i> Residencia</h2>
+                <div class="mb-3">
+                    <label class="form-label" for="{{ form.address.id_for_label }}">Dirección <span class="text-danger">*</span></label>
+                    {{ form.address }}
+                </div>
+                <div>
+                    <label class="form-label" for="{{ form.city.id_for_label }}">Ciudad <span class="text-danger">*</span></label>
+                    {{ form.city }}
+                </div>
+            </div>
+            <div class="panel">
+                <h2 class="panel-title"><i class="bi bi-paperclip"></i> Documento (opcional)</h2>
+                {{ form.pdf }}
+                <div class="form-text">PDF con documentos del cliente.</div>
+            </div>
+        </div>
+    </div>
+
+    <div class="form-actions">
+        <a href="{% url 'viewClient' %}" class="btn btn-secondary">Cancelar</a>
+        <button type="submit" class="btn btn-primary" id="submitBtn">
+            <span class="spinner-border spinner-border-sm me-1 d-none" id="spinner"></span>
+            <span id="submitText">{{ submit_label }}</span>
+        </button>
+    </div>
+</form>

@@ -44,6 +44,13 @@ from django.urls import reverse
 from django.http import HttpResponseRedirect
 from django.utils.http import url_has_allowed_host_and_scheme
 from django.utils.dateparse import parse_date
+from Invoice.pdf_engine import run_pdf_job
+from quote.services import (
+    QuoteNotAvailable,
+    get_pending_quote,
+    link_quote_to_invoice,
+    parse_quote_id,
+)
 
 
 def _norm_text(value) -> str:
@@ -500,11 +507,7 @@ def render_pdf_with_puppeteer(template_src, context, filename="Factura.pdf"):
         f.write(html)
 
     script_path = os.path.join(settings.BASE_DIR, "pdfgen", "generate_pdf.js")
-    result = subprocess.run(
-        ["node", script_path, html_path, pdf_path],
-        capture_output=True,
-        text=True
-    )
+    result = run_pdf_job(html_path, pdf_path)
 
     if result.returncode != 0:
 
@@ -579,8 +582,17 @@ def edit_type_transaction(request, transaction_id):
 @login_required
 def delete_type_transaction(request, transaction_id):
     transaction = get_object_or_404(TransactionType, id=transaction_id)
+    # Invoice.transaction_type es on_delete=CASCADE: borrar un tipo con
+    # documentos eliminaría TODAS sus facturas, cuotas y pagos.
+    in_use = transaction.invoices.count() + CanceledInvoice.objects.filter(transaction_type=transaction).count()
+    if in_use:
+        messages.error(
+            request,
+            f'No se puede eliminar "{transaction.tra_type}": tiene {in_use} documento(s) asociados.'
+        )
+        return redirect('create_transaction')
     transaction.delete()
-    messages.success(request, "Transacción eliminada correctamente.")
+    messages.success(request, "Tipo de documento eliminado correctamente.")
     return redirect('create_transaction')
 
 def calcular_fechas_cuotas(start_date, cuotas, frecuencia, tiene_cuota_inicial=False):
@@ -629,6 +641,14 @@ def create_invoice(request):
     sub_total = 0
     if request.method == 'POST':
         form = InvoiceForm(request.POST)
+        # Cotización traída con el botón "Traer cotización" (opcional)
+        quote_id = parse_quote_id(request.POST.get('quote_id'))
+        if quote_id:
+            try:
+                get_pending_quote(quote_id)
+            except QuoteNotAvailable as exc:
+                messages.error(request, str(exc))
+                return redirect('create_invoice')
         if form.is_valid():
             payment_method = request.POST.get('payment_method')
             if payment_method == 'Credito':
@@ -648,6 +668,8 @@ def create_invoice(request):
         'items': items,
         'sub_total': sub_total,
         'transaction_types': transaction_types,
+        # Desde el listado de cotizaciones: /invoice/create-invoice/?quote=<id>
+        'preload_quote_id': parse_quote_id(request.GET.get('quote')) or '',
     })
 
 
@@ -741,6 +763,10 @@ def create_invoice_credit(request, form):
         transaction_type.save()
 
         invoice.save()
+
+        quote_id = parse_quote_id(request.POST.get('quote_id'))
+        if quote_id:
+            link_quote_to_invoice(quote_id, invoice)
 
         # =============================
         # CREAR CUOTAS FINANCIADAS
@@ -899,6 +925,10 @@ def create_invoice_cash(request, form):
 
         invoice.save()
 
+        quote_id = parse_quote_id(request.POST.get('quote_id'))
+        if quote_id:
+            link_quote_to_invoice(quote_id, invoice)
+
         # Crear items y actualizar stock
         for item_id, qty, price in zip(items, quantities, prices):
             if item_id and qty and price:
@@ -954,9 +984,12 @@ def invoices_report(request):
 
         total_factura = float(invoice.total or 0)
 
+        # Se usan las cuotas ya precargadas (prefetch_related); .filter() aquí
+        # disparaba 2 consultas por factura.
+        quotas_list = list(invoice.payment_quotas.all())
         if invoice.payment_method == 'Credito':
             total_pagado_factura = round(
-                sum(float(q.amount) for q in invoice.payment_quotas.filter(is_paid=True)),
+                sum(float(q.amount) for q in quotas_list if q.is_paid),
                 2
             )
         else:
@@ -971,7 +1004,7 @@ def invoices_report(request):
         # ===============================
         # VALIDAR ESTADO
         # ===============================
-        has_unpaid_quotas = invoice.payment_quotas.filter(is_paid=False).exists()
+        has_unpaid_quotas = any(not q.is_paid for q in quotas_list)
 
         # ===============================
         # DATA PARA LA VISTA
@@ -1004,12 +1037,25 @@ def invoices_report(request):
 
     return render(request, 'Invoice/Report_invoice.html', {
         'invoices': invoice_list,
-        'invoices_json': json.dumps(invoice_list), 
         'total_pagado': float(total_pagado),
         'total_credito': float(total_credit),
         'cont_pay': cont_pay,
         'cont_credit': cont_credit,
+        **_invoice_report_kpis(invoice_list),
     })
+
+
+def _invoice_report_kpis(invoice_list):
+    """Indicadores reales del reporte de facturas (sin porcentajes inventados)."""
+    vigentes = [i for i in invoice_list if i['status'] != 'Anulada']
+    credito = [i for i in vigentes if i['payment_method'] == 'Credito']
+    return {
+        'kpi_total_facturado': sum(i['total'] for i in vigentes),
+        'kpi_count_facturas': len(vigentes),
+        'kpi_saldo_cartera': sum(max(i['saldo_pendiente'], 0) for i in credito),
+        'kpi_count_con_saldo': sum(1 for i in credito if i['has_unpaid_quotas']),
+        'kpi_count_anuladas': len(invoice_list) - len(vigentes),
+    }
 
 
 @login_required
@@ -1136,11 +1182,13 @@ def preview_invoice(request, invoice_id):
 def View_quota(request):
     customer_id = request.GET.get('customer')
     estado = request.GET.get('estado')  
-    customer = Customer.objects.all()
+    customer = Customer.objects.order_by('name', 'lastname')
     count_quota_paid = PaymentQuota.objects.filter(is_paid=1).count()
     count_quota_unpaid = PaymentQuota.objects.filter(is_paid=0).count()
     count_quota_expired = PaymentQuota.objects.filter(payment_date__lt=date.today(), is_paid=False).count()
-    quotas = PaymentQuota.objects.select_related('invoice', 'invoice__customer')
+    quotas = PaymentQuota.with_paid_total(
+        PaymentQuota.objects.select_related('invoice', 'invoice__customer')
+    )
 
     if customer_id:
         quotas = quotas.filter(invoice__customer__id=customer_id)
@@ -1152,12 +1200,32 @@ def View_quota(request):
 
     context = {
         'customer': customer,
-        'credits': quotas,
         'count_quota_paid': count_quota_paid,
         'count_quota_unpaid': count_quota_unpaid,
         'count_quota_expired': count_quota_expired,
+        **_paginate_quotas(request, quotas),
     }
     return render(request, 'PaymentQuota/Payment_quota.html', context)
+
+
+QUOTAS_PER_PAGE = 50
+
+
+def _paginate_quotas(request, quotas):
+    """Pagina el listado de cuotas (antes se pintaban todas: >1.500 filas)."""
+    from django.core.paginator import Paginator
+
+    quotas = quotas.order_by('payment_date', 'invoice__invoice_number', 'number')
+    page_obj = Paginator(quotas, QUOTAS_PER_PAGE).get_page(request.GET.get('page'))
+    params = request.GET.copy()
+    params.pop('page', None)
+    querystring = params.urlencode()
+    return {
+        'credits': page_obj.object_list,
+        'page_obj': page_obj,
+        'querystring': f'{querystring}&' if querystring else '',
+        'today': date.today(),
+    }
 
 
 
@@ -1167,8 +1235,10 @@ def View_quota_customer(request):
     invoice_id = request.GET.get('numero_factura')
     estado = request.GET.get('estado')
 
-    customers = Customer.objects.all()
-    quotas = PaymentQuota.objects.select_related('invoice', 'invoice__customer')
+    customers = Customer.objects.order_by('name', 'lastname')
+    quotas = PaymentQuota.with_paid_total(
+        PaymentQuota.objects.select_related('invoice', 'invoice__customer')
+    )
 
     if customer_id:
         quotas = quotas.filter(invoice__customer__id=customer_id)
@@ -1199,11 +1269,11 @@ def View_quota_customer(request):
 
     context = {
         'customer': customers,
-        'credits': quotas,
         'count_quota_paid': count_quota_paid,
         'count_quota_unpaid': count_quota_unpaid,
         'count_quota_expired': count_quota_expired,
-        'invoice': invoices,
+        'invoice': invoices.order_by('-invoice_number'),
+        **_paginate_quotas(request, quotas),
     }
     return render(request, 'PaymentQuota/Payment_quota_customer.html', context)
 
@@ -1221,11 +1291,7 @@ def render_pdf_inline_with_puppeteer(template_src, context, filename="ReciboPago
         f.write(html)
 
     script_path = os.path.join(settings.BASE_DIR, "pdfgen", "generate_pdf.js")
-    result = subprocess.run(
-        ["node", script_path, html_path, pdf_path],
-        capture_output=True,
-        text=True
-    )
+    result = run_pdf_job(html_path, pdf_path)
 
     if result.returncode != 0:
         if os.path.exists(html_path): os.remove(html_path)
@@ -1606,13 +1672,14 @@ def payment_history_data(request):
         }
     })
 
+@login_required
 def cancel_invoice_view(request):
-    invoices = Invoice.objects.select_related('customer').all()
+    invoices = Invoice.objects.select_related('customer').order_by('-date', '-id')
     return render(request, 'Invoice/Cancel_invoice.html', {'invoices': invoices})
 
 
+@login_required
 def invoice_detail_ajax(request, invoice_id):
-    print("Invoice ID:", invoice_id)
     invoice = get_object_or_404(Invoice.objects.select_related('customer'), pk=invoice_id)
     items = InvoiceItem.objects.filter(invoice=invoice).select_related('item')
 
@@ -1633,6 +1700,7 @@ def invoice_detail_ajax(request, invoice_id):
 
     data = {
         'id': invoice.id,
+        'invoice_number': invoice.invoice_number,
         'status': invoice.status,
         'customer': f"{invoice.customer.name} {invoice.customer.lastname}",
         'total': float(invoice.total),
@@ -1673,11 +1741,7 @@ def canceled_invoice_pdf_view(request, invoice_id):
             f.write(html_content)
 
         script_path = os.path.join(settings.BASE_DIR, 'pdfgen', 'generate_pdf.js')
-        result = subprocess.run(
-            ['node', script_path, html_path, pdf_path],
-            capture_output=True,
-            text=True
-        )
+        result = run_pdf_job(html_path, pdf_path)
 
         if os.path.exists(html_path):
             os.remove(html_path)
@@ -1766,11 +1830,7 @@ def cancel_invoice_ajax(request, invoice_id):
 
         
         script_path = os.path.join(settings.BASE_DIR, 'pdfgen', 'generate_pdf.js')
-        result = subprocess.run(
-            ['node', script_path, html_path, pdf_path],
-            capture_output=True,
-            text=True
-        )
+        result = run_pdf_job(html_path, pdf_path)
 
         if result.returncode != 0:
             print("STDOUT:", result.stdout)
@@ -2029,12 +2089,7 @@ def generate_temp_invoice_pdf_safe(invoice):
 
         script_path = os.path.join(settings.BASE_DIR, "pdfgen", "generate_pdf.js")
 
-        result = subprocess.run(
-            ["node", script_path, html_path, pdf_path],
-            capture_output=True,
-            text=True,
-            timeout=30
-        )
+        result = run_pdf_job(html_path, pdf_path)
 
         if result.returncode != 0:
             raise Exception(result.stderr)

@@ -13,7 +13,15 @@ from Invoice.models import Invoice, InvoiceItem
 from django.db.models import Sum
 from .form import UserUpdateForm, CustomPasswordChangeForm
 from django.contrib.auth import update_session_auth_hash
-from datetime import datetime
+from datetime import datetime, timedelta
+
+MESES_CORTOS = ['Ene', 'Feb', 'Mar', 'Abr', 'May', 'Jun', 'Jul', 'Ago', 'Sep', 'Oct', 'Nov', 'Dic']
+DIAS_ES = ['lunes', 'martes', 'miércoles', 'jueves', 'viernes', 'sábado', 'domingo']
+MESES_ES = ['enero', 'febrero', 'marzo', 'abril', 'mayo', 'junio', 'julio', 'agosto', 'septiembre', 'octubre', 'noviembre', 'diciembre']
+
+
+def _fecha_larga_es(d):
+    return f'{DIAS_ES[d.weekday()]} {d.day} de {MESES_ES[d.month - 1]}'
 from django.db.models.functions import TruncMonth
 from django.db.models import F, Sum, Count
 from django.db.models.functions import TruncMonth
@@ -53,7 +61,9 @@ def signup(request):
 def Dashboard(request):
     customer_count = Customer.objects.count()
     items_count = Item.objects.filter(active=True).count()
-    low_stock_items = Item.objects.filter(Stock__lte=2).order_by('Stock')
+    low_stock_qs = Item.objects.filter(active=True, Stock__lte=2).order_by('Stock', 'Name')
+    low_stock_count = low_stock_qs.count()
+    low_stock_items = list(low_stock_qs[:8])
 
     year = int(request.GET.get('year', datetime.now().year))
     month = int(request.GET.get('month', datetime.now().month))
@@ -61,7 +71,7 @@ def Dashboard(request):
     # Clientes nuevos por día
     new_clients_per_day = (
         Customer.objects
-        .filter(record_date__isnull=False)
+        .filter(record_date__isnull=False, record_date__gte=datetime.now().date() - timedelta(days=60))
         .values('record_date')
         .annotate(count=Count('id'))
         .order_by('record_date')
@@ -75,8 +85,8 @@ def Dashboard(request):
         .annotate(total=Sum('total'))
         .order_by('month')
     )
-    labels = [f"{calendar.month_name[sale['month'].month]} {sale['month'].year}" for sale in monthly_sales]
-    totals = [float(sale['total']) for sale in monthly_sales]
+    labels = [f"{MESES_CORTOS[sale['month'].month - 1]} {sale['month'].year}" for sale in monthly_sales if sale['month']]
+    totals = [float(sale['total'] or 0) for sale in monthly_sales if sale['month']]
 
     # Productos más vendidos
     best_selling_products = (
@@ -98,7 +108,7 @@ def Dashboard(request):
     Total_Payment_credit = float(Total_credit.get('result') or 0)
 
     # Datos para gráficos
-    dates_clients = [entry['record_date'].strftime('%Y-%m-%d') for entry in new_clients_per_day if entry['record_date']]
+    dates_clients = [entry['record_date'].strftime('%d/%m') for entry in new_clients_per_day if entry['record_date']]
     counts_clients = [entry['count'] for entry in new_clients_per_day]
 
 
@@ -110,6 +120,8 @@ def Dashboard(request):
 
     context = {
         'low_stock_items': low_stock_items,
+        'low_stock_count': low_stock_count,
+        'today_label': _fecha_larga_es(datetime.now()),
         'num_Customers': customer_count,
         'num_items': items_count,
         'num_total': Total_Payment,
@@ -167,21 +179,21 @@ def edit_profile_view(request):
         user_form = UserUpdateForm(request.POST, instance=request.user)
         password_form = CustomPasswordChangeForm(user=request.user, data=request.POST)
 
-        if user_form.is_valid() and password_form.is_valid():
+        # La contraseña es opcional: solo se valida si se llenó algún campo
+        wants_password = any(request.POST.get(f) for f in ('old_password', 'new_password1', 'new_password2'))
+        password_ok = password_form.is_valid() if wants_password else True
+
+        if user_form.is_valid() and password_ok:
             user_form.save()
-            password_form.save()
-            update_session_auth_hash(request, password_form.user)
-            messages.success(request, 'Usuario actualizado exitosamente')
+            if wants_password:
+                password_form.save()
+                update_session_auth_hash(request, password_form.user)
+            messages.success(request, 'Perfil actualizado correctamente.')
             return redirect('edit_profile')
-        else:
-            if password_form.errors:
-                for field, errors in password_form.errors.items():
-                    for error in errors:
-                        messages.error(request, 'Ultilize otra contraseña')
-            if user_form.errors:
-                for field, errors in user_form.errors.items():
-                    for error in errors:
-                        messages.error(request, 'Ultilize otro nombre de usuario')
+        for form in ([user_form, password_form] if wants_password else [user_form]):
+            for errors in form.errors.values():
+                for error in errors:
+                    messages.error(request, error)
     else:
         user_form = UserUpdateForm(instance=request.user)
         password_form = CustomPasswordChangeForm(user=request.user)

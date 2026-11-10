@@ -1,0 +1,130 @@
+{% load humanize %}<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8">
+  <title>Cotización {{ quote.code }}</title>
+  <style>
+    * { margin: 0; padding: 0; box-sizing: border-box; }
+    body { font-family: 'Segoe UI', Arial, sans-serif; color: #263238; background: #fff; font-size: 13px; }
+    .page { max-width: 800px; margin: 0 auto; }
+    .header {
+      background: linear-gradient(135deg, #e8f4f8 0%, #ffffff 100%);
+      padding: 26px 36px 18px; border-bottom: 3px solid #1e88e5;
+      display: flex; justify-content: space-between; align-items: center;
+    }
+    .logo { width: 300px; height: 80px; display: flex; align-items: center; justify-content: center; flex-shrink: 0; }
+    .logo img { transform: translateX(20px) scale(0.2); transform-origin: center; }
+    .title { text-align: right; }
+    .title h2 { font-size: 38px; font-weight: 700; color: #1e88e5; letter-spacing: 3px; line-height: 1; margin-bottom: 6px; }
+    .title .number { font-size: 14px; font-weight: 600; color: #455a64; }
+    .company-nit { font-size: 12px; color: #455a64; margin-top: 4px; }
+    .body { padding: 24px 36px; }
+    .grid { display: flex; gap: 18px; margin-bottom: 22px; }
+    .block { flex: 1; background: #f7fafc; border-radius: 8px; padding: 12px 14px; }
+    .block h3 { font-size: 11px; text-transform: uppercase; color: #78909c; letter-spacing: .5px; margin-bottom: 4px; }
+    .block p { font-size: 13px; margin-bottom: 8px; }
+    .block p:last-child { margin-bottom: 0; }
+    .highlight { font-weight: 700; color: #1e88e5; }
+    table { width: 100%; border-collapse: collapse; margin-bottom: 20px; }
+    thead th { background: #1e88e5; color: #fff; font-size: 11px; text-align: left; padding: 10px; letter-spacing: .5px; }
+    thead th.num, td.num { text-align: right; }
+    tbody td { padding: 10px; border-bottom: 1px solid #eceff1; }
+    tbody tr:nth-child(even) td { background: #fafcfe; }
+    .bottom { display: flex; justify-content: space-between; gap: 24px; }
+    .notes { flex: 1; font-size: 12px; color: #546e7a; }
+    .notes h4 { font-size: 12px; color: #37474f; margin-bottom: 4px; }
+    .totals { width: 290px; }
+    .row { display: flex; justify-content: space-between; padding: 6px 0; border-bottom: 1px solid #eceff1; }
+    .row.grand { border-bottom: none; background: #1e88e5; color: #fff; padding: 10px 12px; border-radius: 6px; margin-top: 8px; font-size: 15px; font-weight: 700; }
+    .status { display: inline-block; padding: 3px 10px; border-radius: 12px; font-size: 11px; font-weight: 700; }
+    .status-pendiente { background: #e3f2fd; color: #1565c0; }
+    .status-facturada { background: #e8f5e9; color: #2e7d32; }
+    .status-anulada { background: #eceff1; color: #546e7a; }
+    .footer { margin: 26px 36px 0; padding-top: 14px; border-top: 1px solid #eceff1; font-size: 11px; color: #78909c; }
+  </style>
+</head>
+<body>
+<div class="page">
+  <div class="header">
+    <div class="logo">
+      <img src="{% pdf_asset 'logo' %}" width="1890" height="945" alt="{% company_name %} Logo">
+    </div>
+    <div class="title">
+      <h2>COTIZACIÓN</h2>
+      <p class="number">NO. {{ quote.code }}</p>
+      <p class="company-nit">{% company_name %} · NIT {% company_nit %}</p>
+    </div>
+  </div>
+
+  <div class="body">
+    <div class="grid">
+      <div class="block">
+        <h3>Fecha</h3>
+        <p class="highlight">{{ quote.quote_date|date:"d/m/Y" }}</p>
+        <h3>Válida hasta</h3>
+        <p>{{ quote.valid_until|date:"d/m/Y"|default:"—" }}</p>
+      </div>
+      <div class="block">
+        <h3>Cliente</h3>
+        <p class="highlight">{{ quote.customer.name }} {{ quote.customer.lastname }}</p>
+        <h3>Cédula</h3>
+        <p>{{ quote.customer.cedula|default:"—" }}</p>
+      </div>
+      <div class="block">
+        <h3>Contacto</h3>
+        <p>{{ quote.customer.phone|default:"—" }}</p>
+        <p>{{ quote.customer.email|default:"" }}</p>
+        <h3>Estado</h3>
+        <p><span class="status status-{{ quote.status }}">{{ quote.get_status_display }}{% if quote.invoice %} · Factura #{{ quote.invoice.invoice_number }}{% endif %}</span></p>
+      </div>
+    </div>
+
+    <table>
+      <thead>
+        <tr>
+          <th>DESCRIPCIÓN</th>
+          <th class="num">CANT.</th>
+          <th class="num">PRECIO</th>
+          <th class="num">TOTAL</th>
+        </tr>
+      </thead>
+      <tbody>
+        {% for line in items %}
+        <tr>
+          <td>{{ line.item.Name }}</td>
+          <td class="num">{{ line.quantity }}</td>
+          <td class="num">${{ line.price|floatformat:0|intcomma }}</td>
+          <td class="num">${{ line.subtotal|floatformat:0|intcomma }}</td>
+        </tr>
+        {% endfor %}
+      </tbody>
+    </table>
+
+    <div class="bottom">
+      <div class="notes">
+        {% if quote.notes %}
+        <h4>Observaciones</h4>
+        <p>{{ quote.notes|linebreaksbr }}</p>
+        {% endif %}
+      </div>
+      <div class="totals">
+        <div class="row"><span>Subtotal</span><span>${{ quote.subtotal|floatformat:0|intcomma }}</span></div>
+        {% if quote.discount %}
+        <div class="row"><span>Descuento ({{ quote.discount|floatformat:"-2" }}%)</span><span>-${{ quote.discount_amount|floatformat:0|intcomma }}</span></div>
+        {% endif %}
+        {% if quote.delivery_amount %}
+        <div class="row"><span>Domicilio</span><span>${{ quote.delivery_amount|floatformat:0|intcomma }}</span></div>
+        {% endif %}
+        <div class="row grand"><span>Total</span><span>${{ quote.total|floatformat:0|intcomma }}</span></div>
+      </div>
+    </div>
+  </div>
+
+  <div class="footer">
+    Esta cotización no es una factura y no compromete inventario. Precios sujetos a disponibilidad
+    {% if quote.valid_until %}y válidos hasta el {{ quote.valid_until|date:"d/m/Y" }}{% endif %}.
+    {% company_name %} · NIT {% company_nit %} · +57 3005034055 · https://celuproco.com.co/
+  </div>
+</div>
+</body>
+</html>

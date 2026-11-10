@@ -4,7 +4,7 @@
 {% block title %}Ventas por productos{% endblock %}
 
 {% block extra_head %}
-<link rel="stylesheet" type="text/css" href="https://cdn.jsdelivr.net/npm/daterangepicker/daterangepicker.css" />
+<link rel="stylesheet" type="text/css" href="https://cdn.jsdelivr.net/npm/daterangepicker@3.1.0/daterangepicker.css" />
 <style>
     .ventas-container {
         display: flex;
@@ -67,7 +67,7 @@
 
     .filter-input:focus {
         outline: none;
-        border-color: #10b981;
+        border-color: #16a34a;
         box-shadow: 0 0 0 3px rgba(16, 185, 129, 0.1);
     }
 
@@ -77,7 +77,7 @@
 
     .btn-primary {
         width: 100%;
-        background: linear-gradient(135deg, #10b981 0%, #059669 100%);
+        background: linear-gradient(135deg, #16a34a 0%, #15803d 100%);
         color: white;
         border: none;
         padding: 0.75rem 1rem;
@@ -163,7 +163,7 @@
     }
 
     .btn-download.excel {
-        background: linear-gradient(135deg, #059669 0%, #047857 100%);
+        background: linear-gradient(135deg, #15803d 0%, #047857 100%);
     }
 
     .btn-download.pdf {
@@ -228,7 +228,7 @@
     }
 
     .stat-icon.blue { background: #dbeafe; }
-    .stat-icon.green { background: #d1fae5; }
+    .stat-icon.green { background: #dcfce7; }
     .stat-icon.purple { background: #e9d5ff; }
     .stat-icon.yellow { background: #fef3c7; }
 
@@ -245,7 +245,7 @@
         margin-top: 0.25rem;
     }
 
-    .stat-change.positive { color: #059669; }
+    .stat-change.positive { color: #15803d; }
     .stat-change.negative { color: #dc2626; }
 
     /* Sección del gráfico */
@@ -276,7 +276,7 @@
     .info-badge {
         width: 20px;
         height: 20px;
-        background: #10b981;
+        background: #16a34a;
         color: white;
         border-radius: 50%;
         display: flex;
@@ -336,7 +336,7 @@
 
     .spinner {
         border: 4px solid #f3f4f6;
-        border-top: 4px solid #10b981;
+        border-top: 4px solid #16a34a;
         border-radius: 50%;
         width: 48px;
         height: 48px;
@@ -407,8 +407,8 @@
     }
 
     .alert-success {
-        background: #d1fae5;
-        border-left: 4px solid #10b981;
+        background: #dcfce7;
+        border-left: 4px solid #16a34a;
         color: #065f46;
     }
 
@@ -473,7 +473,7 @@
             position: fixed;
             bottom: 1rem;
             right: 1rem;
-            background: #10b981;
+            background: #16a34a;
             color: white;
             width: 56px;
             height: 56px;
@@ -517,19 +517,15 @@
 {% endblock %}
 
 {% block content %}
-<br>
-<br>
-<br>
+<div class="page-header">
+    <div>
+        <h1 class="page-title">Ventas por producto</h1>
+        <p class="page-subtitle">Productos más vendidos por valor en el período elegido.</p>
+    </div>
+</div>
 <div class="ventas-container">
     <!-- Panel Izquierdo - Filtros -->
     <aside class="filters-panel" id="filtersPanel">
-        <br>
-        <br>
-        <br>
-        <div class="filters-header">
-            <h1>🧾 Ventas por Productos</h1>
-            <p>Filtra y consulta tus ventas</p>
-        </div>
 
         <form id="filterForm">
             <div class="filter-group">
@@ -644,9 +640,9 @@
 {% endblock %}
 
 {% block extra_scripts %}
-<script type="text/javascript" src="https://cdn.jsdelivr.net/momentjs/latest/moment.min.js"></script>
-<script type="text/javascript" src="https://cdn.jsdelivr.net/npm/daterangepicker/daterangepicker.min.js"></script>
-<script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+<script type="text/javascript" src="https://cdn.jsdelivr.net/npm/moment@2.29.4/min/moment.min.js"></script>
+<script type="text/javascript" src="https://cdn.jsdelivr.net/npm/daterangepicker@3.1.0/daterangepicker.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.1/dist/chart.umd.min.js"></script>
 
 <script>
 let salesChart = null;
@@ -764,7 +760,7 @@ function mostrarDatos(data) {
                     padding: 12,
                     titleColor: '#fff',
                     bodyColor: '#fff',
-                    borderColor: '#10b981',
+                    borderColor: '#16a34a',
                     borderWidth: 1,
                     callbacks: {
                         label: function(context) {
@@ -831,7 +827,7 @@ function mostrarEstadisticas(totales) {
                 <p class="stat-card-title">Diferencia</p>
                 <div class="stat-icon purple">${esPositivo ? '📈' : '📉'}</div>
             </div>
-            <p class="stat-value" style="color: ${esPositivo ? '#059669' : '#dc2626'}">
+            <p class="stat-value" style="color: ${esPositivo ? '#15803d' : '#dc2626'}">
                 ${esPositivo ? '+' : ''}${formatearMoneda(cambio)}
             </p>
         </div>
@@ -840,7 +836,7 @@ function mostrarEstadisticas(totales) {
                 <p class="stat-card-title">Variación</p>
                 <div class="stat-icon yellow">%</div>
             </div>
-            <p class="stat-value" style="color: ${esPositivo ? '#059669' : '#dc2626'}">
+            <p class="stat-value" style="color: ${esPositivo ? '#15803d' : '#dc2626'}">
                 ${esPositivo ? '+' : ''}${porcentaje.toFixed(2)}%
             </p>
         </div>

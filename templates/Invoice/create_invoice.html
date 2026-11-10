@@ -51,7 +51,7 @@
     
     /* Nuevos estilos para el diseño */
     .document-header {
-        background: linear-gradient(135deg, #28a745, #20c997);
+        background: linear-gradient(135deg, #15803d, #20c997);
         color: white;
         padding: 20px;
         border-radius: 12px;
@@ -95,7 +95,7 @@
     }
     
     .section-title {
-        color: #28a745;
+        color: #15803d;
         font-weight: 600;
         font: 400 italic;
         margin-bottom: 20px;
@@ -155,13 +155,13 @@
     }
     
     .btn-add-product {
-        color: #28a745;
+        color: #15803d;
         text-decoration: none;
         font-weight: 500;
     }
     
     .btn-add-product:hover {
-        color: #1e7e34;
+        color: #166534;
         text-decoration: underline;
     }
     
@@ -176,7 +176,7 @@
         background: #f8f9fa;
         padding: 15px;
         border-radius: 8px;
-        border-left: 4px solid #28a745;
+        border-left: 4px solid #15803d;
         margin-top: 10px;
     }
     
@@ -199,14 +199,14 @@
     }
     
     .btn-save {
-        background: #28a745;
-        border-color: #28a745;
+        background: #15803d;
+        border-color: #15803d;
         color: white;
     }
     
     .btn-save:hover {
-        background: #218838;
-        border-color: #1e7e34;
+        background: #166534;
+        border-color: #166534;
     }
     
     .btn-send {
@@ -219,24 +219,39 @@
         background: #0069d9;
         border-color: #0062cc;
     }
+
+    /* Traer cotización */
+    .btn-quote {
+        background: #e3f2fd;
+        color: #1565c0;
+        border: 1px solid #90caf9;
+        font-weight: 600;
+    }
+    .btn-quote:hover { background: #bbdefb; color: #0d47a1; }
+    .quote-banner {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        gap: 12px;
+        background: #e3f2fd;
+        border-left: 4px solid #15803d;
+        border-radius: 8px;
+        padding: 12px 16px;
+        margin-bottom: 20px;
+    }
+    #quotesTable tbody tr { cursor: pointer; }
 </style>
 {% endblock %}
 
 {% block content %}
 <div class="container-fluid" style="margin-top: 5rem; padding: 0 2rem;">
-    <!-- Header del documento -->
-    <div class="document-header">
-        <div class="row align-items-center">
-            <div class="col-md-8">
-                <h3>Tipo de documento</h3>
-                <p class="mb-0">Generar factura de venta</p>
-            </div>
-            <div class="col-md-4 text-end">
-                <div class="document-number">
-                    <h4 id="preview-invoice-number">No. 001</h4>
-                    <small>Opcional</small>
-                </div>
-            </div>
+    <div class="page-header">
+        <div>
+            <h1 class="page-title">Nueva factura</h1>
+            <p class="page-subtitle">Factura de contado o a crédito. Puedes traer una cotización pendiente.</p>
+        </div>
+        <div class="page-actions">
+            <span class="badge-soft neutral fs-6" id="preview-invoice-number">No. 001</span>
         </div>
     </div>
 
@@ -265,8 +280,21 @@
             </div>
         </div>
 
+        <!-- Cotización (opcional): solo se usa si el usuario la trae -->
+        <input type="hidden" name="quote_id" id="quote_id" value="">
+        <div id="quote-banner" class="quote-banner" style="display:none;">
+            <div>
+                📋 Facturando desde la cotización <strong id="quote-banner-code"></strong>
+                <small id="quote-banner-extra" class="d-block text-muted"></small>
+            </div>
+            <button type="button" class="btn btn-sm btn-outline-secondary" id="btn-unlink-quote">Desvincular</button>
+        </div>
+
         <!-- Información del cliente -->
-        <div class="section-title">📭 Destinatario</div>
+        <div class="section-title d-flex justify-content-between align-items-center">
+            <span>📭 Destinatario</span>
+            <button type="button" class="btn btn-sm btn-quote" id="btn-open-quotes">📋 Traer cotización</button>
+        </div>
         <div class="row mb-4">
             <div class="col-md-6">
                 <div class="form-floating">
@@ -468,8 +496,8 @@
         <!-- Botones de acción -->
         <div class="action-buttons">
             <input type="hidden" name="download" value="pdf">
-            <button type="button" class="btn btn-cancel">Cancelar</button>
-            <button type="submit" class="btn btn-save">Guardar</button>
+            <a href="{% url 'report_invoice' %}" class="btn btn-secondary">Cancelar</a>
+            <button type="submit" class="btn btn-primary"><i class="bi bi-check-lg me-1"></i>Guardar y descargar</button>
         </div>
     </form>
 </div>
@@ -508,6 +536,50 @@
                         {% endfor %}
                     </tbody>
                 </table>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Modal: traer cotización -->
+<div class="modal fade" id="quotesModal" tabindex="-1" aria-labelledby="quotesModalLabel" aria-hidden="true">
+    <div class="modal-dialog modal-lg modal-dialog-scrollable">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title" id="quotesModalLabel">Traer cotización pendiente</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Cerrar"></button>
+            </div>
+            <div class="modal-body">
+                <div class="row g-2 mb-3 align-items-center">
+                    <div class="col-md-8">
+                        <input type="text" id="searchQuote" class="form-control" placeholder="Buscar por número, cliente o cédula...">
+                    </div>
+                    <div class="col-md-4">
+                        <div class="form-check">
+                            <input class="form-check-input" type="checkbox" id="quotesOnlyCustomer">
+                            <label class="form-check-label" for="quotesOnlyCustomer">Solo del cliente elegido</label>
+                        </div>
+                    </div>
+                </div>
+                <table class="table table-hover align-middle" id="quotesTable">
+                    <thead>
+                        <tr>
+                            <th>No.</th>
+                            <th>Cliente</th>
+                            <th>Fecha</th>
+                            <th>Vence</th>
+                            <th class="text-end">Total</th>
+                            <th></th>
+                        </tr>
+                    </thead>
+                    <tbody id="quotesTableBody">
+                        <tr><td colspan="6" class="text-center text-muted">Cargando...</td></tr>
+                    </tbody>
+                </table>
+            </div>
+            <div class="modal-footer">
+                <a href="{% url 'quote_create' %}" target="_blank" class="btn btn-link me-auto">+ Nueva cotización</a>
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cerrar</button>
             </div>
         </div>
     </div>
@@ -730,7 +802,8 @@ $(document).ready(function(){
         // Aplicar descuento general si existe
         if($('#add_discount').is(':checked')){
             var discountPercent = parseFloat($('#discount-percent').val()) || 0;
-            var discountAmount = subtotalWithDelivery * (discountPercent / 100);
+            // El backend aplica el descuento solo sobre los productos (no sobre el domicilio)
+            var discountAmount = subtotal * (discountPercent / 100);
             var total = subtotalWithDelivery - discountAmount;
             $('#discount-preview').show();
             $('#discount-amount').text('-$' + discountAmount.toLocaleString('es-CO', { minimumFractionDigits: 2 }));
@@ -754,24 +827,200 @@ $(document).ready(function(){
     });
 
     // Agregar nueva línea de producto
-$('#add-line').click(function(e){
-    e.preventDefault();
+    function addProductLine() {
+        // Destruir Select2 antes de clonar
+        $('.item-id').select2('destroy');
 
-    // Destruir Select2 antes de clonar
-    $('.item-id').select2('destroy');
+        var newLine = $('.product-line:first').clone();
 
-    var newLine = $('.product-line:first').clone();
+        newLine.find('select, input').val('');
+        newLine.find('.item-qty').val('1');
+        newLine.find('.item-price, .item-discount, .item-tax').val('0');
+        newLine.find('.item-total').val('$0.00');
 
-    newLine.find('select, input').val('');
-    newLine.find('.item-qty').val('1');
-    newLine.find('.item-price, .item-discount, .item-tax').val('0');
-    newLine.find('.item-total').val('$0.00');
+        $('#products').append(newLine);
 
-    $('#products').append(newLine);
+        // Volver a inicializar Select2
+        initItemSelect();
+        return newLine;
+    }
 
-    // Volver a inicializar Select2
-    initItemSelect();
-});
+    $('#add-line').click(function(e){
+        e.preventDefault();
+        addProductLine();
+    });
+
+    // =====================================================
+    // TRAER COTIZACIÓN (opcional, solo si el usuario la elige)
+    // =====================================================
+    const QUOTES_PENDING_URL = "{% url 'quote_pending_api' %}";
+    const QUOTE_DETAIL_URL = "{% url 'quote_detail_api' 0 %}";
+    let pendingQuotes = [];
+
+    function escapeHtml(text) {
+        return String(text ?? '').replace(/[&<>"']/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
+    }
+    function formatCOP(value) {
+        return '$' + (Number(value) || 0).toLocaleString('es-CO', { maximumFractionDigits: 0 });
+    }
+    function formatDate(iso) {
+        if (!iso) return '—';
+        const [y, m, d] = iso.split('-');
+        return d + '/' + m + '/' + y;
+    }
+
+    function renderQuotes() {
+        const term = ($('#searchQuote').val() || '').toLowerCase().trim();
+        const rows = pendingQuotes.filter(q =>
+            !term || q.code.toLowerCase().includes(term) || q.customer.toLowerCase().includes(term) || String(q.cedula || '').includes(term)
+        );
+        const $body = $('#quotesTableBody').empty();
+        if (!rows.length) {
+            $body.append('<tr><td colspan="6" class="text-center text-muted">No hay cotizaciones pendientes' + (term ? ' con esa búsqueda' : '') + '.</td></tr>');
+            return;
+        }
+        rows.forEach(q => {
+            $body.append(
+                '<tr data-id="' + q.id + '">' +
+                    '<td class="fw-semibold">' + escapeHtml(q.code) + '</td>' +
+                    '<td>' + escapeHtml(q.customer) + '<br><small class="text-muted">' + escapeHtml(q.cedula) + '</small></td>' +
+                    '<td>' + formatDate(q.quote_date) + '</td>' +
+                    '<td>' + formatDate(q.valid_until) + (q.expired ? ' <span class="badge bg-warning text-dark">Vencida</span>' : '') + '</td>' +
+                    '<td class="text-end">' + formatCOP(q.total) + '</td>' +
+                    '<td class="text-end"><button type="button" class="btn btn-sm btn-primary pick-quote" data-id="' + q.id + '">Traer</button></td>' +
+                '</tr>'
+            );
+        });
+    }
+
+    function fetchPendingQuotes() {
+        const params = new URLSearchParams();
+        if ($('#quotesOnlyCustomer').is(':checked') && $('#customer').val()) {
+            params.set('customer', $('#customer').val());
+        }
+        $('#quotesTableBody').html('<tr><td colspan="6" class="text-center text-muted">Cargando...</td></tr>');
+        return fetch(QUOTES_PENDING_URL + '?' + params.toString(), { credentials: 'same-origin' })
+            .then(r => r.json())
+            .then(data => { pendingQuotes = data.quotes || []; renderQuotes(); })
+            .catch(() => {
+                $('#quotesTableBody').html('<tr><td colspan="6" class="text-center text-danger">No se pudieron cargar las cotizaciones.</td></tr>');
+            });
+    }
+
+    $('#btn-open-quotes').on('click', function() {
+        $('#quotesOnlyCustomer').prop('checked', !!$('#customer').val());
+        $('#searchQuote').val('');
+        bootstrap.Modal.getOrCreateInstance(document.getElementById('quotesModal')).show();
+        fetchPendingQuotes();
+    });
+    $('#searchQuote').on('input', renderQuotes);
+    $('#quotesOnlyCustomer').on('change', fetchPendingQuotes);
+    $('#quotesTableBody').on('click', 'tr[data-id], .pick-quote', function(e) {
+        e.stopPropagation();
+        const id = $(this).data('id') || $(this).closest('tr').data('id');
+        bootstrap.Modal.getOrCreateInstance(document.getElementById('quotesModal')).hide();
+        loadQuote(id);
+    });
+
+    function hasProductsSelected() {
+        return $('.product-line .item-id').filter(function() { return $(this).val(); }).length > 0;
+    }
+
+    function loadQuote(quoteId) {
+        fetch(QUOTE_DETAIL_URL.replace(/0\/$/, quoteId + '/'), { credentials: 'same-origin' })
+            .then(r => r.json().then(body => ({ ok: r.ok, body })))
+            .then(({ ok, body }) => {
+                if (!ok) { Swal.fire('No disponible', body.error || 'No se pudo cargar la cotización.', 'error'); return; }
+                const apply = () => applyQuote(body);
+                if (hasProductsSelected()) {
+                    Swal.fire({
+                        title: 'Reemplazar productos',
+                        text: 'Los productos que ya agregaste se reemplazarán por los de la cotización ' + body.code + '.',
+                        icon: 'question',
+                        showCancelButton: true,
+                        confirmButtonText: 'Sí, traerla',
+                        cancelButtonText: 'Cancelar',
+                    }).then(r => { if (r.isConfirmed) apply(); });
+                } else {
+                    apply();
+                }
+            })
+            .catch(() => Swal.fire('Error', 'No se pudo cargar la cotización.', 'error'));
+    }
+
+    function applyQuote(q) {
+        // Cliente
+        $('#customer').val(String(q.customer_id));
+
+        // Productos: dejar una sola línea vacía y reconstruir
+        $('.product-line:not(:first)').remove();
+        const $first = $('.product-line:first');
+        $first.find('.item-id').val('').trigger('change');
+        $first.find('.item-qty').val('1');
+        $first.find('.item-price, .item-discount, .item-tax').val('0');
+
+        const skipped = [];
+        const lowStock = [];
+        let lineIndex = 0;
+        q.items.forEach(it => {
+            // La factura solo ofrece productos activos con stock > 0
+            const exists = $first.find('.item-id option[value="' + it.item_id + '"]').length > 0;
+            if (!exists) { skipped.push(it.name + (it.active ? ' (sin stock)' : ' (inactivo)')); return; }
+            if (it.stock < it.quantity) lowStock.push(it.name + ': pide ' + it.quantity + ', hay ' + it.stock);
+
+            const $line = lineIndex === 0 ? $first : addProductLine();
+            lineIndex++;
+            $line.find('.item-id').val(String(it.item_id)).trigger('change'); // pone precio de lista...
+            $line.find('.item-price').val(it.price);                            // ...y aquí el de la cotización
+            $line.find('.item-qty').val(it.quantity);
+            $line.find('.item-discount').val('0');
+        });
+
+        // Descuento general
+        const discount = parseFloat(q.discount) || 0;
+        $('#add_discount').prop('checked', discount > 0);
+        $('#discount-fields').toggle(discount > 0);
+        $('#discount-percent').val(discount > 0 ? discount : '');
+
+        // Domicilio
+        const delivery = Math.round(parseFloat(q.delivery_amount) || 0);
+        $('#has_delivery').prop('checked', delivery > 0);
+        $('#delivery-amount-container').toggle(delivery > 0);
+        $('#delivery_amount_display').val(String(delivery));
+        syncDelivery();
+
+        // Vincular
+        $('#quote_id').val(q.id);
+        $('#quote-banner-code').text(q.code);
+        $('#quote-banner-extra').text(
+            q.customer + (q.valid_until ? ' · válida hasta ' + formatDate(q.valid_until) : '') + (q.expired ? ' · VENCIDA' : '')
+        );
+        $('#quote-banner').css('display', 'flex');
+
+        calculateTotals();
+
+        const warnings = [];
+        if (q.expired) warnings.push('La cotización está vencida: revisa que los precios sigan vigentes.');
+        if (skipped.length) warnings.push('No se cargaron (no están disponibles para facturar): ' + skipped.join(', ') + '.');
+        if (lowStock.length) warnings.push('Stock insuficiente: ' + lowStock.join('; ') + '.');
+        if (!lineIndex) warnings.push('Ningún producto de la cotización está disponible para facturar.');
+
+        if (warnings.length) {
+            Swal.fire({ title: 'Cotización ' + q.code + ' cargada', html: warnings.map(escapeHtml).join('<br><br>'), icon: 'warning' });
+        } else {
+            Swal.fire({ title: 'Cotización ' + q.code + ' cargada', text: 'Revisa el método de pago y guarda la factura.', icon: 'success', timer: 2200, showConfirmButton: false });
+        }
+    }
+
+    $('#btn-unlink-quote').on('click', function() {
+        $('#quote_id').val('');
+        $('#quote-banner').hide();
+        Swal.fire({ text: 'La factura ya no quedará amarrada a la cotización. Los productos cargados se mantienen.', icon: 'info', timer: 2500, showConfirmButton: false });
+    });
+
+    // Llegada desde el listado de cotizaciones (botón "Facturar")
+    const preloadQuoteId = "{{ preload_quote_id }}";
+    if (preloadQuoteId) { loadQuote(preloadQuoteId); }
 
     // Mostrar/ocultar campos de descuento
     $('#add_discount').change(function(){

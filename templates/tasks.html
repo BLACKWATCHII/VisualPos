@@ -2,217 +2,165 @@
 {% load static %}
 {% load humanize %}
 
+{% block title %}Dashboard{% endblock %}
+
 {% block content %}
+<div class="page-header">
+    <div>
+        <div class="page-eyebrow">{{ today_label|capfirst }}</div>
+        <h1 class="page-title">Hola, {{ user.first_name|default:user.username }}</h1>
+        <p class="page-subtitle">Resumen general del negocio.</p>
+    </div>
+    <div class="page-actions">
+        <a href="{% url 'quote_create' %}" class="btn btn-outline-secondary"><i class="bi bi-file-earmark-text me-1"></i>Cotizar</a>
+        <a href="{% url 'payment_quota' %}" class="btn btn-outline-secondary"><i class="bi bi-cash-coin me-1"></i>Pagar cuota</a>
+        <a href="{% url 'create_invoice' %}" class="btn btn-primary"><i class="bi bi-plus-lg me-1"></i>Nueva factura</a>
+    </div>
+</div>
 
-<link rel="stylesheet" href="{% static 'css/homePages/tasks.css' %}">
+<div class="kpi-grid">
+    <a href="{% url 'report_invoice' %}" class="kpi text-decoration-none">
+        <span class="kpi-icon"><i class="bi bi-cash-stack"></i></span>
+        <div>
+            <div class="kpi-label">Ventas de contado</div>
+            <div class="kpi-value">${{ num_total|floatformat:0|intcomma }}</div>
+            <div class="kpi-hint">Facturas pagadas, sin domicilio</div>
+        </div>
+    </a>
+    <a href="{% url 'payment_quota' %}" class="kpi text-decoration-none">
+        <span class="kpi-icon warning"><i class="bi bi-credit-card"></i></span>
+        <div>
+            <div class="kpi-label">Ventas a crédito</div>
+            <div class="kpi-value">${{ num_total_credit|floatformat:0|intcomma }}</div>
+            <div class="kpi-hint">Valor vendido a crédito</div>
+        </div>
+    </a>
+    <a href="{% url 'viewClient' %}" class="kpi text-decoration-none">
+        <span class="kpi-icon info"><i class="bi bi-people"></i></span>
+        <div>
+            <div class="kpi-label">Clientes</div>
+            <div class="kpi-value">{{ num_Customers|intcomma }}</div>
+            <div class="kpi-hint">Registrados</div>
+        </div>
+    </a>
+    <a href="{% url 'viewItem' %}" class="kpi text-decoration-none">
+        <span class="kpi-icon {% if low_stock_count %}danger{% endif %}"><i class="bi bi-box-seam"></i></span>
+        <div>
+            <div class="kpi-label">Productos activos</div>
+            <div class="kpi-value">{{ num_items|intcomma }}</div>
+            <div class="kpi-hint">{% if low_stock_count %}{{ low_stock_count }} con stock bajo (≤ 2){% else %}Stock al día{% endif %}</div>
+        </div>
+    </a>
+</div>
 
-<div class="container-fluid px-4 py-4" style="margin-top: 6rem;">
-  <div class="dashboard-header d-flex flex-column flex-md-row align-items-start align-items-md-center justify-content-between gap-3"  id="dashboard-container">
-    
-    <div class="d-flex align-items-center gap-3">
-      <!-- Botón Panel de Control -->
-      <a href="{% url 'Dasboard' %}" class="dashboard-btn" style="text-decoration: none;">
-        Panel de control
-        <span class="icon">
-          <i class="bi bi-arrow-clockwise"></i>
-        </span>
-      </a>
-
-      <!-- Notificaciones -->
-        <div class="dropdown">
-          <button class="btn position-relative" id="notificationDropdown" data-bs-toggle="dropdown" aria-expanded="false">
-            <i class="bi bi-bell" style="font-size: 1.5rem;"></i>
-            
+<div class="row g-4">
+    <div class="col-xl-8">
+        <div class="panel h-100">
+            <h2 class="panel-title"><i class="bi bi-bar-chart"></i> Ventas por mes</h2>
+            <div style="height: 300px;"><canvas id="chartMonthlySales" aria-label="Ventas por mes" role="img"></canvas></div>
+        </div>
+    </div>
+    <div class="col-xl-4">
+        <div class="panel h-100">
+            <h2 class="panel-title"><i class="bi bi-exclamation-triangle"></i> Stock bajo</h2>
             {% if low_stock_items %}
-              <span class="position-absolute top-0 start-100 translate-middle p-1 bg-danger border border-light rounded-circle">
-                <span class="visually-hidden">Notificaciones nuevas</span>
-              </span>
-            {% endif %}
-          </button>
-
-          <ul class="dropdown-menu dropdown-menu-end shadow-sm" aria-labelledby="notificationDropdown" style="min-width: 300px; max-height: 300px; overflow-y: auto;">
-            <li class="dropdown-header fw-bold">Notificaciones</li>
-            <li><hr class="dropdown-divider"></li>
-
-            {% if low_stock_items %}
-              {% for item in low_stock_items %}
-                <li>
-                  <a class="dropdown-item d-flex justify-content-between align-items-center" href="{% url 'viewItem' %}">
-                    <div>
-                      <i class="bi bi-exclamation-circle-fill text-warning me-2"></i>
-                      <strong>{{ item.Name }}</strong> con stock bajo ({{ item.Stock }})
-                    </div>
-                    <span class="badge bg-danger rounded-pill">¡Atención!</span>
-                  </a>
+            <ul class="list-unstyled mb-0">
+                {% for item in low_stock_items %}
+                <li class="d-flex justify-content-between align-items-center py-2 {% if not forloop.last %}border-bottom{% endif %}">
+                    <a href="{% url 'updateItem' item.id %}" class="text-body text-decoration-none text-truncate me-2">{{ item.Name }}</a>
+                    {% if item.Stock <= 0 %}
+                        <span class="badge-soft danger">Agotado</span>
+                    {% else %}
+                        <span class="badge-soft warning">{{ item.Stock }} und.</span>
+                    {% endif %}
                 </li>
-              {% endfor %}
-            {% else %}
-              <li class="dropdown-item text-muted">No hay notificaciones</li>
+                {% endfor %}
+            </ul>
+            {% if low_stock_count > low_stock_items|length %}
+            <a href="{% url 'viewItem' %}" class="d-inline-block mt-2 small">Ver los {{ low_stock_count }} productos →</a>
             {% endif %}
-          </ul>
+            {% else %}
+            <div class="empty-state py-4"><i class="bi bi-check2-circle"></i>Todo el inventario tiene stock.</div>
+            {% endif %}
         </div>
-      <!-- Botón de Configuración (Perfil) -->
-      <a href="{% url 'Profile' %}" class="btn" title="Configuración de perfil">
-        <i class="bi bi-gear" style="font-size: 1.5rem;"></i>
-      </a>
     </div>
-    <!-- Bienvenida -->
-    <h2 class="mb-0">
-      Bienvenido, <span style="color: green;">{{ user.get_full_name|default:user.username|upper }}</span>
-    </h2>
-  </div>
+    <div class="col-xl-6">
+        <div class="panel h-100">
+            <h2 class="panel-title"><i class="bi bi-trophy"></i> Productos más vendidos</h2>
+            <div style="height: 300px;"><canvas id="chartTopProducts" aria-label="Productos más vendidos" role="img"></canvas></div>
+        </div>
+    </div>
+    <div class="col-xl-6">
+        <div class="panel h-100">
+            <h2 class="panel-title"><i class="bi bi-person-plus"></i> Clientes nuevos por día</h2>
+            <div style="height: 300px;"><canvas id="chartNewClients" aria-label="Clientes nuevos por día" role="img"></canvas></div>
+        </div>
+    </div>
 </div>
+{% endblock %}
 
-<div class="dashboard-cards">
-  <!-- Clientes Registrados -->
-  <div class="card-style hover-gradient">
-    <a href="{% url 'viewClient' %}" class="card-link">
-      <div class="card-header">
-        <h6>Clientes Registrados</h6>
-        <i class="bi bi-arrow-up-right"></i>
-      </div>
-      <div class="card-body">
-        <p class="main-number">{{ num_Customers }}</p>
-        <p class="card-subtext text-success">⬆ Aumentó desde el mes pasado</p>
-      </div>
-    </a>
-  </div>
-
-  <!-- Productos Disponibles -->
-  <div class="card-style hover-gradient">
-    <div class="card-header">
-      <h6>Productos Disponibles</h6>
-      <i class="bi bi-box-seam"></i>
-    </div>
-    <div class="card-body">
-      <p class="main-number">{{ num_items }}</p>
-      <p class="card-subtext text-success">⬆ Aumentó desde el mes pasado</p>
-    </div>
-  </div>
-
-  <!-- Ventas -->
-  <div class="card-style hover-gradient">
-    <a href="{% url 'report_invoice' %}" class="card-link">
-      <div class="card-header">
-        <h6>Ventas</h6>
-        <i class="bi bi-cash-coin"></i>
-      </div>
-      <div class="card-body">
-        <p class="main-number">${{ num_total|intcomma }}</p>
-        <p class="card-subtext text-success">⬆ Aumentó desde el mes pasado</p>
-      </div>
-    </a>
-  </div>
-
-  <!-- Ventas a Crédito -->
-  <div class="card-style hover-gradient">
-    <a href="{% url 'payment_quota' %}" class="card-link">
-      <div class="card-header">
-        <h6>Ventas a Crédito</h6>
-        <i class="bi bi-credit-card-2-front-fill"></i>
-      </div>
-      <div class="card-body">
-        <p class="main-number">${{ num_total_credit|intcomma }}</p>
-        <p class="card-subtext text-muted">Sin cambios este mes</p>
-      </div>
-    </a>
-  </div>
-</div>
-
-
-<div class="charts-container">
-    <div class="charts-grid">
-      <div class="chart-card">
-        <div class="card-header">Ventas Diarias</div>
-        <div class="card-body">
-          <canvas id="chart1"></canvas>
-        </div>
-      </div>
-      <div class="chart-card">
-        <div class="card-header">Clientes Nuevos</div>
-        <div class="card-body">
-          <canvas id="chart2"></canvas>
-        </div>
-      </div>
-      <div class="chart-card">
-        <div class="card-header">Productos Más Vendidos</div>
-        <div class="card-body">
-          <canvas id="chart3"></canvas>
-        </div>
-      </div>
-      <div class="chart-card">
-        <div class="card-header">Ventas a lo largo del tiempo</div>
-        <div class="card-body">
-          <canvas id="chart4"></canvas>
-        </div>
-      </div>
-    </div>
-  </div>
-</div>
-
-<script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+{% block extra_scripts %}
+<script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.1/dist/chart.umd.min.js"></script>
 <script>
-  // Parse data from Django context
-  const datesClients = JSON.parse('{{ dates_clients|escapejs }}');
-  const countsClients = JSON.parse('{{ counts_clients|escapejs }}');
-  const datesSales = JSON.parse('{{ dates_sales|escapejs }}');
-  const totalsSales = JSON.parse('{{ totals_sales|escapejs }}');
-  const productsNames = JSON.parse('{{ products_names|escapejs }}');
-  const productsSales = JSON.parse('{{ products_sales|escapejs }}');
+(function () {
+    const BRAND = '#16a34a';
+    const INK_MUTED = '#64748b';
+    const GRID = '#eef2f6';
+    const money = v => '$' + Number(v || 0).toLocaleString('es-CO', { maximumFractionDigits: 0 });
 
-  // Chart: Clientes Nuevos
-  new Chart(document.getElementById('chart2').getContext('2d'), {
-    type: 'bar',
-    data: {
-      labels: datesClients,
-      datasets: [{
-        label: 'Clientes Nuevos',
-        data: countsClients,
-        backgroundColor: countsClients.map((_, i) => i % 2 === 0 ? '#96df7d' : 'black'),
-        borderColor: countsClients.map((_, i) => i % 2 === 0 ? '#e1ffe1' : 'gray'),
-        borderWidth: 1
-      }]
-    },
-    options: {
-      responsive: true,
-      plugins: { legend: { display: false } },
-      scales: { y: { beginAtZero: true } }
-    }
-  });
+    Chart.defaults.font.family = getComputedStyle(document.body).fontFamily;
+    Chart.defaults.color = INK_MUTED;
+    Chart.defaults.plugins.legend.display = false; // una serie por gráfica: el título la nombra
 
-  // Chart: Ventas Diarias (doughnut)
-  new Chart(document.getElementById('chart1').getContext('2d'), {
-    type: 'doughnut',
-    data: {
-      labels: datesSales,
-      datasets: [{
-        label: 'Ventas Diarias',
-        data: totalsSales,
-        backgroundColor: totalsSales.map((_, i) => i % 2 === 0 ? '#96df7d' : 'black'),
-        borderColor: totalsSales.map((_, i) => i % 2 === 0 ? '#96df7d' : 'gray'),
-        hoverOffset: 4
-      }]
-    },
-    options: {
-      responsive: true,
-      plugins: {
-        legend: { position: 'top' },
-        title: { display: true, text: 'Ventas Diarias del Mes Actual' }
-      }
-    }
-  });
+    const baseScales = (valueFmt, horizontal) => {
+        const valueAxis = { beginAtZero: true, grid: { color: GRID }, border: { display: false }, ticks: { callback: valueFmt } };
+        const catAxis = { grid: { display: false }, border: { color: GRID } };
+        return horizontal ? { x: valueAxis, y: catAxis } : { x: catAxis, y: valueAxis };
+    };
+    const barDataset = (label, data) => ({
+        label, data, backgroundColor: BRAND, hoverBackgroundColor: '#15803d',
+        borderRadius: 4, borderSkipped: 'start', maxBarThickness: 36
+    });
 
+    // Ventas por mes
+    const monthLabels = JSON.parse('{{ dates_sales|escapejs }}');
+    const monthTotals = JSON.parse('{{ totals_sales|escapejs }}');
+    new Chart(document.getElementById('chartMonthlySales'), {
+        type: 'bar',
+        data: { labels: monthLabels, datasets: [barDataset('Ventas', monthTotals)] },
+        options: {
+            maintainAspectRatio: false,
+            scales: baseScales(v => v >= 1e6 ? '$' + (v / 1e6).toLocaleString('es-CO') + ' M' : money(v)),
+            plugins: { tooltip: { callbacks: { label: ctx => ' ' + money(ctx.parsed.y) } } }
+        }
+    });
 
-  // Chart: Productos Más Vendidos (horizontal bar)
-  new Chart(document.getElementById('chart3').getContext('2d'), {
-    type: 'bar', data: { labels: productsNames, datasets: [{ label: 'Cantidad Vendida', data: productsSales }] },
-    options: { indexAxis: 'y', responsive: true, plugins: { legend: { display: false }, title: { display: true, text: 'Productos Más Vendidos' } }, scales: { x: { beginAtZero: true } } }
-  });
+    // Productos más vendidos (barras horizontales)
+    const productNames = JSON.parse('{{ products_names|escapejs }}');
+    const productQty = JSON.parse('{{ products_sales|escapejs }}');
+    new Chart(document.getElementById('chartTopProducts'), {
+        type: 'bar',
+        data: { labels: productNames, datasets: [barDataset('Unidades vendidas', productQty)] },
+        options: {
+            indexAxis: 'y',
+            maintainAspectRatio: false,
+            scales: baseScales(v => v, true),
+            plugins: { tooltip: { callbacks: { label: ctx => ' ' + ctx.parsed.x + ' unidades' } } }
+        }
+    });
 
-  // Chart: Sales Over Time (line)
-  new Chart(document.getElementById('chart4').getContext('2d'), {
-    type: 'line', data: { labels: datesSales, datasets: [{ label: 'Sales Over Time', data: totalsSales }] },
-    options: { responsive: true, plugins: { legend: { display: false } }, scales: { y: { beginAtZero: true } } }
-  });
+    // Clientes nuevos por día
+    const clientDates = JSON.parse('{{ dates_clients|escapejs }}');
+    const clientCounts = JSON.parse('{{ counts_clients|escapejs }}');
+    new Chart(document.getElementById('chartNewClients'), {
+        type: 'bar',
+        data: { labels: clientDates, datasets: [barDataset('Clientes nuevos', clientCounts)] },
+        options: {
+            maintainAspectRatio: false,
+            scales: baseScales(v => Number.isInteger(v) ? v : null),
+            plugins: { tooltip: { callbacks: { label: ctx => ' ' + ctx.parsed.y + ' cliente(s)' } } }
+        }
+    });
+})();
 </script>
 {% endblock %}

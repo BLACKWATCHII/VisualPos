@@ -183,18 +183,11 @@
 
 {% block content %}
 <div class="container-fluid" style="margin-top: 5rem; padding: 0 2rem;">
-	<div class="document-header">
-		<div class="row align-items-center">
-			<div class="col-md-8">
-				<h3>Editar factura</h3>
-				<p class="mb-0">Puedes editar todo excepto el consecutivo</p>
-			</div>
-			<div class="col-md-4 text-end">
-				<div class="document-number">
-					<h4>FAC-{{ invoice.invoice_number }}</h4>
-					<small>Consecutivo (no editable)</small>
-				</div>
-			</div>
+	<div class="page-header">
+		<div>
+			<div class="page-eyebrow"><a href="{% url 'report_invoice' %}" class="text-decoration-none"><i class="bi bi-arrow-left me-1"></i>Facturas</a></div>
+			<h1 class="page-title">Editar factura FAC-{{ invoice.invoice_number }}</h1>
+			<p class="page-subtitle">Puedes editar todo excepto el consecutivo.</p>
 		</div>
 	</div>
 
@@ -344,7 +337,7 @@
 		<div class="row mb-4 mt-3">
 			<div class="col-12">
 				<div class="form-floating">
-					<input type="text" id="subject" name="subject" class="form-control" placeholder="Descripci f3n del asunto" value="{{ invoice.notes|default_if_none:'' }}">
+					<input type="text" id="subject" name="subject" class="form-control" placeholder="Descripción del asunto" value="{{ invoice.notes|default_if_none:'' }}">
 					<label>Asunto / Notas</label>
 				</div>
 			</div>
@@ -823,8 +816,8 @@ $(document).ready(function(){
 	}
 
 	function applyDesiredQuotaCountUI() {
-		// Ajusta visibilidad de filas en el modal seg fan el n famero deseado.
-		// Nota: si el usuario aumenta cuotas, las nuevas se crear e1n al guardar (no existen a fan en el DOM).
+		// Ajusta visibilidad de filas en el modal según el número deseado.
+		// Nota: si el usuario aumenta cuotas, las nuevas se crearán al guardar (no existen aún en el DOM).
 		const desired = parseInt($('#quotas').val(), 10) || 0;
 		const lockedCount = getLockedQuotasCount();
 		const totalCurrent = $('#quotasTable tbody tr.quota-row').length;
@@ -842,7 +835,7 @@ $(document).ready(function(){
 			const desiredEditable = Math.max(0, desired - lockedCount);
 			const currentEditable = editableRows.length;
 			if (currentEditable > desiredEditable) {
-				// Ocultar las  faltimas para simular que se eliminar e1n al guardar.
+				// Ocultar las últimas para simular que se eliminarán al guardar.
 				editableRows.slice(desiredEditable).hide();
 			}
 			if (desired > totalCurrent) {
@@ -878,7 +871,7 @@ $(document).ready(function(){
 	}
 
 	function balanceAfterManualEdit($editedRow, showToast = true) {
-		// Ajusta autom e1ticamente la  faltima cuota editable visible para que la suma total
+		// Ajusta automáticamente la última cuota editable visible para que la suma total
 		// coincida con el monto a financiar (respetando cuotas bloqueadas).
 		const financed = Number(lastFinancedAmount) || 0;
 		const lockedTotal = getLockedQuotasTotal();
@@ -965,7 +958,7 @@ $(document).ready(function(){
 		});
 	});
 
-	// Selecci f3n de cliente desde el modal
+	// Selección de cliente desde el modal
 	document.querySelectorAll('.select-customer').forEach(button => {
 		button.addEventListener('click', function () {
 			const id = this.getAttribute('data-id');
@@ -991,7 +984,7 @@ $(document).ready(function(){
 		}
 	}
 
-	// Mostrar/ocultar opciones seg fan m e9todo
+	// Mostrar/ocultar opciones según método
 	$('#payment_method_select').on('change', function() {
 		const val = ($(this).val() || '').toLowerCase();
 		toggleCreditUI(val.includes('credito') || val.includes('credit'));
@@ -1095,7 +1088,7 @@ $(document).ready(function(){
 
 	// Eventos cuotas
 	$('#quotas').on('input change', function(){
-		quotaTouched = false; // al cambiar n famero de cuotas, se asume auto-reparto
+		quotaTouched = false; // al cambiar número de cuotas, se asume auto-reparto
 		applyDesiredQuotaCountUI();
 		redistributeQuotaAmounts();
 	});
@@ -1121,7 +1114,7 @@ $(document).ready(function(){
 		balanceAfterManualEdit($row, true);
 	});
 
-	// Al abrir el modal, sincronizar formato y validaci f3n
+	// Al abrir el modal, sincronizar formato y validación
 	const quotasModalEl = document.getElementById('quotasModal');
 	if (quotasModalEl) {
 		quotasModalEl.addEventListener('shown.bs.modal', function(){
@@ -1133,7 +1126,7 @@ $(document).ready(function(){
 		});
 	}
 
-	// Agregar nueva l ednea de producto
+	// Agregar nueva línea de producto
 	$('#add-line').click(function(e){
 		e.preventDefault();
 		if ($.fn.select2) $('.item-id').select2('destroy');

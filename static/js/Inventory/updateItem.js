@@ -23,7 +23,7 @@ $(document).ready(function() {
                     icon: 'success',
                     title: '¡Producto actualizado!',
                     showConfirmButton: false,
-                    timer: 1500
+                    timer: 700
                 }).then(function() {
                     window.location.href = response.redirect;
                 });

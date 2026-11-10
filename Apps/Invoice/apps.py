@@ -5,6 +5,12 @@ class InvoiceConfig(AppConfig):
     name = 'Invoice'
 
     def ready(self):
+        import os
+        import sys
+        from Invoice.pdf_engine import should_warm_up, warm_up_in_background
+        if should_warm_up(sys.argv, os.environ):
+            warm_up_in_background()
+
         try:
             from Invoice.models import TransactionType
             obj, created = TransactionType.objects.get_or_create(

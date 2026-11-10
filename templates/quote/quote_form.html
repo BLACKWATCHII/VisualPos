@@ -1,0 +1,249 @@
+{% extends 'base.html' %}
+{% load static %}
+
+{% block title %}{% if quote %}Editar {{ quote.code }}{% else %}Nueva cotización{% endif %}{% endblock %}
+
+{% block extra_head %}
+<style>
+    .select2-container .select2-selection--single { height: 38px; padding: 6px 12px; border: 1px solid #ced4da; border-radius: .375rem; }
+    .select2-container--default .select2-selection--single .select2-selection__rendered { line-height: 24px; color: #212529; }
+    .select2-container--default .select2-selection--single .select2-selection__arrow { height: 38px; }
+
+    .section-title { color: #15803d; font-weight: 600; margin-bottom: 20px; border-bottom: 2px solid #e9ecef; padding-bottom: 8px; }
+    .products-table { background: #fff; border-radius: 8px; overflow: hidden; box-shadow: 0 2px 4px rgba(0,0,0,.1); margin-bottom: 20px; }
+    .products-table table { margin-bottom: 0; }
+    .products-table thead th { background: #f8f9fa; border-bottom: 2px solid #dee2e6; font-weight: 600; color: #495057; padding: 15px 10px; }
+    .products-table tbody td { padding: 12px 10px; vertical-align: middle; }
+    .btn-add-product { color: #15803d; text-decoration: none; font-weight: 500; }
+    .btn-add-product:hover { text-decoration: underline; }
+    .totals-section { background: #fff; padding: 20px; border-radius: 8px; box-shadow: 0 2px 4px rgba(0,0,0,.1); }
+    .action-buttons { display: flex; gap: 10px; justify-content: flex-end; margin-top: 30px; }
+    .btn-save { background: #15803d; border-color: #15803d; color: #fff; }
+    .btn-save:hover { background: #166534; color: #fff; }
+    .stock-hint { font-size: 12px; color: #6c757d; }
+</style>
+{% endblock %}
+
+{% block content %}
+<div>
+    <div class="page-header">
+        <div>
+            <div class="page-eyebrow"><a href="{% url 'quote_list' %}" class="text-decoration-none"><i class="bi bi-arrow-left me-1"></i>Cotizaciones</a></div>
+            <h1 class="page-title">{% if quote %}Editar {{ quote.code }}{% else %}Nueva cotización{% endif %}</h1>
+            <p class="page-subtitle">No descuenta inventario. Se usa después al facturar con el botón "Traer cotización".</p>
+        </div>
+    </div>
+
+    <form id="quote-form" method="post" novalidate>
+        {% csrf_token %}
+
+        <div class="section-title">📭 Cliente y vigencia</div>
+        <div class="row g-3 mb-4">
+            <div class="col-md-6">
+                <label class="form-label" for="customer">Cliente</label>
+                <select id="customer" name="customer" class="form-select" required>
+                    <option value="">Selecciona cliente</option>
+                    {% for c in customers %}
+                    <option value="{{ c.pk }}">{{ c.name }} {{ c.lastname }}{% if c.cedula %} · {{ c.cedula }}{% endif %}</option>
+                    {% endfor %}
+                </select>
+                <small><a href="{% url 'createCustomer' %}" target="_blank">+ Crear nuevo cliente</a></small>
+            </div>
+            <div class="col-md-3">
+                <label class="form-label" for="quote_date">Fecha</label>
+                <input type="date" id="quote_date" name="quote_date" class="form-control" required>
+            </div>
+            <div class="col-md-3">
+                <label class="form-label" for="valid_until">Válida hasta</label>
+                <input type="date" id="valid_until" name="valid_until" class="form-control">
+            </div>
+        </div>
+
+        <div class="row g-3 mb-4">
+            <div class="col-md-3">
+                <div class="form-check pt-2">
+                    <input class="form-check-input" type="checkbox" id="has_delivery" name="has_delivery">
+                    <label class="form-check-label" for="has_delivery">¿Incluye domicilio?</label>
+                </div>
+            </div>
+            <div class="col-md-3" id="delivery-container" style="display:none;">
+                <input type="text" id="delivery_amount_display" class="form-control" placeholder="Valor domicilio" inputmode="numeric" autocomplete="off">
+                <input type="hidden" id="delivery_amount" name="delivery_amount" value="0">
+            </div>
+        </div>
+
+        <div class="section-title">🛒 Productos y servicios</div>
+        <div class="products-table">
+            <table class="table table-striped">
+                <thead>
+                    <tr>
+                        <th style="width: 45%">Producto</th>
+                        <th style="width: 18%">Precio</th>
+                        <th style="width: 12%">Cant</th>
+                        <th style="width: 18%">Total</th>
+                        <th style="width: 7%"></th>
+                    </tr>
+                </thead>
+                <tbody id="products"></tbody>
+            </table>
+        </div>
+        <a href="#" id="add-line" class="btn-add-product">+ Agregar línea</a>
+
+        <template id="line-template">
+            <tr class="product-line">
+                <td>
+                    <select class="form-select item-id" name="item_id">
+                        <option value="">Seleccionar producto o servicio</option>
+                        {% for item in items %}
+                        <option value="{{ item.id }}" data-price="{{ item.Price }}" data-stock="{{ item.Stock }}">{{ item.Name }}{% if not item.active %} (inactivo){% endif %}</option>
+                        {% endfor %}
+                    </select>
+                    <div class="stock-hint"></div>
+                </td>
+                <td><input type="number" min="0" step="any" class="form-control item-price" name="price" value="0"></td>
+                <td><input type="number" min="1" class="form-control item-qty" name="quantity" value="1"></td>
+                <td><input type="text" class="form-control item-total" readonly value="$0"></td>
+                <td class="text-center">
+                    <button type="button" class="btn btn-sm btn-outline-secondary remove-line" title="Quitar línea">✕</button>
+                </td>
+            </tr>
+        </template>
+
+        <div class="form-check mt-3">
+            <input class="form-check-input" type="checkbox" id="has_discount" name="has_discount">
+            <label class="form-check-label" for="has_discount">Agregar descuento</label>
+        </div>
+        <div id="discount-fields" style="display:none;" class="mt-2">
+            <div class="row"><div class="col-md-3">
+                <input type="number" id="discount_percent" name="discount_percent" class="form-control" placeholder="Descuento %" min="0" max="100" step="any">
+            </div></div>
+        </div>
+
+        <div class="row mt-4">
+            <div class="col-md-8">
+                <label class="form-label" for="notes">Observaciones</label>
+                <textarea id="notes" name="notes" class="form-control" rows="4" placeholder="Condiciones, tiempos de entrega, etc."></textarea>
+            </div>
+            <div class="col-md-4">
+                <div class="totals-section">
+                    <div class="d-flex justify-content-between mb-2"><span>Subtotal:</span><span id="subtotal">$0</span></div>
+                    <div class="d-flex justify-content-between mb-2" id="discount-row" style="display:none !important;"><span>Descuento:</span><span id="discount-amount">-$0</span></div>
+                    <div class="d-flex justify-content-between mb-2" id="delivery-row" style="display:none !important;"><span>Domicilio:</span><span id="delivery-total">$0</span></div>
+                    <hr>
+                    <div class="d-flex justify-content-between"><strong>Total:</strong><strong id="total">$0</strong></div>
+                </div>
+            </div>
+        </div>
+
+        <div class="action-buttons">
+            <a href="{% url 'quote_list' %}" class="btn btn-secondary">Cancelar</a>
+            <button type="submit" class="btn btn-save">Guardar cotización</button>
+        </div>
+    </form>
+</div>
+{{ initial|json_script:"quote-initial" }}
+{% endblock %}
+
+{% block extra_scripts %}
+<script>
+$(function () {
+    const initial = JSON.parse(document.getElementById('quote-initial').textContent);
+    const fmt = n => '$' + (Number(n) || 0).toLocaleString('es-CO', { maximumFractionDigits: 2 });
+    const digits = v => { const d = String(v ?? '').replace(/[^0-9]/g, ''); return d ? parseInt(d, 10) : 0; };
+
+    $('#customer').select2({ placeholder: 'Buscar cliente...', width: '100%' });
+
+    function addLine(data) {
+        const $row = $($('#line-template').html());
+        $('#products').append($row);
+        const $sel = $row.find('.item-id');
+        $sel.select2({ placeholder: 'Buscar producto o servicio...', width: '100%', allowClear: true });
+        if (data && data.item_id) {
+            $sel.val(String(data.item_id)).trigger('change.select2');
+            $row.find('.item-price').val(data.price);
+            $row.find('.item-qty').val(data.quantity);
+            showStock($row);
+        }
+        return $row;
+    }
+
+    function showStock($row) {
+        const stock = $row.find('.item-id option:selected').data('stock');
+        const qty = parseInt($row.find('.item-qty').val()) || 0;
+        const $hint = $row.find('.stock-hint');
+        if (stock === undefined || !$row.find('.item-id').val()) { $hint.text(''); return; }
+        $hint.text('Stock actual: ' + stock + (qty > stock ? ' · ojo: al facturar no alcanza' : ''));
+        $hint.css('color', qty > stock ? '#b45309' : '#6c757d');
+    }
+
+    function recalc() {
+        let subtotal = 0;
+        $('.product-line').each(function () {
+            const $r = $(this);
+            const line = (parseFloat($r.find('.item-price').val()) || 0) * (parseInt($r.find('.item-qty').val()) || 0);
+            $r.find('.item-total').val(fmt(line));
+            if ($r.find('.item-id').val()) subtotal += line;
+        });
+        const disc = $('#has_discount').is(':checked') ? (parseFloat($('#discount_percent').val()) || 0) : 0;
+        const discAmt = subtotal * disc / 100;
+        const delivery = $('#has_delivery').is(':checked') ? (parseFloat($('#delivery_amount').val()) || 0) : 0;
+        $('#subtotal').text(fmt(subtotal));
+        $('#discount-amount').text('-' + fmt(discAmt));
+        $('#delivery-total').text(fmt(delivery));
+        $('#discount-row').attr('style', disc > 0 ? '' : 'display:none !important;');
+        $('#delivery-row').attr('style', delivery > 0 ? '' : 'display:none !important;');
+        $('#total').text(fmt(subtotal - discAmt + delivery));
+    }
+
+    $('#products').on('change', '.item-id', function () {
+        const $row = $(this).closest('.product-line');
+        $row.find('.item-price').val($(this).find(':selected').data('price') || 0);
+        showStock($row); recalc();
+    });
+    $('#products').on('input change', '.item-price, .item-qty', function () {
+        showStock($(this).closest('.product-line')); recalc();
+    });
+    $('#products').on('click', '.remove-line', function () {
+        if ($('.product-line').length > 1) { $(this).closest('.product-line').remove(); }
+        else { const $r = $(this).closest('.product-line'); $r.find('.item-id').val('').trigger('change'); $r.find('.item-qty').val(1); }
+        recalc();
+    });
+    $('#add-line').on('click', function (e) { e.preventDefault(); addLine(); });
+
+    $('#has_discount').on('change', function () { $('#discount-fields').toggle(this.checked); recalc(); });
+    $('#discount_percent').on('input', recalc);
+    $('#has_delivery').on('change', function () {
+        $('#delivery-container').toggle(this.checked);
+        if (!this.checked) { $('#delivery_amount_display').val(''); $('#delivery_amount').val('0'); }
+        recalc();
+    });
+    $('#delivery_amount_display').on('input', function () {
+        const n = digits(this.value);
+        $('#delivery_amount').val(n);
+        this.value = n ? n.toLocaleString('es-CO') : '';
+        recalc();
+    });
+
+    $('#quote-form').on('submit', function (e) {
+        if (!$('#customer').val()) { e.preventDefault(); Swal.fire('Falta el cliente', 'Selecciona el cliente de la cotización.', 'warning'); return; }
+        if (!$('.product-line .item-id').filter(function () { return $(this).val(); }).length) {
+            e.preventDefault(); Swal.fire('Sin productos', 'Agrega al menos un producto.', 'warning');
+        }
+    });
+
+    // ---- Estado inicial (nueva, edición o re-render con errores) ----
+    $('#customer').val(initial.customer).trigger('change');
+    $('#quote_date').val(initial.quote_date);
+    $('#valid_until').val(initial.valid_until);
+    $('#notes').val(initial.notes);
+    if (initial.has_discount) { $('#has_discount').prop('checked', true); $('#discount-fields').show(); $('#discount_percent').val(initial.discount); }
+    if (initial.has_delivery) {
+        $('#has_delivery').prop('checked', true); $('#delivery-container').show();
+        const n = digits(initial.delivery_amount);
+        $('#delivery_amount').val(n); $('#delivery_amount_display').val(n ? n.toLocaleString('es-CO') : '');
+    }
+    if (initial.lines.length) { initial.lines.forEach(addLine); } else { addLine(); }
+    recalc();
+});
+</script>
+{% endblock %}

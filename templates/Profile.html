@@ -4,47 +4,33 @@
 {% block title %}Perfil{% endblock %}
 
 {% block content %}
-<div class="container mt-5">
-  <div class="card p-4 shadow rounded" style="margin-top: 8rem;">
-    <h2 class="mb-4">Bienvenido a tu cuenta, {{ user.first_name|default:user.username|upper }}</h2>
-    
-    <div class="row">
-      <!-- Información del plan -->
-      <div class="col-md-4">
-        <div class="card border-0">
-          <div class="card-body">
-            <h5 class="card-title">+ De 100gb de almacenamiento</h5>
-            <p class="card-text">
-              Disfruta de berserker con las nuevas funcionalidades de importacion y exportacion.Tanto para clientes como para productos
-            </p>
-            <a href="#" class="btn btn-outline-success btn-sm">Administrar plan</a>
-          </div>
-        </div>
-      </div>
-
-      <!-- Seguridad / Login -->
-      <div class="col-md-4">
-        <h5>Seguridad</h5>
-        <p><strong>Contraseña actualizada hace:</strong> (fecha estimada)</p>
-        <a class="btn btn-outline-dark btn-sm">Cambiar contraseña</a>
-        
-        <h5 class="mt-4">Inicio de sesión social</h5>
-        <p class="text-muted">Integraciones con Google, Apple, etc.</p>
-        <a href="#" class="btn btn-outline-dark btn-sm">Administrar sesiones</a>
-      </div>
-
-      <!-- Detalles del usuario -->
-      <div class="col-md-4">
-        <div class="rounded-circle bg-warning text-dark d-flex justify-content-center align-items-center" style="width: 70px; height: 70px;">
-            <strong style="font-size: 30px;">{{ user.username|first|upper }}</strong>
-        </div>
-        <h5>Información del usuario</h5>
-        <p><strong>Nombre:</strong> {{ user.first_name }} {{ user.last_name }}</p>
-        <p><strong>Correo:</strong> {{ user.email }}</p>
-        <p><strong>Último acceso:</strong> {{ user.last_login|date:"d M Y, H:i" }}</p>
-        <a href="{% url 'edit_profile' %}" class="btn btn-outline-primary btn-sm">Editar perfil</a>
-      </div>
+<div class="page-header">
+    <div>
+        <h1 class="page-title">Mi perfil</h1>
+        <p class="page-subtitle">Datos de tu cuenta de usuario.</p>
     </div>
-  </div>
+    <div class="page-actions">
+        <a href="{% url 'edit_profile' %}" class="btn btn-primary"><i class="bi bi-pencil me-1"></i>Editar perfil</a>
+    </div>
+</div>
+
+<div class="panel" style="max-width: 720px;">
+    <div class="d-flex align-items-center gap-3 mb-4">
+        <span class="topbar-user p-0 border-0"><span class="avatar" style="width:56px;height:56px;font-size:22px;">{{ user.username|first|upper }}</span></span>
+        <div>
+            <div class="fs-5 fw-semibold">{{ user.get_full_name|default:user.username }}</div>
+            <div class="text-muted">@{{ user.username }}</div>
+        </div>
+    </div>
+    <dl class="row mb-0">
+        <dt class="col-sm-4 text-muted fw-normal">Correo</dt>
+        <dd class="col-sm-8">{{ user.email|default:"—" }}</dd>
+        <dt class="col-sm-4 text-muted fw-normal">Nombre</dt>
+        <dd class="col-sm-8">{{ user.first_name|default:"—" }} {{ user.last_name }}</dd>
+        <dt class="col-sm-4 text-muted fw-normal">Último acceso</dt>
+        <dd class="col-sm-8">{{ user.last_login|date:"d/m/Y H:i"|default:"—" }}</dd>
+        <dt class="col-sm-4 text-muted fw-normal">Miembro desde</dt>
+        <dd class="col-sm-8 mb-0">{{ user.date_joined|date:"d/m/Y" }}</dd>
+    </dl>
 </div>
 {% endblock %}

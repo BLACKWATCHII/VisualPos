@@ -46,11 +46,14 @@ INSTALLED_APPS = [
     'Apps.Invoice',
     'Apps.inventory',
     'Apps.reports',
+    'Apps.quote',
     'whatsapp'
 ]
 
 MIDDLEWARE = [
     'django.middleware.security.SecurityMiddleware',
+    # Comprime HTML/JSON (Facturar pesa ~270 KB sin comprimir)
+    'django.middleware.gzip.GZipMiddleware',
     'django.contrib.sessions.middleware.SessionMiddleware',
     'django.middleware.common.CommonMiddleware',
     'django.middleware.csrf.CsrfViewMiddleware',
@@ -73,6 +76,9 @@ TEMPLATES = [
                 'django.contrib.auth.context_processors.auth',
                 'django.contrib.messages.context_processors.messages',
             ],
+            # Tags disponibles en todas las plantillas (incluidas las que se
+            # renderizan a PDF con render_to_string): {% company_nit %}, {% company_name %}
+            'builtins': ['Invoice.company_tags'],
         },
     },
 ]
@@ -160,6 +166,14 @@ MEDIA_ROOT = os.path.join(BASE_DIR, 'media')
 # WhatsApp/Baileys service (Node)
 # En Docker Compose debe apuntar al nombre del servicio, p.ej. http://whatsapp:3030
 BAILEYS_URL = os.getenv('BAILEYS_URL', 'http://127.0.0.1:3030')
+
+# Datos de la empresa que se imprimen en facturas y cotizaciones.
+# Se pueden sobreescribir por variable de entorno sin tocar código.
+COMPANY_NAME = os.getenv('COMPANY_NAME', 'CELUPRO CO')
+COMPANY_NIT = os.getenv('COMPANY_NIT', '1045737528')
+
+# Días de vigencia por defecto de una cotización
+QUOTE_DEFAULT_VALIDITY_DAYS = int(os.getenv('QUOTE_DEFAULT_VALIDITY_DAYS', '15'))
 
 # Default primary key field type
 # https://docs.djangoproject.com/en/4.1/ref/settings/#default-auto-field

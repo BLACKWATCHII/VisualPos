@@ -24,7 +24,7 @@ $(document).ready(function() {
                     icon: 'success',
                     title: '¡Producto creado!',
                     showConfirmButton: false,
-                    timer: 1500
+                    timer: 700
                 }).then(function() {
                     window.location.href = '/items/viewItem/'; 
                 });

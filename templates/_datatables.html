@@ -1,0 +1,23 @@
+{# DataTables con integración Bootstrap 5 y textos en español (una sola configuración para todo el sistema) #}
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/datatables.net-bs5@1.13.8/css/dataTables.bootstrap5.min.css">
+<script src="https://cdn.jsdelivr.net/npm/datatables.net@1.13.8/js/jquery.dataTables.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/datatables.net-bs5@1.13.8/js/dataTables.bootstrap5.min.js"></script>
+<script>
+  $.extend(true, $.fn.dataTable.defaults, {
+    pageLength: 25,
+    lengthMenu: [10, 25, 50, 100],
+    deferRender: true,
+    autoWidth: false,
+    language: {
+      search: '',
+      searchPlaceholder: 'Buscar…',
+      lengthMenu: 'Mostrar _MENU_',
+      info: '_START_–_END_ de _TOTAL_',
+      infoEmpty: 'Sin registros',
+      infoFiltered: '(filtrado de _MAX_)',
+      zeroRecords: 'No se encontraron resultados',
+      emptyTable: 'No hay datos',
+      paginate: { first: '«', last: '»', next: '›', previous: '‹' }
+    }
+  });
+</script>

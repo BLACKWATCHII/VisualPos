@@ -5,488 +5,117 @@
 {% block title %}Anular factura{% endblock %}
 
 {% block content %}
-
-<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/limonte-sweetalert2/11.10.1/sweetalert2.min.css">
-<script src="https://cdnjs.cloudflare.com/ajax/libs/limonte-sweetalert2/11.10.1/sweetalert2.all.min.js"></script>
 <style>
-    :root {
-        --primary-color: #327747;
-        --primary-light: #4a9960;
-        --primary-dark: #1e4a2a;
-        --accent-color: #e3f2fd;
-        --border-color: #e1e5e9;
-        --text-muted: #6c757d;
-        --shadow: 0 2px 8px rgba(0,0,0,0.1);
-        --shadow-hover: 0 4px 16px rgba(0,0,0,0.15);
-    }
-
-    .modern-container {
-        margin-top: 90px;
-        padding: 0 15px;
-        max-width: 1400px;
-        margin-left: auto;
-        margin-right: auto;
-    }
-
-    .filters-section {
-        background: linear-gradient(135deg, #fff 0%, #f8f9fa 100%);
-        border-radius: 16px;
-        padding: 24px;
-        margin-bottom: 24px;
-        box-shadow: var(--shadow);
-        border: 1px solid var(--border-color);
-    }
-
-    .filters-header {
-        display: flex;
-        align-items: center;
-        gap: 12px;
-        margin-bottom: 20px;
-    }
-
-    .filters-header h5 {
-        margin: 0;
-        color: var(--primary-color);
-        font-weight: 600;
-    }
-
-    .filter-icon {
-        width: 24px;
-        height: 24px;
-        background: var(--primary-color);
-        border-radius: 50%;
-        display: flex;
-        align-items: center;
-        justify-content: center;
-        color: white;
-        font-size: 12px;
-    }
-
-    .filters-grid {
-        display: grid;
-        grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
-        gap: 16px;
-    }
-
-    .filter-group {
-        position: relative;
-    }
-
-    .filter-input {
-        width: 100%;
-        padding: 12px 16px 12px 44px;
-        border: 2px solid var(--border-color);
-        border-radius: 12px;
-        font-size: 14px;
-        transition: all 0.3s ease;
-        background: white;
-    }
-
-    .filter-input:focus {
-        outline: none;
-        border-color: var(--primary-color);
-        box-shadow: 0 0 0 3px rgba(50, 119, 71, 0.1);
-    }
-
-    .filter-icon-input {
-        position: absolute;
-        left: 14px;
-        top: 50%;
-        transform: translateY(-50%);
-        color: var(--text-muted);
-        font-size: 16px;
-    }
-
-    .clear-filters-btn {
-        background: linear-gradient(135deg, #dc3545 0%, #c82333 100%);
-        color: white;
-        border: none;
-        padding: 12px 24px;
-        border-radius: 12px;
-        font-weight: 500;
-        cursor: pointer;
-        transition: all 0.3s ease;
-        display: flex;
-        align-items: center;
-        gap: 8px;
-    }
-
-    .clear-filters-btn:hover {
-        background: linear-gradient(135deg, #c82333 0%, #bd2130 100%);
-        transform: translateY(-2px);
-        box-shadow: var(--shadow-hover);
-    }
-
-    .results-info {
-        background: var(--accent-color);
-        padding: 12px 20px;
-        border-radius: 12px;
-        margin-bottom: 16px;
-        color: var(--primary-dark);
-        font-weight: 500;
-        display: flex;
-        align-items: center;
-        gap: 8px;
-    }
-
-    .invoice-list {
-        height: calc(100vh - 320px);
-        overflow-y: auto;
-        border-right: 1px solid var(--border-color);
-        background: linear-gradient(135deg, #f8f9fa 0%, #ffffff 100%);
-        border-radius: 16px 0 0 16px;
-    }
-
-    .invoice-item {
-        padding: 20px;
-        border-bottom: 1px solid var(--border-color);
-        cursor: pointer;
-        transition: all 0.3s ease;
-        position: relative;
-        background: white;
-        margin: 8px;
-        border-radius: 12px;
-        box-shadow: 0 2px 4px rgba(0,0,0,0.05);
-    }
-
-    .invoice-item:hover {
-        background: linear-gradient(135deg, var(--accent-color) 0%, #ffffff 100%);
-        transform: translateX(4px);
-        box-shadow: var(--shadow);
-    }
-
-    .invoice-item.selected {
-        background: linear-gradient(135deg, var(--primary-color) 0%, var(--primary-light) 100%);
-        color: white;
-        transform: translateX(8px);
-        box-shadow: var(--shadow-hover);
-    }
-
-    .invoice-customer {
-        font-weight: 600;
-        font-size: 16px;
-        margin-bottom: 8px;
-        display: flex;
-        align-items: center;
-        gap: 8px;
-    }
-
-    .invoice-meta {
-        display: grid;
-        grid-template-columns: 1fr 1fr;
-        gap: 8px;
-        font-size: 13px;
-        opacity: 0.8;
-    }
-
-    .invoice-detail {
-        padding: 32px;
-        background: white;
-        border-radius: 0 16px 16px 0;
-        box-shadow: var(--shadow);
-    }
-
-    .invoice-detail h4 {
-        color: var(--primary-color);
-        margin-bottom: 24px;
-        display: flex;
-        align-items: center;
-        gap: 12px;
-    }
-
-    .status-badge {
-        padding: 6px 12px;
-        border-radius: 20px;
-        font-size: 12px;
-        font-weight: 600;
-        text-transform: uppercase;
-        letter-spacing: 0.5px;
-    }
-
-    .status-anulada {
-        background: #fee;
-        color: #dc3545;
-        border: 1px solid #fecaca;
-    }
-
-    .status-pagada {
-        background: #f0f9f0;
-        color: #28a745;
-        border: 1px solid #c3e6cb;
-    }
-
-    .status-pendiente {
-        background: #fff8e1;
-        color: #ffc107;
-        border: 1px solid #ffeaa7;
-    }
-
-    .table-modern {
-        border-radius: 12px;
-        overflow: hidden;
-        box-shadow: var(--shadow);
-        margin-top: 24px;
-    }
-
-    .table-modern thead {
-        background: linear-gradient(135deg, var(--primary-color) 0%, var(--primary-light) 100%);
-    }
-
-    .table-modern thead th {
-        color: white;
-        font-weight: 600;
-        border: none;
-        padding: 16px;
-    }
-
-    .table-modern tbody td {
-        padding: 16px;
-        border-color: var(--border-color);
-        vertical-align: middle;
-    }
-
-    .cancel-btn {
-        background: linear-gradient(135deg, #dc3545 0%, #c82333 100%);
-        color: white;
-        border: none;
-        padding: 14px 28px;
-        border-radius: 12px;
-        font-weight: 600;
-        cursor: pointer;
-        transition: all 0.3s ease;
-        margin-top: 24px;
-        display: flex;
-        align-items: center;
-        gap: 8px;
-    }
-
-    .cancel-btn:hover {
-        background: linear-gradient(135deg, #c82333 0%, #bd2130 100%);
-        transform: translateY(-2px);
-        box-shadow: var(--shadow-hover);
-    }
-
-    .download-btn {
-        background: linear-gradient(135deg, var(--primary-color) 0%, var(--primary-light) 100%);
-        color: white;
-        border: none;
-        padding: 14px 28px;
-        border-radius: 12px;
-        font-weight: 600;
-        cursor: pointer;
-        transition: all 0.3s ease;
-        margin-top: 16px;
-        display: flex;
-        align-items: center;
-        gap: 8px;
-    }
-
-    .download-btn:hover {
-        background: linear-gradient(135deg, var(--primary-dark) 0%, var(--primary-color) 100%);
-        transform: translateY(-2px);
-        box-shadow: var(--shadow-hover);
-    }
-
-    .no-results {
-        text-align: center;
-        padding: 40px 20px;
-        color: var(--text-muted);
-    }
-
-    .no-results-icon {
-        font-size: 48px;
-        margin-bottom: 16px;
-        opacity: 0.5;
-    }
-
-    .invoice-list::-webkit-scrollbar {
-        width: 6px;
-    }
-
-    .invoice-list::-webkit-scrollbar-track {
-        background: #f1f1f1;
-        border-radius: 3px;
-    }
-
-    .invoice-list::-webkit-scrollbar-thumb {
-        background: var(--primary-color);
-        border-radius: 3px;
-    }
-
-    .invoice-list::-webkit-scrollbar-thumb:hover {
-        background: var(--primary-dark);
-    }
-
-    /* SweetAlert2 Custom Styles */
-    .swal-wide {
-        width: 600px !important;
-    }
-    
-    .btn-modern {
-        border-radius: 8px !important;
-        font-weight: 600 !important;
-        padding: 12px 24px !important;
-        transition: all 0.3s ease !important;
-    }
-    
-    .swal2-toast {
-        border-radius: 12px !important;
-    }
-    
-    .swal2-popup {
-        font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif !important;
-        border-radius: 16px !important;
-    }
-    
-    .swal2-title {
-        color: var(--primary-color) !important;
-        font-weight: 600 !important;
-    }
-    
-    .swal2-html-container {
-        font-size: 14px !important;
-        line-height: 1.5 !important;
-    }
-    
-    .swal2-input {
-        border: 2px solid var(--border-color) !important;
-        border-radius: 8px !important;
-        font-size: 14px !important;
-        transition: border-color 0.3s ease !important;
-    }
-    
-    .swal2-input:focus {
-        border-color: var(--primary-color) !important;
-        box-shadow: 0 0 0 3px rgba(50, 119, 71, 0.1) !important;
-    }
-
-    /* Responsive */
-    @media (max-width: 768px) {
-        .swal-wide {
-            width: 95% !important;
-            max-width: 400px !important;
-        }
-
-        .filters-grid {
-            grid-template-columns: 1fr;
-        }
-        
-        .invoice-meta {
-            grid-template-columns: 1fr;
-        }
-        
-        .invoice-detail {
-            padding: 20px;
-        }
-    }
+    .cancel-layout { display: grid; grid-template-columns: minmax(280px, 380px) 1fr; gap: 20px; align-items: start; }
+    @media (max-width: 991.98px) { .cancel-layout { grid-template-columns: 1fr; } }
+    .invoice-list { max-height: calc(100vh - 290px); min-height: 320px; overflow-y: auto; padding: 8px; }
+    .results-info { font-size: 12px; color: var(--muted); padding: 6px 8px 10px; }
+    .invoice-item { padding: 12px; border-radius: var(--radius-sm); cursor: pointer; border: 1px solid transparent; }
+    .invoice-item + .invoice-item { margin-top: 2px; }
+    .invoice-item:hover { background: var(--surface-2); }
+    .invoice-item.selected { background: var(--brand-50); border-color: var(--brand-100); }
+    .invoice-customer { font-weight: 600; color: var(--ink); display: flex; gap: 6px; align-items: center; }
+    .invoice-customer span { display: none; }
+    .invoice-meta { display: flex; flex-wrap: wrap; gap: 4px 14px; font-size: 12.5px; color: var(--muted); margin-top: 4px; align-items: center; }
+    .status-badge { font-weight: 600; border-radius: 999px; padding: .2em .6em; font-size: 11.5px; }
+    .status-pagada { background: var(--success-50); color: var(--success); }
+    .status-pendiente { background: var(--warning-50); color: var(--warning); }
+    .status-anulada { background: #f1f5f9; color: var(--ink-2); }
+    .invoice-detail { padding: 24px; min-height: 320px; }
+    .invoice-detail h4 { font-size: 18px; font-weight: 700; margin-bottom: 16px; display: flex; gap: 8px; align-items: center; }
+    .invoice-detail h4 span { display: none; }
+    .invoice-detail p { margin-bottom: 6px; }
+    .cancel-btn, .download-btn { border: 0; border-radius: var(--radius-sm); padding: 9px 16px; font-weight: 600; margin-top: 16px; display: inline-flex; gap: 6px; align-items: center; }
+    .cancel-btn { background: var(--danger); color: #fff; }
+    .cancel-btn:hover { background: #b91c1c; }
+    .download-btn { background: #fff; color: var(--ink-2); border: 1px solid var(--border-strong); }
+    .no-results { text-align: center; color: var(--muted); padding: 32px 8px; }
+    .no-results-icon { font-size: 28px; }
+    .loading-more { text-align: center; padding: 12px; color: var(--muted); }
+    .table-modern { margin-top: 8px; }
 </style>
 
-<div class="modern-container">
-    <div class="filters-section">
-        <div class="filters-header">
-            <div class="filter-icon">🔍</div>
-            <h5>Filtros de Búsqueda</h5>
+<div class="page-header">
+    <div>
+        <h1 class="page-title">Anular factura</h1>
+        <p class="page-subtitle">Busca la factura, revisa su detalle y genera el comprobante de anulación.</p>
+    </div>
+</div>
+
+<div class="panel">
+    <div class="row g-2">
+        <div class="col-lg-3 col-md-6">
+            <input type="text" id="searchCustomer" class="form-control" placeholder="Cliente…">
         </div>
-        
-        <div class="filters-grid">
-            <div class="filter-group">
-                <span class="filter-icon-input">👤</span>
-                <input type="text" id="searchCustomer" class="filter-input" placeholder="Buscar por nombre del cliente...">
+        <div class="col-lg-2 col-md-6">
+            <input type="text" id="searchInvoice" class="form-control" placeholder="N° de factura…">
+        </div>
+        <div class="col-lg-2 col-md-4">
+            <input type="date" id="searchDate" class="form-control">
+        </div>
+        <div class="col-lg-2 col-md-4">
+            <select id="statusFilter" class="form-select">
+                <option value="">Todos los estados</option>
+                <option value="Pendiente">Pendiente</option>
+                <option value="Pagada">Pagada</option>
+                <option value="Credito">Crédito</option>
+                <option value="Anulada">Anulada</option>
+            </select>
+        </div>
+        <div class="col-lg-2 col-md-4">
+            <input type="number" id="minAmount" class="form-control" placeholder="Monto mínimo">
+        </div>
+        <div class="col-lg-1 col-md-12">
+            <button class="btn btn-outline-secondary w-100" onclick="clearAllFilters()" title="Limpiar filtros"><i class="bi bi-x-lg"></i></button>
+        </div>
+    </div>
+</div>
+
+<div class="cancel-layout">
+    <div class="panel p-0">
+        <div class="invoice-list" id="invoiceListContainer">
+            <div class="results-info" id="resultsInfo">Facturas más recientes</div>
+            <div id="invoicesList">
+                {% for invoice in invoices %}
+                <div class="invoice-item"
+                     onclick="loadInvoiceDetail({{ invoice.id }})"
+                     data-customer="{{ invoice.customer.name }} {{ invoice.customer.lastname }}"
+                     data-invoice-id="{{ invoice.id }}"
+                     data-invoice-number="{{ invoice.invoice_number }}"
+                     data-amount="{{ invoice.total }}"
+                     data-date="{{ invoice.date|date:'Y-m-d' }}"
+                     data-status="{{ invoice.status }}">
+                    <div class="invoice-customer">{{ invoice.customer.name }} {{ invoice.customer.lastname }}</div>
+                    <div class="invoice-meta">
+                        <strong class="text-body">#{{ invoice.invoice_number }}</strong>
+                        <span>${{ invoice.total|floatformat:0|intcomma }}</span>
+                        <span>{{ invoice.date|date:"d/m/Y" }}</span>
+                        {% if invoice.status == 'Anulada' %}
+                            <span class="status-badge status-anulada">Anulada</span>
+                        {% elif invoice.status == 'Pagada' %}
+                            <span class="status-badge status-pagada">Pagada</span>
+                        {% else %}
+                            <span class="status-badge status-pendiente">{{ invoice.status }}</span>
+                        {% endif %}
+                    </div>
+                </div>
+                {% empty %}
+                <div class="no-results"><div class="no-results-icon"><i class="bi bi-receipt"></i></div><p>No hay facturas</p></div>
+                {% endfor %}
             </div>
-            
-            <div class="filter-group">
-                <span class="filter-icon-input">#️⃣</span>
-                <input type="text" id="searchInvoice" class="filter-input" placeholder="Buscar por número de factura...">
-            </div>
-            
-            <div class="filter-group">
-                <span class="filter-icon-input">📅</span>
-                <input type="date" id="searchDate" class="filter-input">
-            </div>
-            
-            <div class="filter-group">
-                <span class="filter-icon-input">🏷️</span>
-                <select id="statusFilter" class="filter-input">
-                    <option value="">Todos los estados</option>
-                    <option value="Pendiente">Pendiente</option>
-                    <option value="Pagada">Pagada</option>
-                    <option value="Anulada">Anulada</option>
-                </select>
-            </div>
-            
-            <div class="filter-group">
-                <span class="filter-icon-input">💰</span>
-                <input type="number" id="minAmount" class="filter-input" placeholder="Monto mínimo">
-            </div>
-            
-            <div class="filter-group">
-                <button class="clear-filters-btn" onclick="clearAllFilters()">
-                    <span>🗑️</span>
-                    Limpiar Filtros
-                </button>
+            <div id="noResults" class="no-results" style="display: none;">
+                <div class="no-results-icon"><i class="bi bi-search"></i></div>
+                <p>No hay facturas con esos filtros</p>
             </div>
         </div>
     </div>
 
-    <div class="row">
-        <div class="col-md-4 p-0">
-            <div class="invoice-list" id="invoiceListContainer">
-                <div class="results-info" id="resultsInfo">
-                    📊 Mostrando facturas más recientes
-                </div>
-                
-                <div id="invoicesList">
-                    {% for invoice in invoices %}
-                    <div class="invoice-item" 
-                         onclick="loadInvoiceDetail({{ invoice.id }})" 
-                         data-customer="{{ invoice.customer.name }} {{ invoice.customer.lastname }}"
-                         data-invoice-id="{{ invoice.id }}"
-                         data-amount="{{ invoice.total }}"
-                         data-date="{{ invoice.date|date:'Y-m-d' }}"
-                         data-status="{{ invoice.status }}">
-                        
-                        <div class="invoice-customer">
-                            <span>👤</span>
-                            {{ invoice.customer.name }} {{ invoice.customer.lastname }}
-                        </div>
-                        
-                        <div class="invoice-meta">
-                            <div><strong>#{{ invoice.id }}</strong></div>
-                            <div>${{ invoice.total|floatformat:2|intcomma }}</div>
-                            <div>{{ invoice.date|date:"d M Y" }}</div>
-                            <div>
-                                {% if invoice.status == 'Anulada' %}
-                                <span class="status-badge status-anulada">{{ invoice.status }}</span>
-                                {% elif invoice.status == 'Pagada' %}
-                                <span class="status-badge status-pagada">{{ invoice.status }}</span>
-                                {% else %}
-                                <span class="status-badge status-pendiente">{{ invoice.status }}</span>
-                                {% endif %}
-                            </div>
-                        </div>
-                    </div>
-                    {% empty %}
-                    <div class="no-results">
-                        <div class="no-results-icon">📄</div>
-                        <p>No hay facturas disponibles</p>
-                    </div>
-                    {% endfor %}
-                </div>
-                
-                <div id="noResults" class="no-results" style="display: none;">
-                    <div class="no-results-icon">🔍</div>
-                    <p>No se encontraron facturas que coincidan con los filtros</p>
-                </div>
-            </div>
-        </div>
-
-        <div class="col-md-8 p-0">
-            <div class="invoice-detail" id="invoice-detail">
-                <h4>
-                    <span>📋</span>
-                    Selecciona una factura
-                </h4>
-                <p>El detalle de la factura aparecerá aquí una vez que selecciones una de la lista...</p>
+    <div class="panel p-0">
+        <div class="invoice-detail" id="invoice-detail">
+            <div class="empty-state">
+                <i class="bi bi-hand-index"></i>
+                <div class="fw-semibold text-body">Selecciona una factura</div>
+                <div>El detalle aparecerá aquí.</div>
             </div>
         </div>
     </div>
@@ -497,7 +126,7 @@ let allInvoices = [];
 let selectedInvoiceId = null;
 let currentPage = 1;
 let isLoading = false;
-let hasMorePages = true;
+let hasMorePages = false; // todas las facturas vienen en el HTML
 
 function showToast(icon, title, position = 'top-end') {
     const Toast = Swal.mixin({
@@ -524,6 +153,7 @@ document.addEventListener('DOMContentLoaded', function() {
         element: el,
         customer: el.dataset.customer.toLowerCase(),
         invoiceId: el.dataset.invoiceId,
+        invoiceNumber: el.dataset.invoiceNumber || '',
         amount: parseFloat(el.dataset.amount),
         date: el.dataset.date,
         status: el.dataset.status
@@ -610,7 +240,7 @@ function createInvoiceHTML(invoice) {
             </div>
             
             <div class="invoice-meta">
-                <div><strong>#${invoice.id}</strong></div>
+                <strong class="text-body">#${invoice.invoice_number || invoice.id}</strong>
                 <div>$${parseFloat(invoice.total).toLocaleString('es-CO', {minimumFractionDigits: 2})}</div>
                 <div>${invoice.date_display}</div>
                 <div>
@@ -692,7 +322,7 @@ function filterInvoices() {
         }
         
        
-        if (invoiceSearch && !invoice.invoiceId.includes(invoiceSearch)) {
+        if (invoiceSearch && !(invoice.invoiceNumber || invoice.invoiceId).includes(invoiceSearch)) {
             shouldShow = false;
         }
         
@@ -814,7 +444,7 @@ function loadInvoiceDetail(invoiceId) {
             document.getElementById('invoice-detail').innerHTML = `
                 <h4>
                     <span>📋</span>
-                    Factura #${data.id}
+                    Factura #${data.invoice_number || data.id}
                 </h4>
                 
                 <div class="row mb-4">
@@ -828,7 +458,7 @@ function loadInvoiceDetail(invoiceId) {
                     </div>
                 </div>
                 
-                <table class="table table-modern">
+                <table class="table table-modern table-sm align-middle">
                     <thead>
                         <tr>
                             <th>#</th>
@@ -890,13 +520,7 @@ function loadInvoiceDetail(invoiceId) {
                     loadInvoiceDetail(invoiceId);
                 } else {
                     
-                    document.getElementById('invoice-detail').innerHTML = `
-                        <h4>
-                            <span>📋</span>
-                            Selecciona una factura
-                        </h4>
-                        <p>El detalle de la factura aparecerá aquí una vez que selecciones una de la lista...</p>
-                    `;
+                    document.getElementById('invoice-detail').innerHTML = '<div class="empty-state"><i class="bi bi-hand-index"></i><div class="fw-semibold text-body">Selecciona una factura</div></div>';
                 }
             });
         });

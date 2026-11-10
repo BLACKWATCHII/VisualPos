@@ -532,13 +532,14 @@
     <div class="invoice-header">
       <div class="company-section">
         <div class="company-logo">
-          <img src="https://raw.githubusercontent.com/Kevin25DC/celupro-assets/refs/heads/main/logo%20de%20prueba%20dos.png" alt="CELUPRO CO Logo">
+          <img src="{% pdf_asset 'logo' %}" width="1890" height="945" alt="CELUPRO CO Logo">
         </div>
       </div>
 
       <div class="invoice-title">
         <h2>FACTURA</h2>
         <p class="invoice-number">NO. # {{ invoice.invoice_number }}</p>
+        <p class="company-nit" style="font-size:12px;color:#455a64;font-weight:600;margin-top:4px;">{% company_name %} &middot; NIT {% company_nit %}</p>
       </div>
     </div>
 
@@ -624,7 +625,7 @@
           <p>Gracias por tu compra</p>
           <div class="signature-area">
             <div class="signature-line">
-                <img src="https://raw.githubusercontent.com/Kevin25DC/celupro-assets/refs/heads/main/firmaYurleynew.png" alt="Firma">
+                <img src="{% pdf_asset 'firma' %}" alt="Firma">
             </div>
             <div class="signature-name">GERENTE GENERAL</div>
             <div class="signature-title">Gerente</div>

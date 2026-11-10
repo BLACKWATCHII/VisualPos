@@ -1,0 +1,128 @@
+{% extends 'base.html' %}
+{% load humanize %}
+
+{% block title %}Cotizaciones{% endblock %}
+
+{% block extra_head %}
+<style>
+    .badge-pendiente { background: var(--info-50); color: var(--info); }
+    .badge-facturada { background: #e8f5e9; color: #2e7d32; }
+    .badge-anulada { background: #eceff1; color: #546e7a; }
+    .badge-vencida { background: #fff8e1; color: #b45309; }
+    .actions { white-space: nowrap; }
+</style>
+{% endblock %}
+
+{% block content %}
+<div>
+    <div class="page-header">
+        <div>
+            <h1 class="page-title">Cotizaciones</h1>
+            <p class="page-subtitle">Las pendientes se pueden traer al facturar con el botón "Traer cotización".</p>
+        </div>
+        <div class="page-actions">
+            <a href="{% url 'quote_create' %}" class="btn btn-primary"><i class="bi bi-plus-lg me-1"></i>Nueva cotización</a>
+        </div>
+    </div>
+
+    <form method="get" class="row g-2 mb-3 panel mx-0 px-2">
+        <div class="col-md-5">
+            <input type="text" name="q" value="{{ search }}" class="form-control" placeholder="Buscar por cliente, cédula o número (ej. 12)">
+        </div>
+        <div class="col-md-3">
+            <select name="status" class="form-select">
+                <option value="">Todos los estados</option>
+                {% for value, label in status_choices %}
+                <option value="{{ value }}" {% if status == value %}selected{% endif %}>{{ label }}</option>
+                {% endfor %}
+            </select>
+        </div>
+        <div class="col-md-2"><button class="btn btn-primary w-100"><i class="bi bi-funnel me-1"></i>Filtrar</button></div>
+        {% if search or status %}<div class="col-md-2"><a href="{% url 'quote_list' %}" class="btn btn-link">Limpiar</a></div>{% endif %}
+    </form>
+
+    <div class="panel p-0">
+        <div class="table-responsive">
+            <table class="table table-hover align-middle">
+                <thead>
+                    <tr>
+                        <th>No.</th>
+                        <th>Cliente</th>
+                        <th>Fecha</th>
+                        <th>Válida hasta</th>
+                        <th class="text-end">Total</th>
+                        <th>Estado</th>
+                        <th>Factura</th>
+                        <th class="text-end">Acciones</th>
+                    </tr>
+                </thead>
+                <tbody>
+                {% for q in page %}
+                    <tr>
+                        <td class="fw-semibold">{{ q.code }}</td>
+                        <td>{{ q.customer.name }} {{ q.customer.lastname }}<br><small class="text-muted">{{ q.customer.cedula }}</small></td>
+                        <td>{{ q.quote_date|date:"d/m/Y" }}</td>
+                        <td>{{ q.valid_until|date:"d/m/Y"|default:"—" }}</td>
+                        <td class="text-end">${{ q.total|floatformat:0|intcomma }}</td>
+                        <td>
+                            {% if q.is_expired %}
+                                <span class="badge badge-vencida">Vencida</span>
+                            {% else %}
+                                <span class="badge badge-{{ q.status }}">{{ q.get_status_display }}</span>
+                            {% endif %}
+                        </td>
+                        <td>{% if q.invoice %}#{{ q.invoice.invoice_number }}{% else %}—{% endif %}</td>
+                        <td class="text-end actions">
+                            <a class="btn btn-sm btn-outline-secondary" href="{% url 'quote_preview' q.id %}" target="_blank" title="Ver">Ver</a>
+                            <a class="btn btn-sm btn-outline-secondary" href="{% url 'quote_pdf' q.id %}" title="Descargar PDF">PDF</a>
+                            {% if q.is_editable %}
+                            <a class="btn btn-sm btn-outline-primary" href="{% url 'quote_edit' q.id %}">Editar</a>
+                            <a class="btn btn-sm btn-primary" href="{% url 'create_invoice' %}?quote={{ q.id }}" title="Abrir facturación con esta cotización cargada">Facturar</a>
+                            <form method="post" action="{% url 'quote_cancel' q.id %}" class="d-inline js-cancel-quote" data-code="{{ q.code }}">
+                                {% csrf_token %}
+                                <button class="btn btn-sm btn-outline-secondary">Anular</button>
+                            </form>
+                            {% endif %}
+                        </td>
+                    </tr>
+                {% empty %}
+                    <tr><td colspan="8" class="text-center text-muted py-4">No hay cotizaciones{% if search or status %} con ese filtro{% endif %}.</td></tr>
+                {% endfor %}
+                </tbody>
+            </table>
+        </div>
+    </div>
+
+    {% if page.paginator.num_pages > 1 %}
+    <nav class="mt-3">
+        <ul class="pagination justify-content-end">
+            {% if page.has_previous %}
+            <li class="page-item"><a class="page-link" href="?page={{ page.previous_page_number }}&q={{ search|urlencode }}&status={{ status }}">Anterior</a></li>
+            {% endif %}
+            <li class="page-item disabled"><span class="page-link">{{ page.number }} / {{ page.paginator.num_pages }}</span></li>
+            {% if page.has_next %}
+            <li class="page-item"><a class="page-link" href="?page={{ page.next_page_number }}&q={{ search|urlencode }}&status={{ status }}">Siguiente</a></li>
+            {% endif %}
+        </ul>
+    </nav>
+    {% endif %}
+</div>
+{% endblock %}
+
+{% block extra_scripts %}
+<script>
+document.querySelectorAll('.js-cancel-quote').forEach(function (form) {
+    form.addEventListener('submit', function (e) {
+        e.preventDefault();
+        Swal.fire({
+            title: '¿Anular ' + form.dataset.code + '?',
+            text: 'Ya no se podrá traer al facturar.',
+            icon: 'warning',
+            showCancelButton: true,
+            confirmButtonText: 'Sí, anular',
+            cancelButtonText: 'No',
+        }).then(function (r) { if (r.isConfirmed) form.submit(); });
+    });
+});
+</script>
+{% endblock %}

@@ -18,6 +18,7 @@ urlpatterns = [
     path('logout/', views.signout, name='logout'),
     path('signin/', views.signin, name='signin'),
     path('invoice/', include('Invoice.urls')),
+    path('quotes/', include('quote.urls')),
     path('inventory/', include('inventory.urls')),
     path('reports/', include('reports.urls')),
     path('whatsapp/', include('whatsapp.urls')),

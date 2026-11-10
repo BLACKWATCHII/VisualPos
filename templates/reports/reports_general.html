@@ -1,10 +1,10 @@
 {% extends 'base.html' %}
 {% load static %}
 
-{% block title %}Reporte generales{% endblock %}
+{% block title %}Ventas generales{% endblock %}
 
 {% block extra_head %}
-<link rel="stylesheet" type="text/css" href="https://cdn.jsdelivr.net/npm/daterangepicker/daterangepicker.css" />
+<link rel="stylesheet" type="text/css" href="https://cdn.jsdelivr.net/npm/daterangepicker@3.1.0/daterangepicker.css" />
 <style>
     .ventas-generales-container {
         padding: 2rem;
@@ -96,12 +96,12 @@
 
     .filter-input:focus {
         outline: none;
-        border-color: #10b981;
+        border-color: #16a34a;
         box-shadow: 0 0 0 3px rgba(16, 185, 129, 0.1);
     }
 
     .btn-generate {
-        background-color: #10b981;
+        background-color: #16a34a;
         color: white;
         border: none;
         padding: 0.75rem 2rem;
@@ -113,7 +113,7 @@
     }
 
     .btn-generate:hover {
-        background-color: #059669;
+        background-color: #15803d;
         transform: translateY(-2px);
         box-shadow: 0 4px 12px rgba(16, 185, 129, 0.3);
     }
@@ -148,7 +148,7 @@
     .info-icon {
         width: 18px;
         height: 18px;
-        background-color: #10b981;
+        background-color: #16a34a;
         color: white;
         border-radius: 50%;
         display: flex;
@@ -182,7 +182,7 @@
 
     .spinner {
         border: 4px solid #f3f3f3;
-        border-top: 4px solid #10b981;
+        border-top: 4px solid #16a34a;
         border-radius: 50%;
         width: 40px;
         height: 40px;
@@ -255,14 +255,14 @@
     }
 
     .format-option:hover {
-        border-color: #10b981;
+        border-color: #16a34a;
         background-color: #f0fdf4;
         transform: translateY(-2px);
     }
 
     .format-option.selected {
-        border-color: #10b981;
-        background-color: #ecfdf5;
+        border-color: #16a34a;
+        background-color: #f0fdf4;
     }
 
     .period-tabs {
@@ -289,8 +289,8 @@
     }
 
     .period-tab.active {
-        background-color: #ecfdf5;
-        color: #10b981;
+        background-color: #f0fdf4;
+        color: #16a34a;
         font-weight: 500;
     }
 
@@ -426,27 +426,16 @@
 {% endblock %}
 
 {% block content %}
-<br>
-<br>
-<br>
-<div class="ventas-generales-container">
-    <!-- Header -->
-    <div class="header-section">
-        <div class="header-title">
-            <span style="font-size: 1.5rem;">📈</span>
-            <h1>Ventas generales</h1>
-        </div>
-        <div class="header-actions">
-            <button class="icon-btn" id="btnDownload" title="Descargar">
-                <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-                    <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4M7 10l5 5 5-5M12 15V3"/>
-                </svg>
-            </button>
-        </div>
+<div class="page-header">
+    <div>
+        <h1 class="page-title">Ventas generales</h1>
+        <p class="page-subtitle">Ventas del período elegido comparadas con el período anterior.</p>
     </div>
-
-    <p class="subtitle">Obtén una visión completa de las ventas y devoluciones de tu empresa en el período que elijas.</p>
-
+    <div class="page-actions">
+        <button class="btn btn-outline-secondary" id="btnDownload" title="Descargar"><i class="bi bi-download me-1"></i>Descargar</button>
+    </div>
+</div>
+<div class="ventas-generales-container">
     <!-- Mensaje de alerta inicial -->
     <div class="alert alert-info" id="alertInicial">
         📊 Selecciona un período y haz clic en "Generar Reporte" para visualizar los datos.
@@ -531,9 +520,9 @@
 {% endblock %}
 
 {% block extra_scripts %}
-<script type="text/javascript" src="https://cdn.jsdelivr.net/momentjs/latest/moment.min.js"></script>
-<script type="text/javascript" src="https://cdn.jsdelivr.net/npm/daterangepicker/daterangepicker.min.js"></script>
-<script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+<script type="text/javascript" src="https://cdn.jsdelivr.net/npm/moment@2.29.4/min/moment.min.js"></script>
+<script type="text/javascript" src="https://cdn.jsdelivr.net/npm/daterangepicker@3.1.0/daterangepicker.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.1/dist/chart.umd.min.js"></script>
 
 <script>
 let salesChart = null;
@@ -640,7 +629,7 @@ function mostrarDatosEjemplo() {
             {
                 label: 'Período Actual',
                 data: [12000000, 15000000, 13000000, 18000000, 16000000, 20000000],
-                borderColor: '#10b981',
+                borderColor: '#16a34a',
                 backgroundColor: 'rgba(16, 185, 129, 0.1)',
                 tension: 0.4
             },
@@ -743,13 +732,13 @@ function mostrarEstadisticas(totales) {
         </div>
         <div class="stat-card">
             <h3>Cambio</h3>
-            <p style="color: ${esPositivo ? '#10b981' : '#ef4444'}">
+            <p style="color: ${esPositivo ? '#16a34a' : '#ef4444'}">
                 ${esPositivo ? '+' : ''}${formatearMoneda(cambio)}
             </p>
         </div>
         <div class="stat-card">
             <h3>Variación</h3>
-            <p style="color: ${esPositivo ? '#10b981' : '#ef4444'}">
+            <p style="color: ${esPositivo ? '#16a34a' : '#ef4444'}">
                 ${esPositivo ? '+' : ''}${porcentaje.toFixed(2)}%
             </p>
         </div>

@@ -1,18 +1,19 @@
 {% extends 'base.html' %}
 {% load static %}
 
-{% block content %}
-<br>
-<br>
-<br>
-<div class="container py-4">
-	<div class="row justify-content-center">
-		<div class="col-12 col-md-8 col-lg-6">
-			<div class="card shadow-sm">
-				<div class="card-body">
-					<h4 class="mb-2">Conexión WhatsApp</h4>
-					<p class="text-muted mb-3">Escanea el QR con WhatsApp → <b>Dispositivos vinculados</b>.</p>
+{% block title %}WhatsApp{% endblock %}
 
+{% block content %}
+<div class="page-header">
+	<div>
+		<h1 class="page-title">Conexión WhatsApp</h1>
+		<p class="page-subtitle">Escanea el QR con WhatsApp → <b>Dispositivos vinculados</b> para enviar facturas por WhatsApp.</p>
+	</div>
+</div>
+<div class="row">
+		<div class="col-12 col-md-8 col-lg-6">
+			<div class="panel">
+				<div>
 					<div class="d-flex align-items-center gap-2 mb-3">
 						<span class="badge" id="waBadge">Cargando…</span>
 						<small class="text-muted" id="waInfo"></small>
@@ -38,7 +39,6 @@
 				</div>
 			</div>
 		</div>
-	</div>
 </div>
 
 <script>

@@ -14,6 +14,7 @@ from datetime import datetime, time
 from io import BytesIO
 import os
 import subprocess
+from Invoice.pdf_engine import run_pdf_job
 import uuid
 
 from openpyxl import Workbook
@@ -94,11 +95,7 @@ def _render_pdf_inline_with_puppeteer(template_src: str, context: dict, filename
         f.write(html)
 
     script_path = os.path.join(settings.BASE_DIR, "pdfgen", "generate_pdf.js")
-    result = subprocess.run(
-        ["node", script_path, html_path, pdf_path],
-        capture_output=True,
-        text=True
-    )
+    result = run_pdf_job(html_path, pdf_path)
 
     if result.returncode != 0:
         if os.path.exists(html_path):

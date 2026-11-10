@@ -1,3 +1,4 @@
+import threading
 from django.shortcuts import render, redirect,get_object_or_404
 from .forms import CustomerForm
 from django.contrib.auth.decorators import login_required
@@ -10,11 +11,17 @@ from customer.sendEmail import send_email
 from Invoice.models import Invoice  
 
 
+def _form_errors_response(form):
+    """Errores del formulario en JSON (el formulario se envía por fetch)."""
+    errors = {field: [str(e) for e in errs] for field, errs in form.errors.items()}
+    first = next(iter(errors.values()), ['Revisa los datos del formulario.'])
+    return JsonResponse({'error': first, 'errors': errors}, status=400)
+
+
 @login_required
 def Customer_create_view(request):  
     if request.method == 'POST':
         form = CustomerForm(request.POST, request.FILES)
-        print(form)
         if form.is_valid():
             customer = form.save()
             destinatario = customer.email 
@@ -187,15 +194,19 @@ def Customer_create_view(request):
             </body>
             </html>
             """
-            try:
-                send_email(destinatario, asunto, contenido_texto, contenido_html)
-            except Exception as e: 
-                print(f"error al enviar correo: {e}")
+            # El correo de bienvenida se envía en segundo plano: el login SMTP
+            # tarda 1-3 s y no debe demorar la respuesta al usuario.
+            def _enviar_bienvenida():
+                try:
+                    send_email(destinatario, asunto, contenido_texto, contenido_html)
+                except Exception as e:
+                    print(f"error al enviar correo: {e}")
+
+            if destinatario:
+                threading.Thread(target=_enviar_bienvenida, daemon=True).start()
             return JsonResponse({'redirect': reverse('viewClient')})
         else:
-            cedula_error = form.errors.get('cedula')
-            if cedula_error:
-                return JsonResponse({'error': cedula_error}, status=400)
+            return _form_errors_response(form)
     else:
         form = CustomerForm()
     return render(request, 'Customer/createCustomer.html', {'form': form})
@@ -206,13 +217,11 @@ def view_Clients(request):
     context = {
         'clients': clients,
     }
-    print(context)
     return render(request, 'Customer/viewClient.html', context)
 
 @login_required
 def download_pdf(request, client_id):
     client = get_object_or_404(Customer, id=client_id)
-    print(client)
     pdf_path = client.pdf.path
     with open(pdf_path, 'rb') as pdf_file:
         response = HttpResponse(pdf_file.read(), content_type='application/pdf')
@@ -229,9 +238,7 @@ def update_Customer(request, client_id):
             form.save()
             return JsonResponse({'redirect': reverse('viewClient')})
         else:
-            cedula_error = form.errors.get('cedula')
-            if cedula_error:
-                return JsonResponse({'error': cedula_error}, status=400)
+            return _form_errors_response(form)
     else:
         form = CustomerForm(instance=client)
     return render(request, 'Customer/updateCustomer.html', {'form': form, 'client_id': client.id})

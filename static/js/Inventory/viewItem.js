@@ -1,26 +1,10 @@
 $(document).ready(function () {
+    // Sin espera artificial: la tabla se arma apenas carga la página
     if ($.fn.DataTable) {
-        setTimeout(() => {
-            $('#itemsTable').DataTable({
-                paging: true,
-                searching: true,
-                ordering: true,
-                lengthChange: true,
-                pageLength: 10,
-                deferRender: true,
-                language: {
-                    search: "Buscar:",
-                    lengthMenu: "Mostrar _MENU_ registros",
-                    info: "Mostrando _START_ a _END_ de _TOTAL_ registros",
-                    paginate: {
-                        previous: "Anterior",
-                        next: "Siguiente"
-                    }
-                }
-            });
-        }, 500);
-    } else {
-        console.error('DataTable plugin no está cargado correctamente.');
+        $('#itemsTable').DataTable({
+            order: [[0, 'desc']],
+            columnDefs: [{ orderable: false, targets: [7] }]
+        });
     }
 
     $('#exportButton').on('click', function (event) {

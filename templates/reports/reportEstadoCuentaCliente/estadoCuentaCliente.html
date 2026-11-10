@@ -67,7 +67,7 @@
 	}
 
 	.stat-blue { background: linear-gradient(135deg, #3b82f6 0%, #2563eb 100%); }
-	.stat-green { background: linear-gradient(135deg, #10b981 0%, #059669 100%); }
+	.stat-green { background: linear-gradient(135deg, #16a34a 0%, #15803d 100%); }
 	.stat-red { background: linear-gradient(135deg, #ef4444 0%, #dc2626 100%); }
 
 	.filters {
@@ -94,7 +94,7 @@
 	}
 
 	.filter-input:focus {
-		border-color: #10b981;
+		border-color: #16a34a;
 		box-shadow: 0 0 0 3px rgba(16,185,129,0.12);
 	}
 
@@ -120,7 +120,7 @@
 		gap: 0.5rem;
 	}
 
-	.btn-excel { background: linear-gradient(135deg, #10b981 0%, #059669 100%); }
+	.btn-excel { background: linear-gradient(135deg, #16a34a 0%, #15803d 100%); }
 	.btn-pdf { background: linear-gradient(135deg, #ef4444 0%, #dc2626 100%); }
 
 	.table-card {
@@ -190,12 +190,12 @@
 		font-size: 0.8rem;
 	}
 
-	.b-paid { background: rgba(16,185,129,0.15); color: #059669; }
+	.b-paid { background: rgba(16,185,129,0.15); color: #15803d; }
 	.b-partial { background: rgba(245,158,11,0.18); color: #b45309; }
 	.b-overdue { background: rgba(239,68,68,0.15); color: #dc2626; }
 	.b-pending { background: rgba(59,130,246,0.14); color: #2563eb; }
 
-	.amt-green { color: #059669; font-weight: 700; }
+	.amt-green { color: #15803d; font-weight: 700; }
 	.amt-red { color: #dc2626; font-weight: 800; }
 
 	.loading {
@@ -213,76 +213,74 @@
 {% endblock %}
 
 {% block content %}
-<br><br><br>
-<div class="ec-container">
-	<div class="ec-header">
-		<h1>Estado de Cuentas</h1>
-		<p>Gestión y seguimiento de cuentas por cobrar</p>
-	</div>
+<div class="page-header">
+    <div>
+        <h1 class="page-title">Estado de cuenta de clientes</h1>
+        <p class="page-subtitle">Facturado, cobrado y saldo pendiente por cliente.</p>
+    </div>
+    <div class="page-actions">
+        <button id="ecBtnExcel" class="btn btn-outline-secondary" type="button"><i class="bi bi-file-earmark-excel me-1"></i>Excel</button>
+        <button id="ecBtnPdf" class="btn btn-outline-secondary" type="button"><i class="bi bi-file-earmark-pdf me-1"></i>PDF</button>
+    </div>
+</div>
 
-	<div class="stats">
-		<div class="stat-card stat-blue">
-			<div class="icon">$</div>
-			<p class="label">Total Facturado</p>
-			<p class="value" id="ecTotalFacturado">$ 0</p>
-		</div>
-		<div class="stat-card stat-green">
-			<div class="icon">✓</div>
-			<p class="label">Total Cobrado</p>
-			<p class="value" id="ecTotalCobrado">$ 0</p>
-		</div>
-		<div class="stat-card stat-red">
-			<div class="icon">!</div>
-			<p class="label">Saldo Pendiente</p>
-			<p class="value" id="ecTotalPendiente">$ 0</p>
-		</div>
-	</div>
+<div class="kpi-grid">
+    <div class="kpi">
+        <span class="kpi-icon info"><i class="bi bi-receipt"></i></span>
+        <div><div class="kpi-label">Total facturado</div><div class="kpi-value" id="ecTotalFacturado">$ 0</div></div>
+    </div>
+    <div class="kpi">
+        <span class="kpi-icon"><i class="bi bi-check2-circle"></i></span>
+        <div><div class="kpi-label">Total cobrado</div><div class="kpi-value" id="ecTotalCobrado">$ 0</div></div>
+    </div>
+    <div class="kpi">
+        <span class="kpi-icon danger"><i class="bi bi-hourglass-split"></i></span>
+        <div><div class="kpi-label">Saldo pendiente</div><div class="kpi-value" id="ecTotalPendiente">$ 0</div></div>
+    </div>
+</div>
 
-	<div class="filters">
-		<input id="ecSearch" class="filter-input" type="text" placeholder="Buscar por cliente o NIT..." />
-		<select id="ecEstado" class="filter-select">
-			<option value="">Todos los estados</option>
-			<option value="Pagada">Pagada</option>
-			<option value="Pago Parcial">Pago Parcial</option>
-			<option value="Vencida">Vencida</option>
-			<option value="Pendiente">Pendiente</option>
-		</select>
-
-		<button id="ecBtnExcel" class="btn-download btn-excel" type="button">Excel</button>
-		<button id="ecBtnPdf" class="btn-download btn-pdf" type="button">PDF</button>
-	</div>
-
-	<div class="table-card">
-		<div class="table-wrap">
-			<table class="ec-table">
-				<thead>
-					<tr>
-						<th>Cliente</th>
-						<th>NIT</th>
-						<th>Factura</th>
-						<th>Fecha</th>
-						<th>Total</th>
-						<th>Pagado</th>
-						<th>Saldo</th>
-						<th>Vencimiento</th>
-						<th>Estado</th>
-					</tr>
-				</thead>
-				<tbody id="ecTbody">
-					<tr><td colspan="9" class="loading">Cargando...</td></tr>
-				</tbody>
-				<tfoot>
-					<tr>
-						<td colspan="4">TOTALES</td>
-						<td id="ecFootTotal">$ 0</td>
-						<td id="ecFootPagado">$ 0</td>
-						<td id="ecFootSaldo">$ 0</td>
-						<td colspan="2"></td>
-					</tr>
-				</tfoot>
-			</table>
-		</div>
-	</div>
+<div class="panel p-0">
+    <div class="row g-2 p-3">
+        <div class="col-md-8"><input id="ecSearch" class="form-control" type="text" placeholder="Buscar por cliente o NIT…" /></div>
+        <div class="col-md-4">
+            <select id="ecEstado" class="form-select">
+                <option value="">Todos los estados</option>
+                <option value="Pagada">Pagada</option>
+                <option value="Pago Parcial">Pago parcial</option>
+                <option value="Vencida">Vencida</option>
+                <option value="Pendiente">Pendiente</option>
+            </select>
+        </div>
+    </div>
+    <div class="table-responsive">
+        <table class="table table-hover align-middle ec-table">
+            <thead>
+                <tr>
+                    <th>Cliente</th>
+                    <th>NIT</th>
+                    <th>Factura</th>
+                    <th>Fecha</th>
+                    <th class="num">Total</th>
+                    <th class="num">Pagado</th>
+                    <th class="num">Saldo</th>
+                    <th>Vencimiento</th>
+                    <th>Estado</th>
+                </tr>
+            </thead>
+            <tbody id="ecTbody">
+                <tr><td colspan="9" class="loading">Cargando…</td></tr>
+            </tbody>
+            <tfoot>
+                <tr class="fw-semibold">
+                    <td colspan="4">Totales</td>
+                    <td class="num" id="ecFootTotal">$ 0</td>
+                    <td class="num" id="ecFootPagado">$ 0</td>
+                    <td class="num" id="ecFootSaldo">$ 0</td>
+                    <td colspan="2"></td>
+                </tr>
+            </tfoot>
+        </table>
+    </div>
 </div>
 {% endblock %}
 
@@ -298,10 +296,10 @@
 	}
 
 	function badgeClass(estado) {
-		if (estado === 'Pagada') return 'badge b-paid';
-		if (estado === 'Pago Parcial') return 'badge b-partial';
-		if (estado === 'Vencida') return 'badge b-overdue';
-		return 'badge b-pending';
+		if (estado === 'Pagada') return 'badge-soft success';
+		if (estado === 'Pago Parcial') return 'badge-soft info';
+		if (estado === 'Vencida') return 'badge-soft danger';
+		return 'badge-soft warning';
 	}
 
 	function debounce(fn, wait) {

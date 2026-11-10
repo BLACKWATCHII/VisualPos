@@ -16,6 +16,7 @@ from io import BytesIO
 import csv
 import uuid
 import subprocess
+from Invoice.pdf_engine import run_pdf_job
 import os
 
 from reportlab.lib.pagesizes import A4
@@ -32,6 +33,7 @@ def menu_reportes(request):
     """Vista principal de ventas generales"""
     return render(request, 'reports/menu_reports.html')
 
+@login_required
 def reports_general(request):
     """Vista de reportes generales"""
     return render(request, 'reports/reports_general.html')
@@ -317,11 +319,7 @@ def _render_pdf_with_puppeteer(template_src: str, context: dict, filename: str):
         f.write(html)
 
     script_path = os.path.join(settings.BASE_DIR, "pdfgen", "generate_pdf.js")
-    result = subprocess.run(
-        ["node", script_path, html_path, pdf_path],
-        capture_output=True,
-        text=True
-    )
+    result = run_pdf_job(html_path, pdf_path)
 
     if result.returncode != 0:
         if os.path.exists(html_path):

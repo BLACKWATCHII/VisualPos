@@ -99,7 +99,24 @@ class PaymentQuota(models.Model):
 
     @property
     def paid_amount(self):
+        # Si la consulta ya trae el total anotado (with_paid_total), no consultar de nuevo
+        annotated = getattr(self, 'paid_total', None)
+        if annotated is not None:
+            return annotated
         return self.payments.aggregate(total=Sum('amount'))['total'] or Decimal('0.00')
+
+    @staticmethod
+    def with_paid_total(queryset):
+        """Anota lo abonado a cada cuota en UNA sola consulta (evita N+1 en listados)."""
+        from django.db.models import DecimalField, Value
+        from django.db.models.functions import Coalesce
+        return queryset.annotate(
+            paid_total=Coalesce(
+                Sum('payments__amount'),
+                Value(Decimal('0.00')),
+                output_field=DecimalField(max_digits=10, decimal_places=2),
+            )
+        )
 
     @property
     def balance(self):

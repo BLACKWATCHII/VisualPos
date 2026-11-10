@@ -21,6 +21,7 @@ def item(request):
     }
     return render(request, 'items/viewItem.html', context)
 
+@login_required
 def download_plant(request):
     file_path = os.path.join(settings.BASE_DIR, 'static/archived/Customers.xlsx')
     if os.path.exists(file_path):
@@ -103,7 +104,6 @@ def UpdateItem(request, item_id):
         price = request.POST.get('Price')
         active = request.POST.get('active')
         tax_id = request.POST.get('Taxes')
-        print("entrando aqui")
         if not (name and referents and description and price and active):
             return JsonResponse({'error': 'Todos los campos son obligatorios.'}, status=400)
 
@@ -117,12 +117,12 @@ def UpdateItem(request, item_id):
         itemID.Description = description
         itemID.Price = price
         itemID.active = (active == 'True')
-        itemID.Taxes = Tax.objects.get(id=tax_id) if tax_id else None
+        itemID.tax = Tax.objects.filter(id=tax_id).first() if tax_id else None
         itemID.save()
 
         return JsonResponse({'redirect': reverse('viewItem')})
     
-    return render(request, 'items/UpdateItem.html', {'item': itemID, 'taxes': taxes})
+    return render(request, 'items/updateItem.html', {'item': itemID, 'taxes': taxes})
 
 @login_required
 def import_datos_excel(request):

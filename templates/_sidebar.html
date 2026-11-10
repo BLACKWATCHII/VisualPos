@@ -1,0 +1,80 @@
+{% load static %}
+{% with path=request.path %}
+<aside class="app-sidebar" id="appSidebar" aria-label="Menú principal">
+  <div class="sidebar-brand">
+    <a href="{% url 'Dasboard' %}" class="d-flex align-items-center gap-2 text-decoration-none">
+      <img src="{% static 'img/BerserkerERP.png' %}" alt="Berserker" class="sidebar-logo">
+    </a>
+    <button class="sidebar-close d-lg-none" type="button" data-sidebar-toggle aria-label="Cerrar menú">
+      <i class="bi bi-x-lg"></i>
+    </button>
+  </div>
+
+  <nav class="sidebar-nav">
+    <a class="nav-item-link {% if '/Dasboard/' in path %}active{% endif %}" href="{% url 'Dasboard' %}">
+      <i class="bi bi-grid-1x2"></i><span>Dashboard</span>
+    </a>
+
+    <div class="nav-section">Ventas</div>
+    <a class="nav-item-link {% if '/invoice/create-invoice/' in path %}active{% endif %}" href="{% url 'create_invoice' %}">
+      <i class="bi bi-receipt"></i><span>Facturar</span>
+    </a>
+    <a class="nav-item-link {% if '/invoice/report-invoice/' in path %}active{% endif %}" href="{% url 'report_invoice' %}">
+      <i class="bi bi-journal-text"></i><span>Facturas</span>
+    </a>
+    <a class="nav-item-link {% if '/quotes/' in path %}active{% endif %}" href="{% url 'quote_list' %}">
+      <i class="bi bi-file-earmark-text"></i><span>Cotizaciones</span>
+    </a>
+    <a class="nav-item-link {% if '/invoice/anular-factura' in path %}active{% endif %}" href="{% url 'cancel_factura' %}">
+      <i class="bi bi-x-octagon"></i><span>Anular factura</span>
+    </a>
+
+    <div class="nav-section">Cartera</div>
+    <a class="nav-item-link {% if '/invoice/payment-quota' in path or '/invoice/invoice/quota/' in path %}active{% endif %}" href="{% url 'payment_quota' %}">
+      <i class="bi bi-cash-coin"></i><span>Pagar cuota</span>
+    </a>
+    <a class="nav-item-link {% if '/invoice/quotaCustomer/' in path %}active{% endif %}" href="{% url 'payment_quota_customer' %}">
+      <i class="bi bi-person-lines-fill"></i><span>Deudas por cliente</span>
+    </a>
+    <a class="nav-item-link {% if '/invoice/payment/history/' in path %}active{% endif %}" href="{% url 'payment_history' %}">
+      <i class="bi bi-clock-history"></i><span>Historial de pagos</span>
+    </a>
+
+    <div class="nav-section">Inventario</div>
+    <a class="nav-item-link {% if '/items/viewItem/' in path or '/items/update/' in path %}active{% endif %}" href="{% url 'viewItem' %}">
+      <i class="bi bi-box-seam"></i><span>Productos</span>
+    </a>
+    <a class="nav-item-link {% if '/items/createItem/' in path %}active{% endif %}" href="{% url 'createItem' %}">
+      <i class="bi bi-plus-square"></i><span>Crear producto</span>
+    </a>
+    <a class="nav-item-link {% if '/inventory/' in path %}active{% endif %}" href="{% url 'inventory_adjustment_create' %}">
+      <i class="bi bi-arrow-left-right"></i><span>Ajustes de inventario</span>
+    </a>
+    <a class="nav-item-link {% if '/tax/' in path %}active{% endif %}" href="{% url 'createTax' %}">
+      <i class="bi bi-percent"></i><span>Impuestos</span>
+    </a>
+
+    <div class="nav-section">Clientes</div>
+    <a class="nav-item-link {% if '/Customer/viewClient/' in path or '/Customer/update_Customer/' in path %}active{% endif %}" href="{% url 'viewClient' %}">
+      <i class="bi bi-people"></i><span>Clientes</span>
+    </a>
+    <a class="nav-item-link {% if '/Customer/createCustomer/' in path %}active{% endif %}" href="{% url 'createCustomer' %}">
+      <i class="bi bi-person-plus"></i><span>Crear cliente</span>
+    </a>
+
+    <div class="nav-section">Análisis</div>
+    <a class="nav-item-link {% if '/reports/' in path %}active{% endif %}" href="{% url 'menu_reportes' %}">
+      <i class="bi bi-bar-chart-line"></i><span>Reportes</span>
+    </a>
+
+    <div class="nav-section">Configuración</div>
+    <a class="nav-item-link {% if '/invoice/create-transaction' in path or '/invoice/edit-transaction/' in path %}active{% endif %}" href="{% url 'create_transaction' %}">
+      <i class="bi bi-hash"></i><span>Tipos de documento</span>
+    </a>
+    <a class="nav-item-link {% if '/whatsapp/' in path %}active{% endif %}" href="{% url 'conexion_whatsapp' %}">
+      <i class="bi bi-whatsapp"></i><span>WhatsApp</span>
+    </a>
+  </nav>
+</aside>
+<div class="sidebar-backdrop d-lg-none" data-sidebar-toggle></div>
+{% endwith %}

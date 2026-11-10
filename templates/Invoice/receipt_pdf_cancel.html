@@ -285,11 +285,12 @@
 
 		<div class="receipt-header">
 			<div class="company-logo">
-				<img src="https://raw.githubusercontent.com/Kevin25DC/celupro-assets/refs/heads/main/logo%20de%20prueba%20dos.png" alt="CELUPRO CO Logo">
+				<img src="{% pdf_asset 'logo' %}" alt="CELUPRO CO Logo">
 			</div>
 
 			<div class="title-box">
 				<h2>COMPROBANTE DE ANULACIÓN</h2>
+				<div class="subtitle">{% company_name %} &middot; NIT {% company_nit %}</div>
 				<div class="subtitle">
 					Factura original No. <strong>#{{ invoice.invoice_number }}</strong>
 				</div>

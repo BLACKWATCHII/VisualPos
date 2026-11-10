@@ -1,0 +1,197 @@
+{% load humanize %}
+{# Lista de cuotas compartida por "Pagar cuota" y "Deudas por cliente" #}
+<div class="page-header">
+    <div>
+        <h1 class="page-title">{{ page_title }}</h1>
+        <p class="page-subtitle">{{ page_subtitle }}</p>
+    </div>
+</div>
+
+<form method="get" class="panel">
+    <div class="row g-3 align-items-end">
+        <div class="{% if show_invoice_filter %}col-lg-4{% else %}col-lg-5{% endif %}">
+            <label class="form-label" for="customer">Cliente</label>
+            <select id="customer" name="customer" class="form-select js-select2">
+                <option value="">Todos los clientes</option>
+                {% for c in customer %}
+                <option value="{{ c.pk }}" {% if request.GET.customer == c.pk|stringformat:"s" %}selected{% endif %}>{{ c.name }} {{ c.lastname }}</option>
+                {% endfor %}
+            </select>
+        </div>
+        {% if show_invoice_filter %}
+        <div class="col-lg-3">
+            <label class="form-label" for="numero_factura">Factura</label>
+            <select class="form-select js-select2" name="numero_factura" id="numero_factura">
+                <option value="">Todas las facturas</option>
+                {% for i in invoice %}
+                <option value="{{ i.pk }}" {% if request.GET.numero_factura == i.pk|stringformat:"s" %}selected{% endif %}>#{{ i.invoice_number }}</option>
+                {% endfor %}
+            </select>
+        </div>
+        {% endif %}
+        <div class="{% if show_invoice_filter %}col-lg-3{% else %}col-lg-4{% endif %}">
+            <label class="form-label" for="estado">Estado de la cuota</label>
+            <select class="form-select" name="estado" id="estado">
+                <option value="Todas" {% if request.GET.estado == "Todas" or not request.GET.estado %}selected{% endif %}>Todas</option>
+                <option value="Pendientes" {% if request.GET.estado == "Pendientes" %}selected{% endif %}>Pendientes</option>
+                <option value="Pagadas" {% if request.GET.estado == "Pagadas" %}selected{% endif %}>Pagadas</option>
+            </select>
+        </div>
+        <div class="col-lg-2 d-flex gap-2">
+            <button type="submit" class="btn btn-primary flex-fill"><i class="bi bi-funnel me-1"></i>Filtrar</button>
+            {% if request.GET %}<a href="{{ request.path }}" class="btn btn-outline-secondary" title="Limpiar filtros"><i class="bi bi-x-lg"></i></a>{% endif %}
+        </div>
+    </div>
+</form>
+
+<div class="kpi-grid">
+    <div class="kpi">
+        <span class="kpi-icon danger"><i class="bi bi-exclamation-triangle"></i></span>
+        <div>
+            <div class="kpi-label">Cuotas vencidas</div>
+            <div class="kpi-value">{{ count_quota_expired|intcomma }}</div>
+            <div class="kpi-hint">Pendientes con fecha pasada</div>
+        </div>
+    </div>
+    <div class="kpi">
+        <span class="kpi-icon warning"><i class="bi bi-clock"></i></span>
+        <div>
+            <div class="kpi-label">Cuotas pendientes</div>
+            <div class="kpi-value">{{ count_quota_unpaid|intcomma }}</div>
+            <div class="kpi-hint">Por cobrar</div>
+        </div>
+    </div>
+    <div class="kpi">
+        <span class="kpi-icon"><i class="bi bi-check2-circle"></i></span>
+        <div>
+            <div class="kpi-label">Cuotas pagadas</div>
+            <div class="kpi-value">{{ count_quota_paid|intcomma }}</div>
+            <div class="kpi-hint">Completadas</div>
+        </div>
+    </div>
+</div>
+
+<div class="panel p-0">
+    <div class="table-responsive">
+        <table class="table table-hover align-middle">
+            <thead>
+                <tr>
+                    <th>Factura</th>
+                    <th>Cliente</th>
+                    <th>Cuota</th>
+                    <th>Vencimiento</th>
+                    <th class="num">Saldo</th>
+                    <th>Estado</th>
+                    <th class="text-end">Acciones</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for credit in credits %}
+                <tr>
+                    <td class="fw-semibold">#{{ credit.invoice.invoice_number }}</td>
+                    <td>{{ credit.invoice.customer.name }} {{ credit.invoice.customer.lastname }}</td>
+                    <td class="text-muted">{% if credit.number == 0 %}Inicial{% else %}{{ credit.number }}{% endif %}</td>
+                    <td class="text-nowrap">{{ credit.payment_date|date:"d/m/Y" }}</td>
+                    <td class="num text-money">${{ credit.balance|floatformat:0|intcomma }}</td>
+                    <td>
+                        {% if credit.number == 0 %}
+                            <span class="badge-soft info">Inicial</span>
+                        {% elif not credit.is_paid %}
+                            {% if credit.payment_date < today %}
+                                <span class="badge-soft danger">Vencida</span>
+                            {% else %}
+                                <span class="badge-soft warning">Pendiente</span>
+                            {% endif %}
+                        {% else %}
+                            <span class="badge-soft success">Pagada</span>
+                        {% endif %}
+                    </td>
+                    <td class="text-end text-nowrap">
+                        {% if credit.number == 0 %}
+                            <span class="text-muted small">—</span>
+                        {% elif not credit.is_paid %}
+                            <button type="button" class="btn btn-sm btn-primary"
+                                    data-bs-toggle="modal" data-bs-target="#payModal"
+                                    data-id="{{ credit.id }}"
+                                    data-balance="{{ credit.balance }}"
+                                    data-date="{{ credit.payment_date|date:'d/m/Y' }}"
+                                    data-invoice="{{ credit.invoice.invoice_number }}"
+                                    data-url="{% url 'pay_quota' credit.id %}">
+                                <i class="bi bi-cash-coin me-1"></i>Pagar
+                            </button>
+                        {% else %}
+                            <a href="{% url 'download_quota_receipt' credit.id %}" class="btn btn-sm btn-outline-secondary" title="Descargar recibo" target="_blank">
+                                <i class="bi bi-file-earmark-pdf"></i>
+                            </a>
+                            <form method="post" action="{% url 'reverse_quota' credit.id %}" class="d-inline js-reverse-quota" data-invoice="#{{ credit.invoice.invoice_number }}" data-date="{{ credit.payment_date|date:'d/m/Y' }}">
+                                {% csrf_token %}
+                                <input type="hidden" name="next" value="{{ request.get_full_path }}">
+                                <button type="submit" class="btn btn-sm btn-outline-secondary text-danger" title="Anular pago">
+                                    <i class="bi bi-arrow-counterclockwise"></i>
+                                </button>
+                            </form>
+                        {% endif %}
+                    </td>
+                </tr>
+                {% empty %}
+                <tr>
+                    <td colspan="7">
+                        <div class="empty-state"><i class="bi bi-inbox"></i>No hay cuotas con los filtros aplicados.</div>
+                    </td>
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    </div>
+    {% if page_obj.paginator.num_pages > 1 %}
+    <div class="d-flex justify-content-between align-items-center px-3 py-2 border-top">
+        <small class="text-muted">{{ page_obj.start_index }}–{{ page_obj.end_index }} de {{ page_obj.paginator.count|intcomma }} cuotas</small>
+        <ul class="pagination pagination-sm mb-0">
+            {% if page_obj.has_previous %}
+            <li class="page-item"><a class="page-link" href="?{{ querystring }}page={{ page_obj.previous_page_number }}">‹ Anterior</a></li>
+            {% endif %}
+            <li class="page-item disabled"><span class="page-link">{{ page_obj.number }} / {{ page_obj.paginator.num_pages }}</span></li>
+            {% if page_obj.has_next %}
+            <li class="page-item"><a class="page-link" href="?{{ querystring }}page={{ page_obj.next_page_number }}">Siguiente ›</a></li>
+            {% endif %}
+        </ul>
+    </div>
+    {% endif %}
+</div>
+
+<!-- Modal de pago -->
+<div class="modal fade" id="payModal" tabindex="-1" aria-labelledby="payModalLabel" aria-hidden="true">
+    <div class="modal-dialog modal-dialog-centered">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title" id="payModalLabel">Registrar pago de cuota</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Cerrar"></button>
+            </div>
+            <div class="modal-body">
+                <div class="row g-3 mb-3">
+                    <div class="col-6">
+                        <div class="kpi-label">Factura</div>
+                        <div class="fw-semibold" id="modalInvoice"></div>
+                    </div>
+                    <div class="col-6">
+                        <div class="kpi-label">Vencimiento</div>
+                        <div class="fw-semibold" id="modalDate"></div>
+                    </div>
+                </div>
+                <label for="modalPayAmount" class="form-label">Importe a pagar</label>
+                <div class="input-group">
+                    <span class="input-group-text">$</span>
+                    <input type="number" step="0.01" min="0.01" id="modalPayAmount" name="amount" class="form-control">
+                </div>
+                <div class="form-text">Saldo de la cuota: <strong>$<span id="modalBalance"></span></strong></div>
+            </div>
+            <div class="modal-footer">
+                <form id="confirmPayForm" method="post" class="d-flex gap-2">
+                    {% csrf_token %}
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancelar</button>
+                    <button id="confirmPayButton" type="button" class="btn btn-primary"><i class="bi bi-check-lg me-1"></i>Confirmar pago</button>
+                </form>
+            </div>
+        </div>
+    </div>
+</div>
